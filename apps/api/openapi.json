@@ -229,6 +229,32 @@
         "title": "ProfileCreate",
         "type": "object"
       },
+      "ServiceInfo": {
+        "properties": {
+          "docs": {
+            "default": "/docs",
+            "title": "Docs",
+            "type": "string"
+          },
+          "health": {
+            "default": "/healthz",
+            "title": "Health",
+            "type": "string"
+          },
+          "service": {
+            "default": "hirevine-api",
+            "title": "Service",
+            "type": "string"
+          },
+          "version": {
+            "default": "0.1.0",
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "title": "ServiceInfo",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -283,6 +309,27 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/": {
+      "get": {
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Root",
+        "tags": [
+          "health"
+        ]
+      }
+    },
     "/healthz": {
       "get": {
         "operationId": "healthz_healthz_get",

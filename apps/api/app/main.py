@@ -28,6 +28,13 @@ class Health(BaseModel):
     db: bool | None = None
 
 
+class ServiceInfo(BaseModel):
+    service: str = "hirevine-api"
+    version: str = "0.1.0"
+    docs: str = "/docs"
+    health: str = "/healthz"
+
+
 def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(title="Hirevine API", version="0.1.0", lifespan=lifespan)
@@ -39,6 +46,10 @@ def create_app() -> FastAPI:
         allow_headers=["Authorization", "Content-Type"],
     )
     install_error_handlers(app)
+
+    @app.get("/", response_model=ServiceInfo, tags=["health"])
+    async def root() -> ServiceInfo:
+        return ServiceInfo()
 
     @app.get("/healthz", response_model=Health, response_model_exclude_none=True, tags=["health"])
     async def healthz(db: bool = False) -> Health:

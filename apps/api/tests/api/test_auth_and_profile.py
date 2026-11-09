@@ -64,6 +64,13 @@ async def make_candidate(client, uid):
 
 # ------------------------------------------------------------------- health
 
+async def test_root_describes_service(client):
+    r = await client.get("/")
+    assert r.status_code == 200
+    assert r.json()["service"] == "hirevine-api"
+    assert (await client.get(r.json()["docs"])).status_code == 200
+
+
 async def test_healthz(client):
     r = await client.get("/healthz")
     assert r.json() == {"ok": True}
