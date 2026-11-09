@@ -1,0 +1,23 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "stream",
+  "tasks": {
+    "openapi": {
+      "inputs": ["app/**/*.py", "pyproject.toml"],
+      "outputs": ["openapi.json"]
+    },
+    "gen:api": {
+      "dependsOn": ["^openapi"],
+      "outputs": ["src/schema.d.ts"]
+    },
+    "typecheck": { "dependsOn": ["^gen:api", "gen:api"] },
+    "lint": { "dependsOn": ["^gen:api", "gen:api"] },
+    "test": { "dependsOn": ["^gen:api", "gen:api"] },
+    "build": {
+      "dependsOn": ["^build", "^gen:api"],
+      "outputs": [".next/**", "!.next/cache/**"],
+      "env": ["NEXT_PUBLIC_*"]
+    },
+    "dev": { "cache": false, "persistent": true }
+  }
+}

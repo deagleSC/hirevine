@@ -1,0 +1,25 @@
+{
+  "name": "@hirevine/api-client",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "gen:api": "openapi-typescript ../../apps/api/openapi.json -o src/schema.d.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.17.0"
+  },
+  "devDependencies": {
+    "@hirevine/api": "workspace:^",
+    "@hirevine/config": "workspace:^",
+    "eslint": "9",
+    "openapi-typescript": "^7.13.0",
+    "typescript": "5",
+    "vitest": "^5.1.0"
+  }
+}

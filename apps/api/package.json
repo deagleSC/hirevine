@@ -1,0 +1,10 @@
+{
+  "name": "@hirevine/api",
+  "private": true,
+  "scripts": {
+    "openapi": "uv run python -m app.export_openapi openapi.json",
+    "dev": "uv run uvicorn app.main:app --reload --port 8000",
+    "lint": "uv run ruff check .",
+    "test": "uv run pytest -q"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "@hirevine/config",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tsconfig/base.json": "./tsconfig/base.json",
+    "./tsconfig/nextjs.json": "./tsconfig/nextjs.json",
+    "./tsconfig/library.json": "./tsconfig/library.json",
+    "./eslint": "./eslint.js",
+    "./tailwind-preset": {
+      "types": "./tailwind-preset.d.cts",
+      "default": "./tailwind-preset.cjs"
+    }
+  },
+  "devDependencies": {
+    "@next/eslint-plugin-next": "15",
+    "eslint": "9",
+    "eslint-plugin-react-hooks": "5",
+    "tailwindcss": "3",
+    "typescript-eslint": "^8.72.2"
+  }
+}
