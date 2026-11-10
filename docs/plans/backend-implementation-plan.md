@@ -443,6 +443,13 @@ def apply_patches(base: Workflow, patches: list[Patch]) -> tuple[Workflow, Diff]
     """Pure function: copy, apply each op, re-validate Workflow, compute a JSON diff."""
 ```
 
+**As built (Phase 3):**
+- Two ops beyond the table, because the editor forms have these fields: `set_time_limit` (quiz, 5–120 min) and `set_interview_themes` (≤ 10).
+- Values the plan left open: interview rubric items are `{id, name, weight 1–5, description}`; quiz questions ≤ 30, 3–5 distinct options, `difficulty` defaults to `medium`; criteria 1–20.
+- Diffs are keyed by node and item id (`n1.criteria[c2].weight`), not array index, so they read well and survive reordering. Reordering has no op in v1.
+- `apply_patches` validates after every op, so a 422 names the first op that breaks the workflow.
+- The protected-characteristic keyword list (`domain/protected.py`) warns on `add_criterion` and on renames via `update_criterion`.
+
 ### 8.4 Applier service
 
 `WorkflowService.apply(job_id, base_version, patches, source, actor)` runs in one transaction:
@@ -454,6 +461,8 @@ def apply_patches(base: Workflow, patches: list[Patch]) -> tuple[Workflow, Diff]
 5. If a campaign is open, the new version applies to applications whose `current_node` comes before the earliest changed node. Update `applications.workflow_id` for those rows and record `workflow.repinned` events. The preview endpoint computes and returns `affected_stage_note` with the same logic, so the UI can warn before confirming.
 
 **Undo** = apply the parent's definition as a new version (`source: "undo"`). History is never rewritten.
+
+**As built (Phase 3):** step 5 also moves the open campaign's `workflow_id` to the new version (and mirrors `set_notify` to `campaigns.notify_on_complete`), so new applicants get the current version. The workflow endpoints from §7.2 (`GET workflow`, `versions`, `preview`, `apply`, `undo`) are in place; `/workflow/chat` comes with the override agent in Phase 4.
 
 ---
 
