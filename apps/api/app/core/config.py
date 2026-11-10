@@ -29,6 +29,27 @@ class Settings(BaseSettings):
     )
     cron_secret: str = ""
 
+    # Supabase Storage (backend plan §20.2). The service key is used ONLY by SupabaseStorage for
+    # signed URLs and downloads, never for database access. Without it (dev/test), an in-memory
+    # store is used.
+    supabase_service_key: str = ""
+    resume_bucket: str = "resumes"
+
+    # Embeddings Edge Function (§20.3). Without a URL (dev/test), a deterministic hashing embedder.
+    embed_function_url: str = ""
+    embed_function_key: str = ""
+
+    # Consent (§18): the version of the consent text the candidate app shows. Applications must
+    # quote this exact version; bump it whenever the text or the provider list changes.
+    consent_text_version: str = "2026-11-10"
+    consent_providers: list[str] = Field(
+        default_factory=lambda: ["Supabase", "OpenRouter", "Inngest", "Langfuse", "Vercel"]
+    )
+
+    # Abuse limits (§18).
+    applications_per_day: int = 10
+    upload_urls_per_hour: int = 20
+
     # LLM (backend plan §11.1). Model lists are ordered: OpenRouter falls back down the list.
     openrouter_api_key: str = ""
     openrouter_base_url: str = "https://openrouter.ai/api/v1"

@@ -27,3 +27,4 @@ export {
   type ScreeningForm,
 } from "./workflow/diff-form";
 export { humanizeDiff, type DiffEntry, type DiffRow } from "./workflow/humanize";
+export { MAX_RESUME_BYTES, RESUME_TYPES, checkResumeFile, resumeContentType, uploadToSignedUrl } from "./upload";
