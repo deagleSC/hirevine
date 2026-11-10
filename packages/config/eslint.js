@@ -7,7 +7,7 @@ import tseslint from "typescript-eslint";
 
 export function config({ next = false, candidateApp = false } = {}) {
   return tseslint.config(
-    { ignores: [".next/**", "node_modules/**", "dist/**", "**/schema.d.ts", "next-env.d.ts"] },
+    { ignores: [".next/**", ".next-e2e/**", "test-results/**", "playwright-report/**", "node_modules/**", "dist/**", "**/schema.d.ts", "next-env.d.ts"] },
     ...tseslint.configs.recommended,
     {
       plugins: { "react-hooks": reactHooks },

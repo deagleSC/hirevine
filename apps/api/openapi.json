@@ -247,6 +247,110 @@
         "title": "ApplyRequest",
         "type": "object"
       },
+      "CampaignSummary": {
+        "properties": {
+          "applicants": {
+            "title": "Applicants",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "share_slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Share Slug"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "open",
+              "completed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "applicants"
+        ],
+        "title": "CampaignSummary",
+        "type": "object"
+      },
+      "ChatMessage": {
+        "properties": {
+          "content": {
+            "maxLength": 4000,
+            "title": "Content",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "user",
+              "assistant"
+            ],
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "content"
+        ],
+        "title": "ChatMessage",
+        "type": "object"
+      },
+      "ChatRequest": {
+        "properties": {
+          "message": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          },
+          "thread_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thread Id"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "title": "ChatRequest",
+        "type": "object"
+      },
+      "Created": {
+        "properties": {
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id"
+        ],
+        "title": "Created",
+        "type": "object"
+      },
       "Criterion": {
         "additionalProperties": false,
         "properties": {
@@ -325,6 +429,29 @@
           }
         },
         "title": "CriterionFields",
+        "type": "object"
+      },
+      "CriterionWarning": {
+        "properties": {
+          "characteristic": {
+            "title": "Characteristic",
+            "type": "string"
+          },
+          "criterion": {
+            "title": "Criterion",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "criterion",
+          "characteristic",
+          "reason"
+        ],
+        "title": "CriterionWarning",
         "type": "object"
       },
       "DiffEntry": {
@@ -594,6 +721,364 @@
         "title": "InterviewNode",
         "type": "object"
       },
+      "JdChatState": {
+        "properties": {
+          "complete": {
+            "title": "Complete",
+            "type": "boolean"
+          },
+          "draft": {
+            "$ref": "#/components/schemas/JobDraft"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/ChatMessage"
+            },
+            "title": "Messages",
+            "type": "array"
+          },
+          "missing": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing",
+            "type": "array"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "thread_id": {
+            "format": "uuid",
+            "title": "Thread Id",
+            "type": "string"
+          },
+          "warnings": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/CriterionWarning"
+            },
+            "title": "Warnings",
+            "type": "array"
+          },
+          "workflow": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Workflow"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "thread_id",
+          "messages",
+          "draft",
+          "missing",
+          "complete"
+        ],
+        "title": "JdChatState",
+        "type": "object"
+      },
+      "Job": {
+        "properties": {
+          "campaign": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CampaignSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "seniority": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seniority"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "published",
+              "closed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          },
+          "workflow_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workflow Version"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "location",
+          "seniority",
+          "status",
+          "workflow_version",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "Job",
+        "type": "object"
+      },
+      "JobDraft": {
+        "properties": {
+          "include_interview": {
+            "default": true,
+            "title": "Include Interview",
+            "type": "boolean"
+          },
+          "include_quiz": {
+            "default": true,
+            "title": "Include Quiz",
+            "type": "boolean"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "City, region, or 'Remote'",
+            "title": "Location"
+          },
+          "must_have_skills": {
+            "items": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 8,
+            "title": "Must Have Skills",
+            "type": "array"
+          },
+          "nice_to_have_skills": {
+            "items": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 8,
+            "title": "Nice To Have Skills",
+            "type": "array"
+          },
+          "quiz_questions": {
+            "default": 10,
+            "maximum": 20.0,
+            "minimum": 3.0,
+            "title": "Quiz Questions",
+            "type": "integer"
+          },
+          "seniority": {
+            "anyOf": [
+              {
+                "enum": [
+                  "intern",
+                  "junior",
+                  "mid",
+                  "senior",
+                  "lead",
+                  "principal"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seniority"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "maxLength": 1500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Two or three sentences on what the role does",
+            "title": "Summary"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "JobDraft",
+        "type": "object"
+      },
+      "JobSummary": {
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "location": {
+            "title": "Location",
+            "type": "string"
+          },
+          "must_have_skills": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Must Have Skills",
+            "type": "array"
+          },
+          "nice_to_have_skills": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Nice To Have Skills",
+            "type": "array"
+          },
+          "seniority": {
+            "title": "Seniority",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "seniority",
+          "location",
+          "description",
+          "must_have_skills",
+          "nice_to_have_skills"
+        ],
+        "title": "JobSummary",
+        "type": "object"
+      },
+      "JobUpdate": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 8000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "seniority": {
+            "anyOf": [
+              {
+                "maxLength": 50,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seniority"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "JobUpdate",
+        "type": "object"
+      },
       "Me": {
         "properties": {
           "display_name": {
@@ -674,6 +1159,145 @@
           "name"
         ],
         "title": "Organization",
+        "type": "object"
+      },
+      "OverrideRequest": {
+        "properties": {
+          "message": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          },
+          "thread_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thread Id"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "title": "OverrideRequest",
+        "type": "object"
+      },
+      "OverrideResult": {
+        "properties": {
+          "descriptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Descriptions",
+            "type": "array"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "patches": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "add_criterion": "#/components/schemas/AddCriterion",
+                  "add_quiz_question": "#/components/schemas/AddQuizQuestion",
+                  "edit_interview_prompt": "#/components/schemas/EditInterviewPrompt",
+                  "remove_criterion": "#/components/schemas/RemoveCriterion",
+                  "remove_quiz_question": "#/components/schemas/RemoveQuizQuestion",
+                  "replace_quiz_question": "#/components/schemas/ReplaceQuizQuestion",
+                  "set_cutoff": "#/components/schemas/SetCutoff",
+                  "set_interview_themes": "#/components/schemas/SetInterviewThemes",
+                  "set_notify": "#/components/schemas/SetNotify",
+                  "set_pass_mark": "#/components/schemas/SetPassMark",
+                  "set_time_limit": "#/components/schemas/SetTimeLimit",
+                  "set_turn_cap": "#/components/schemas/SetTurnCap",
+                  "toggle_node": "#/components/schemas/ToggleNode",
+                  "update_criterion": "#/components/schemas/UpdateCriterion",
+                  "update_interview_rubric": "#/components/schemas/UpdateInterviewRubric"
+                },
+                "propertyName": "op"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/SetCutoff"
+                },
+                {
+                  "$ref": "#/components/schemas/SetPassMark"
+                },
+                {
+                  "$ref": "#/components/schemas/SetTimeLimit"
+                },
+                {
+                  "$ref": "#/components/schemas/AddCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/UpdateCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/RemoveCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/AddQuizQuestion"
+                },
+                {
+                  "$ref": "#/components/schemas/ReplaceQuizQuestion"
+                },
+                {
+                  "$ref": "#/components/schemas/RemoveQuizQuestion"
+                },
+                {
+                  "$ref": "#/components/schemas/EditInterviewPrompt"
+                },
+                {
+                  "$ref": "#/components/schemas/SetInterviewThemes"
+                },
+                {
+                  "$ref": "#/components/schemas/UpdateInterviewRubric"
+                },
+                {
+                  "$ref": "#/components/schemas/SetTurnCap"
+                },
+                {
+                  "$ref": "#/components/schemas/ToggleNode"
+                },
+                {
+                  "$ref": "#/components/schemas/SetNotify"
+                }
+              ]
+            },
+            "title": "Patches",
+            "type": "array"
+          },
+          "thread_id": {
+            "format": "uuid",
+            "title": "Thread Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "thread_id",
+          "patches",
+          "descriptions",
+          "explanation"
+        ],
+        "title": "OverrideResult",
         "type": "object"
       },
       "PatchRequest": {
@@ -862,6 +1486,36 @@
           "display_name"
         ],
         "title": "ProfileCreate",
+        "type": "object"
+      },
+      "Published": {
+        "properties": {
+          "campaign_id": {
+            "format": "uuid",
+            "title": "Campaign Id",
+            "type": "string"
+          },
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "share_slug": {
+            "title": "Share Slug",
+            "type": "string"
+          },
+          "workflow_version": {
+            "title": "Workflow Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "job_id",
+          "campaign_id",
+          "workflow_version",
+          "share_slug"
+        ],
+        "title": "Published",
         "type": "object"
       },
       "QuizConfig": {
@@ -1835,6 +2489,627 @@
         ]
       }
     },
+    "/v1/manager/jobs": {
+      "get": {
+        "operationId": "list_jobs_v1_manager_jobs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Job"
+                  },
+                  "title": "Response List Jobs V1 Manager Jobs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Jobs",
+        "tags": [
+          "manager",
+          "jobs"
+        ]
+      }
+    },
+    "/v1/manager/jobs/chat": {
+      "post": {
+        "operationId": "chat_v1_manager_jobs_chat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JdChatState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Chat",
+        "tags": [
+          "manager",
+          "jobs"
+        ]
+      }
+    },
+    "/v1/manager/jobs/chat/{thread_id}": {
+      "get": {
+        "operationId": "get_chat_v1_manager_jobs_chat__thread_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "thread_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Thread Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JdChatState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Chat",
+        "tags": [
+          "manager",
+          "jobs"
+        ]
+      }
+    },
+    "/v1/manager/jobs/chat/{thread_id}/confirm": {
+      "post": {
+        "operationId": "confirm_v1_manager_jobs_chat__thread_id__confirm_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "thread_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Thread Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Created"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Confirm",
+        "tags": [
+          "manager",
+          "jobs"
+        ]
+      }
+    },
+    "/v1/manager/jobs/{job_id}": {
+      "get": {
+        "operationId": "get_job_v1_manager_jobs__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Job",
+        "tags": [
+          "manager",
+          "jobs"
+        ]
+      },
+      "patch": {
+        "operationId": "update_job_v1_manager_jobs__job_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Job",
+        "tags": [
+          "manager",
+          "jobs"
+        ]
+      }
+    },
+    "/v1/manager/jobs/{job_id}/publish": {
+      "post": {
+        "operationId": "publish_v1_manager_jobs__job_id__publish_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Published"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Publish",
+        "tags": [
+          "manager",
+          "jobs"
+        ]
+      }
+    },
     "/v1/manager/jobs/{job_id}/workflow": {
       "get": {
         "operationId": "get_workflow_v1_manager_jobs__job_id__workflow_get",
@@ -2017,6 +3292,106 @@
           }
         ],
         "summary": "Apply",
+        "tags": [
+          "manager",
+          "workflow"
+        ]
+      }
+    },
+    "/v1/manager/jobs/{job_id}/workflow/chat": {
+      "post": {
+        "description": "Natural-language edit \u2192 proposed patches. Applies nothing: the UI previews and applies.",
+        "operationId": "chat_v1_manager_jobs__job_id__workflow_chat_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OverrideRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OverrideResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Chat",
         "tags": [
           "manager",
           "workflow"

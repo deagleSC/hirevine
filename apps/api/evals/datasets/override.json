@@ -1,0 +1,1792 @@
+{
+  "base": {
+    "schema_version": 1,
+    "nodes": [
+      {
+        "type": "screening",
+        "id": "screening",
+        "config": {
+          "cutoff": 60,
+          "criteria": [
+            {
+              "id": "c1",
+              "name": "React",
+              "weight": 5,
+              "must_have": true
+            },
+            {
+              "id": "c2",
+              "name": "TypeScript",
+              "weight": 4,
+              "must_have": true
+            },
+            {
+              "id": "c3",
+              "name": "Testing",
+              "weight": 2,
+              "must_have": false
+            },
+            {
+              "id": "c4",
+              "name": "Accessibility",
+              "weight": 2,
+              "must_have": false
+            }
+          ]
+        }
+      },
+      {
+        "type": "quiz",
+        "id": "quiz",
+        "enabled": true,
+        "config": {
+          "pass_mark": 60,
+          "time_limit_min": 20,
+          "questions": [
+            {
+              "id": "q1",
+              "prompt": "What does useEffect do?",
+              "options": [
+                "Runs side effects",
+                "Styles a component",
+                "Defines routes"
+              ],
+              "answer_index": 0,
+              "explanation": "",
+              "difficulty": "easy"
+            },
+            {
+              "id": "q2",
+              "prompt": "What is a TypeScript union type?",
+              "options": [
+                "One of several types",
+                "A class",
+                "A loop"
+              ],
+              "answer_index": 0,
+              "explanation": "",
+              "difficulty": "medium"
+            }
+          ]
+        }
+      },
+      {
+        "type": "interview",
+        "id": "interview",
+        "enabled": true,
+        "config": {
+          "prompt_additions": "",
+          "themes": [
+            "Component design"
+          ],
+          "turn_cap": 6,
+          "pass_threshold": 60,
+          "rubric": [
+            {
+              "id": "r1",
+              "name": "Depth",
+              "weight": 3,
+              "description": "Explains trade-offs"
+            }
+          ]
+        }
+      },
+      {
+        "type": "final",
+        "id": "final",
+        "config": {
+          "notify_on_complete": true,
+          "ranking": "weighted_mean"
+        }
+      }
+    ],
+    "edges": [
+      [
+        "screening",
+        "quiz"
+      ],
+      [
+        "quiz",
+        "interview"
+      ],
+      [
+        "interview",
+        "final"
+      ]
+    ]
+  },
+  "cases": [
+    {
+      "id": "o01",
+      "instruction": "Raise the screening cutoff to 70.",
+      "forms": [
+        {
+          "node": "screening",
+          "form": {
+            "cutoff": 70,
+            "criteria": [
+              {
+                "id": "c1",
+                "name": "React",
+                "weight": 5,
+                "must_have": true
+              },
+              {
+                "id": "c2",
+                "name": "TypeScript",
+                "weight": 4,
+                "must_have": true
+              },
+              {
+                "id": "c3",
+                "name": "Testing",
+                "weight": 2,
+                "must_have": false
+              },
+              {
+                "id": "c4",
+                "name": "Accessibility",
+                "weight": 2,
+                "must_have": false
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "set_cutoff",
+          "node": "screening",
+          "value": 70
+        }
+      ]
+    },
+    {
+      "id": "o02",
+      "instruction": "Only pass resumes that score 75 or more.",
+      "forms": [
+        {
+          "node": "screening",
+          "form": {
+            "cutoff": 75,
+            "criteria": [
+              {
+                "id": "c1",
+                "name": "React",
+                "weight": 5,
+                "must_have": true
+              },
+              {
+                "id": "c2",
+                "name": "TypeScript",
+                "weight": 4,
+                "must_have": true
+              },
+              {
+                "id": "c3",
+                "name": "Testing",
+                "weight": 2,
+                "must_have": false
+              },
+              {
+                "id": "c4",
+                "name": "Accessibility",
+                "weight": 2,
+                "must_have": false
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "set_cutoff",
+          "node": "screening",
+          "value": 75
+        }
+      ]
+    },
+    {
+      "id": "o03",
+      "instruction": "Lower the resume cutoff to 50, we're not getting enough candidates.",
+      "forms": [
+        {
+          "node": "screening",
+          "form": {
+            "cutoff": 50,
+            "criteria": [
+              {
+                "id": "c1",
+                "name": "React",
+                "weight": 5,
+                "must_have": true
+              },
+              {
+                "id": "c2",
+                "name": "TypeScript",
+                "weight": 4,
+                "must_have": true
+              },
+              {
+                "id": "c3",
+                "name": "Testing",
+                "weight": 2,
+                "must_have": false
+              },
+              {
+                "id": "c4",
+                "name": "Accessibility",
+                "weight": 2,
+                "must_have": false
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "set_cutoff",
+          "node": "screening",
+          "value": 50
+        }
+      ]
+    },
+    {
+      "id": "o04",
+      "instruction": "Set the screening threshold to 65%.",
+      "forms": [
+        {
+          "node": "screening",
+          "form": {
+            "cutoff": 65,
+            "criteria": [
+              {
+                "id": "c1",
+                "name": "React",
+                "weight": 5,
+                "must_have": true
+              },
+              {
+                "id": "c2",
+                "name": "TypeScript",
+                "weight": 4,
+                "must_have": true
+              },
+              {
+                "id": "c3",
+                "name": "Testing",
+                "weight": 2,
+                "must_have": false
+              },
+              {
+                "id": "c4",
+                "name": "Accessibility",
+                "weight": 2,
+                "must_have": false
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "set_cutoff",
+          "node": "screening",
+          "value": 65
+        }
+      ]
+    },
+    {
+      "id": "o05",
+      "instruction": "Add Next.js as a nice-to-have criterion with weight 2.",
+      "forms": [
+        {
+          "node": "screening",
+          "form": {
+            "cutoff": 60,
+            "criteria": [
+              {
+                "id": "c1",
+                "name": "React",
+                "weight": 5,
+                "must_have": true
+              },
+              {
+                "id": "c2",
+                "name": "TypeScript",
+                "weight": 4,
+                "must_have": true
+              },
+              {
+                "id": "c3",
+                "name": "Testing",
+                "weight": 2,
+                "must_have": false
+              },
+              {
+                "id": "c4",
+                "name": "Accessibility",
+                "weight": 2,
+                "must_have": false
+              },
+              {
+                "name": "Next.js",
+                "weight": 2,
+                "must_have": false
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "add_criterion",
+          "node": "screening",
+          "criterion": {
+            "id": "cnew1",
+            "name": "Next.js",
+            "weight": 2,
+            "must_have": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "o06",
+      "instruction": "Add GraphQL as a must-have, weight 4.",
+      "forms": [
+        {
+          "node": "screening",
+          "form": {
+            "cutoff": 60,
+            "criteria": [
+              {
+                "id": "c1",
+                "name": "React",
+                "weight": 5,
+                "must_have": true
+              },
+              {
+                "id": "c2",
+                "name": "TypeScript",
+                "weight": 4,
+                "must_have": true
+              },
+              {
+                "id": "c3",
+                "name": "Testing",
+                "weight": 2,
+                "must_have": false
+              },
+              {
+                "id": "c4",
+                "name": "Accessibility",
+                "weight": 2,
+                "must_have": false
+              },
+              {
+                "name": "GraphQL",
+                "weight": 4,
+                "must_have": true
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "add_criterion",
+          "node": "screening",
+          "criterion": {
+            "id": "cnew1",
+            "name": "GraphQL",
+            "weight": 4,
+            "must_have": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "o07",
+      "instruction": "Make Testing a must-have.",
+      "forms": [
+        {
+          "node": "screening",
+          "form": {
+            "cutoff": 60,
+            "criteria": [
+              {
+                "id": "c1",
+                "name": "React",
+                "weight": 5,
+                "must_have": true
+              },
+              {
+                "id": "c2",
+                "name": "TypeScript",
+                "weight": 4,
+                "must_have": true
+              },
+              {
+                "id": "c3",
+                "name": "Testing",
+                "weight": 2,
+                "must_have": true
+              },
+              {
+                "id": "c4",
+                "name": "Accessibility",
+                "weight": 2,
+                "must_have": false
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "update_criterion",
+          "node": "screening",
+          "criterion_id": "c3",
+          "fields": {
+            "must_have": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "o08",
+      "instruction": "TypeScript shouldn't be required anymore.",
+      "forms": [
+        {
+          "node": "screening",
+          "form": {
+            "cutoff": 60,
+            "criteria": [
+              {
+                "id": "c1",
+                "name": "React",
+                "weight": 5,
+                "must_have": true
+              },
+              {
+                "id": "c2",
+                "name": "TypeScript",
+                "weight": 4,
+                "must_have": false
+              },
+              {
+                "id": "c3",
+                "name": "Testing",
+                "weight": 2,
+                "must_have": false
+              },
+              {
+                "id": "c4",
+                "name": "Accessibility",
+                "weight": 2,
+                "must_have": false
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "update_criterion",
+          "node": "screening",
+          "criterion_id": "c2",
+          "fields": {
+            "must_have": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "o09",
+      "instruction": "Increase the weight of Accessibility to 4.",
+      "forms": [
+        {
+          "node": "screening",
+          "form": {
+            "cutoff": 60,
+            "criteria": [
+              {
+                "id": "c1",
+                "name": "React",
+                "weight": 5,
+                "must_have": true
+              },
+              {
+                "id": "c2",
+                "name": "TypeScript",
+                "weight": 4,
+                "must_have": true
+              },
+              {
+                "id": "c3",
+                "name": "Testing",
+                "weight": 2,
+                "must_have": false
+              },
+              {
+                "id": "c4",
+                "name": "Accessibility",
+                "weight": 4,
+                "must_have": false
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "update_criterion",
+          "node": "screening",
+          "criterion_id": "c4",
+          "fields": {
+            "weight": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "o10",
+      "instruction": "Drop the Accessibility criterion.",
+      "forms": [
+        {
+          "node": "screening",
+          "form": {
+            "cutoff": 60,
+            "criteria": [
+              {
+                "id": "c1",
+                "name": "React",
+                "weight": 5,
+                "must_have": true
+              },
+              {
+                "id": "c2",
+                "name": "TypeScript",
+                "weight": 4,
+                "must_have": true
+              },
+              {
+                "id": "c3",
+                "name": "Testing",
+                "weight": 2,
+                "must_have": false
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "remove_criterion",
+          "node": "screening",
+          "criterion_id": "c4"
+        }
+      ]
+    },
+    {
+      "id": "o11",
+      "instruction": "Rename Testing to Automated testing.",
+      "forms": [
+        {
+          "node": "screening",
+          "form": {
+            "cutoff": 60,
+            "criteria": [
+              {
+                "id": "c1",
+                "name": "React",
+                "weight": 5,
+                "must_have": true
+              },
+              {
+                "id": "c2",
+                "name": "TypeScript",
+                "weight": 4,
+                "must_have": true
+              },
+              {
+                "id": "c3",
+                "name": "Automated testing",
+                "weight": 2,
+                "must_have": false
+              },
+              {
+                "id": "c4",
+                "name": "Accessibility",
+                "weight": 2,
+                "must_have": false
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "update_criterion",
+          "node": "screening",
+          "criterion_id": "c3",
+          "fields": {
+            "name": "Automated testing"
+          }
+        }
+      ]
+    },
+    {
+      "id": "o12",
+      "instruction": "Remove Testing and add CSS with weight 3.",
+      "forms": [
+        {
+          "node": "screening",
+          "form": {
+            "cutoff": 60,
+            "criteria": [
+              {
+                "id": "c1",
+                "name": "React",
+                "weight": 5,
+                "must_have": true
+              },
+              {
+                "id": "c2",
+                "name": "TypeScript",
+                "weight": 4,
+                "must_have": true
+              },
+              {
+                "id": "c4",
+                "name": "Accessibility",
+                "weight": 2,
+                "must_have": false
+              },
+              {
+                "name": "CSS",
+                "weight": 3,
+                "must_have": false
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "add_criterion",
+          "node": "screening",
+          "criterion": {
+            "id": "cnew1",
+            "name": "CSS",
+            "weight": 3,
+            "must_have": false
+          }
+        },
+        {
+          "op": "remove_criterion",
+          "node": "screening",
+          "criterion_id": "c3"
+        }
+      ]
+    },
+    {
+      "id": "o13",
+      "instruction": "Make React weight 4 and TypeScript weight 5.",
+      "forms": [
+        {
+          "node": "screening",
+          "form": {
+            "cutoff": 60,
+            "criteria": [
+              {
+                "id": "c1",
+                "name": "React",
+                "weight": 4,
+                "must_have": true
+              },
+              {
+                "id": "c2",
+                "name": "TypeScript",
+                "weight": 5,
+                "must_have": true
+              },
+              {
+                "id": "c3",
+                "name": "Testing",
+                "weight": 2,
+                "must_have": false
+              },
+              {
+                "id": "c4",
+                "name": "Accessibility",
+                "weight": 2,
+                "must_have": false
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "update_criterion",
+          "node": "screening",
+          "criterion_id": "c1",
+          "fields": {
+            "weight": 4
+          }
+        },
+        {
+          "op": "update_criterion",
+          "node": "screening",
+          "criterion_id": "c2",
+          "fields": {
+            "weight": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "o14",
+      "instruction": "Set the quiz pass mark to 70.",
+      "forms": [
+        {
+          "node": "quiz",
+          "form": {
+            "enabled": true,
+            "pass_mark": 70,
+            "time_limit_min": 20,
+            "questions": [
+              {
+                "id": "q1",
+                "prompt": "What does useEffect do?",
+                "options": [
+                  "Runs side effects",
+                  "Styles a component",
+                  "Defines routes"
+                ],
+                "answer_index": 0,
+                "explanation": "",
+                "difficulty": "easy"
+              },
+              {
+                "id": "q2",
+                "prompt": "What is a TypeScript union type?",
+                "options": [
+                  "One of several types",
+                  "A class",
+                  "A loop"
+                ],
+                "answer_index": 0,
+                "explanation": "",
+                "difficulty": "medium"
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "set_pass_mark",
+          "node": "quiz",
+          "value": 70
+        }
+      ]
+    },
+    {
+      "id": "o15",
+      "instruction": "Make the quiz easier to pass: 50 is enough.",
+      "forms": [
+        {
+          "node": "quiz",
+          "form": {
+            "enabled": true,
+            "pass_mark": 50,
+            "time_limit_min": 20,
+            "questions": [
+              {
+                "id": "q1",
+                "prompt": "What does useEffect do?",
+                "options": [
+                  "Runs side effects",
+                  "Styles a component",
+                  "Defines routes"
+                ],
+                "answer_index": 0,
+                "explanation": "",
+                "difficulty": "easy"
+              },
+              {
+                "id": "q2",
+                "prompt": "What is a TypeScript union type?",
+                "options": [
+                  "One of several types",
+                  "A class",
+                  "A loop"
+                ],
+                "answer_index": 0,
+                "explanation": "",
+                "difficulty": "medium"
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "set_pass_mark",
+          "node": "quiz",
+          "value": 50
+        }
+      ]
+    },
+    {
+      "id": "o16",
+      "instruction": "Give candidates 30 minutes for the quiz.",
+      "forms": [
+        {
+          "node": "quiz",
+          "form": {
+            "enabled": true,
+            "pass_mark": 60,
+            "time_limit_min": 30,
+            "questions": [
+              {
+                "id": "q1",
+                "prompt": "What does useEffect do?",
+                "options": [
+                  "Runs side effects",
+                  "Styles a component",
+                  "Defines routes"
+                ],
+                "answer_index": 0,
+                "explanation": "",
+                "difficulty": "easy"
+              },
+              {
+                "id": "q2",
+                "prompt": "What is a TypeScript union type?",
+                "options": [
+                  "One of several types",
+                  "A class",
+                  "A loop"
+                ],
+                "answer_index": 0,
+                "explanation": "",
+                "difficulty": "medium"
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "set_time_limit",
+          "node": "quiz",
+          "value": 30
+        }
+      ]
+    },
+    {
+      "id": "o17",
+      "instruction": "Cut the quiz time limit to 15 minutes.",
+      "forms": [
+        {
+          "node": "quiz",
+          "form": {
+            "enabled": true,
+            "pass_mark": 60,
+            "time_limit_min": 15,
+            "questions": [
+              {
+                "id": "q1",
+                "prompt": "What does useEffect do?",
+                "options": [
+                  "Runs side effects",
+                  "Styles a component",
+                  "Defines routes"
+                ],
+                "answer_index": 0,
+                "explanation": "",
+                "difficulty": "easy"
+              },
+              {
+                "id": "q2",
+                "prompt": "What is a TypeScript union type?",
+                "options": [
+                  "One of several types",
+                  "A class",
+                  "A loop"
+                ],
+                "answer_index": 0,
+                "explanation": "",
+                "difficulty": "medium"
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "set_time_limit",
+          "node": "quiz",
+          "value": 15
+        }
+      ]
+    },
+    {
+      "id": "o18",
+      "instruction": "Skip the quiz for this role.",
+      "forms": [
+        {
+          "node": "quiz",
+          "form": {
+            "enabled": false,
+            "pass_mark": 60,
+            "time_limit_min": 20,
+            "questions": [
+              {
+                "id": "q1",
+                "prompt": "What does useEffect do?",
+                "options": [
+                  "Runs side effects",
+                  "Styles a component",
+                  "Defines routes"
+                ],
+                "answer_index": 0,
+                "explanation": "",
+                "difficulty": "easy"
+              },
+              {
+                "id": "q2",
+                "prompt": "What is a TypeScript union type?",
+                "options": [
+                  "One of several types",
+                  "A class",
+                  "A loop"
+                ],
+                "answer_index": 0,
+                "explanation": "",
+                "difficulty": "medium"
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "toggle_node",
+          "node": "quiz",
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "id": "o19",
+      "instruction": "Remove the question about union types.",
+      "forms": [
+        {
+          "node": "quiz",
+          "form": {
+            "enabled": true,
+            "pass_mark": 60,
+            "time_limit_min": 20,
+            "questions": [
+              {
+                "id": "q1",
+                "prompt": "What does useEffect do?",
+                "options": [
+                  "Runs side effects",
+                  "Styles a component",
+                  "Defines routes"
+                ],
+                "answer_index": 0,
+                "explanation": "",
+                "difficulty": "easy"
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "remove_quiz_question",
+          "node": "quiz",
+          "question_id": "q2"
+        }
+      ]
+    },
+    {
+      "id": "o20",
+      "instruction": "Mark the useEffect question as medium difficulty.",
+      "forms": [
+        {
+          "node": "quiz",
+          "form": {
+            "enabled": true,
+            "pass_mark": 60,
+            "time_limit_min": 20,
+            "questions": [
+              {
+                "id": "q1",
+                "prompt": "What does useEffect do?",
+                "options": [
+                  "Runs side effects",
+                  "Styles a component",
+                  "Defines routes"
+                ],
+                "answer_index": 0,
+                "explanation": "",
+                "difficulty": "medium"
+              },
+              {
+                "id": "q2",
+                "prompt": "What is a TypeScript union type?",
+                "options": [
+                  "One of several types",
+                  "A class",
+                  "A loop"
+                ],
+                "answer_index": 0,
+                "explanation": "",
+                "difficulty": "medium"
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "replace_quiz_question",
+          "node": "quiz",
+          "question_id": "q1",
+          "question": {
+            "id": "q1",
+            "prompt": "What does useEffect do?",
+            "options": [
+              "Runs side effects",
+              "Styles a component",
+              "Defines routes"
+            ],
+            "answer_index": 0,
+            "explanation": "",
+            "difficulty": "medium"
+          }
+        }
+      ]
+    },
+    {
+      "id": "o21",
+      "instruction": "Quiz pass mark 65 and a 25 minute limit.",
+      "forms": [
+        {
+          "node": "quiz",
+          "form": {
+            "enabled": true,
+            "pass_mark": 65,
+            "time_limit_min": 25,
+            "questions": [
+              {
+                "id": "q1",
+                "prompt": "What does useEffect do?",
+                "options": [
+                  "Runs side effects",
+                  "Styles a component",
+                  "Defines routes"
+                ],
+                "answer_index": 0,
+                "explanation": "",
+                "difficulty": "easy"
+              },
+              {
+                "id": "q2",
+                "prompt": "What is a TypeScript union type?",
+                "options": [
+                  "One of several types",
+                  "A class",
+                  "A loop"
+                ],
+                "answer_index": 0,
+                "explanation": "",
+                "difficulty": "medium"
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "set_pass_mark",
+          "node": "quiz",
+          "value": 65
+        },
+        {
+          "op": "set_time_limit",
+          "node": "quiz",
+          "value": 25
+        }
+      ]
+    },
+    {
+      "id": "o22",
+      "instruction": "Disable the AI interview.",
+      "forms": [
+        {
+          "node": "interview",
+          "form": {
+            "enabled": false,
+            "prompt_additions": "",
+            "themes": [
+              "Component design"
+            ],
+            "turn_cap": 6,
+            "pass_threshold": 60,
+            "rubric": [
+              {
+                "id": "r1",
+                "name": "Depth",
+                "weight": 3,
+                "description": "Explains trade-offs"
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "toggle_node",
+          "node": "interview",
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "id": "o23",
+      "instruction": "Limit the interview to 4 questions.",
+      "forms": [
+        {
+          "node": "interview",
+          "form": {
+            "enabled": true,
+            "prompt_additions": "",
+            "themes": [
+              "Component design"
+            ],
+            "turn_cap": 4,
+            "pass_threshold": 60,
+            "rubric": [
+              {
+                "id": "r1",
+                "name": "Depth",
+                "weight": 3,
+                "description": "Explains trade-offs"
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "set_turn_cap",
+          "node": "interview",
+          "value": 4
+        }
+      ]
+    },
+    {
+      "id": "o24",
+      "instruction": "Let the interview run for 8 questions.",
+      "forms": [
+        {
+          "node": "interview",
+          "form": {
+            "enabled": true,
+            "prompt_additions": "",
+            "themes": [
+              "Component design"
+            ],
+            "turn_cap": 8,
+            "pass_threshold": 60,
+            "rubric": [
+              {
+                "id": "r1",
+                "name": "Depth",
+                "weight": 3,
+                "description": "Explains trade-offs"
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "set_turn_cap",
+          "node": "interview",
+          "value": 8
+        }
+      ]
+    },
+    {
+      "id": "o25",
+      "instruction": "Set the interview pass threshold to 70.",
+      "forms": [
+        {
+          "node": "interview",
+          "form": {
+            "enabled": true,
+            "prompt_additions": "",
+            "themes": [
+              "Component design"
+            ],
+            "turn_cap": 6,
+            "pass_threshold": 70,
+            "rubric": [
+              {
+                "id": "r1",
+                "name": "Depth",
+                "weight": 3,
+                "description": "Explains trade-offs"
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "set_pass_mark",
+          "node": "interview",
+          "value": 70
+        }
+      ]
+    },
+    {
+      "id": "o26",
+      "instruction": "Ask the interviewer to focus on performance debugging.",
+      "forms": [
+        {
+          "node": "interview",
+          "form": {
+            "enabled": true,
+            "prompt_additions": "Focus on performance debugging.",
+            "themes": [
+              "Component design"
+            ],
+            "turn_cap": 6,
+            "pass_threshold": 60,
+            "rubric": [
+              {
+                "id": "r1",
+                "name": "Depth",
+                "weight": 3,
+                "description": "Explains trade-offs"
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "edit_interview_prompt",
+          "node": "interview",
+          "prompt_additions": "Focus on performance debugging."
+        }
+      ]
+    },
+    {
+      "id": "o27",
+      "instruction": "Add State management as an interview theme.",
+      "forms": [
+        {
+          "node": "interview",
+          "form": {
+            "enabled": true,
+            "prompt_additions": "",
+            "themes": [
+              "Component design",
+              "State management"
+            ],
+            "turn_cap": 6,
+            "pass_threshold": 60,
+            "rubric": [
+              {
+                "id": "r1",
+                "name": "Depth",
+                "weight": 3,
+                "description": "Explains trade-offs"
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "set_interview_themes",
+          "node": "interview",
+          "themes": [
+            "Component design",
+            "State management"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "o28",
+      "instruction": "Replace the interview themes with Testing strategy only.",
+      "forms": [
+        {
+          "node": "interview",
+          "form": {
+            "enabled": true,
+            "prompt_additions": "",
+            "themes": [
+              "Testing strategy"
+            ],
+            "turn_cap": 6,
+            "pass_threshold": 60,
+            "rubric": [
+              {
+                "id": "r1",
+                "name": "Depth",
+                "weight": 3,
+                "description": "Explains trade-offs"
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "set_interview_themes",
+          "node": "interview",
+          "themes": [
+            "Testing strategy"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "o29",
+      "instruction": "Add a rubric item 'Communication' with weight 2 to the interview.",
+      "forms": [
+        {
+          "node": "interview",
+          "form": {
+            "enabled": true,
+            "prompt_additions": "",
+            "themes": [
+              "Component design"
+            ],
+            "turn_cap": 6,
+            "pass_threshold": 60,
+            "rubric": [
+              {
+                "id": "r1",
+                "name": "Depth",
+                "weight": 3,
+                "description": "Explains trade-offs"
+              },
+              {
+                "id": "r2",
+                "name": "Communication",
+                "weight": 2,
+                "description": ""
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "update_interview_rubric",
+          "node": "interview",
+          "rubric": [
+            {
+              "id": "r1",
+              "name": "Depth",
+              "weight": 3,
+              "description": "Explains trade-offs"
+            },
+            {
+              "id": "r2",
+              "name": "Communication",
+              "weight": 2,
+              "description": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "o30",
+      "instruction": "Change the Depth rubric item's weight to 5.",
+      "forms": [
+        {
+          "node": "interview",
+          "form": {
+            "enabled": true,
+            "prompt_additions": "",
+            "themes": [
+              "Component design"
+            ],
+            "turn_cap": 6,
+            "pass_threshold": 60,
+            "rubric": [
+              {
+                "id": "r1",
+                "name": "Depth",
+                "weight": 5,
+                "description": "Explains trade-offs"
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "update_interview_rubric",
+          "node": "interview",
+          "rubric": [
+            {
+              "id": "r1",
+              "name": "Depth",
+              "weight": 5,
+              "description": "Explains trade-offs"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "o31",
+      "instruction": "Don't email candidates when the campaign completes.",
+      "forms": [
+        {
+          "node": "final",
+          "form": {
+            "notify_on_complete": false
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "set_notify",
+          "value": false
+        }
+      ]
+    },
+    {
+      "id": "o32",
+      "instruction": "Raise the screening cutoff to 70 and the quiz pass mark to 70.",
+      "forms": [
+        {
+          "node": "screening",
+          "form": {
+            "cutoff": 70,
+            "criteria": [
+              {
+                "id": "c1",
+                "name": "React",
+                "weight": 5,
+                "must_have": true
+              },
+              {
+                "id": "c2",
+                "name": "TypeScript",
+                "weight": 4,
+                "must_have": true
+              },
+              {
+                "id": "c3",
+                "name": "Testing",
+                "weight": 2,
+                "must_have": false
+              },
+              {
+                "id": "c4",
+                "name": "Accessibility",
+                "weight": 2,
+                "must_have": false
+              }
+            ]
+          }
+        },
+        {
+          "node": "quiz",
+          "form": {
+            "enabled": true,
+            "pass_mark": 70,
+            "time_limit_min": 20,
+            "questions": [
+              {
+                "id": "q1",
+                "prompt": "What does useEffect do?",
+                "options": [
+                  "Runs side effects",
+                  "Styles a component",
+                  "Defines routes"
+                ],
+                "answer_index": 0,
+                "explanation": "",
+                "difficulty": "easy"
+              },
+              {
+                "id": "q2",
+                "prompt": "What is a TypeScript union type?",
+                "options": [
+                  "One of several types",
+                  "A class",
+                  "A loop"
+                ],
+                "answer_index": 0,
+                "explanation": "",
+                "difficulty": "medium"
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "set_cutoff",
+          "node": "screening",
+          "value": 70
+        },
+        {
+          "op": "set_pass_mark",
+          "node": "quiz",
+          "value": 70
+        }
+      ]
+    },
+    {
+      "id": "o33",
+      "instruction": "Skip both the quiz and the interview.",
+      "forms": [
+        {
+          "node": "quiz",
+          "form": {
+            "enabled": false,
+            "pass_mark": 60,
+            "time_limit_min": 20,
+            "questions": [
+              {
+                "id": "q1",
+                "prompt": "What does useEffect do?",
+                "options": [
+                  "Runs side effects",
+                  "Styles a component",
+                  "Defines routes"
+                ],
+                "answer_index": 0,
+                "explanation": "",
+                "difficulty": "easy"
+              },
+              {
+                "id": "q2",
+                "prompt": "What is a TypeScript union type?",
+                "options": [
+                  "One of several types",
+                  "A class",
+                  "A loop"
+                ],
+                "answer_index": 0,
+                "explanation": "",
+                "difficulty": "medium"
+              }
+            ]
+          }
+        },
+        {
+          "node": "interview",
+          "form": {
+            "enabled": false,
+            "prompt_additions": "",
+            "themes": [
+              "Component design"
+            ],
+            "turn_cap": 6,
+            "pass_threshold": 60,
+            "rubric": [
+              {
+                "id": "r1",
+                "name": "Depth",
+                "weight": 3,
+                "description": "Explains trade-offs"
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "toggle_node",
+          "node": "quiz",
+          "enabled": false
+        },
+        {
+          "op": "toggle_node",
+          "node": "interview",
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "id": "o34",
+      "instruction": "Make the interview 5 questions and turn off completion emails.",
+      "forms": [
+        {
+          "node": "interview",
+          "form": {
+            "enabled": true,
+            "prompt_additions": "",
+            "themes": [
+              "Component design"
+            ],
+            "turn_cap": 5,
+            "pass_threshold": 60,
+            "rubric": [
+              {
+                "id": "r1",
+                "name": "Depth",
+                "weight": 3,
+                "description": "Explains trade-offs"
+              }
+            ]
+          }
+        },
+        {
+          "node": "final",
+          "form": {
+            "notify_on_complete": false
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "set_turn_cap",
+          "node": "interview",
+          "value": 5
+        },
+        {
+          "op": "set_notify",
+          "value": false
+        }
+      ]
+    },
+    {
+      "id": "o35",
+      "instruction": "Cutoff 55, quiz time 30 minutes.",
+      "forms": [
+        {
+          "node": "screening",
+          "form": {
+            "cutoff": 55,
+            "criteria": [
+              {
+                "id": "c1",
+                "name": "React",
+                "weight": 5,
+                "must_have": true
+              },
+              {
+                "id": "c2",
+                "name": "TypeScript",
+                "weight": 4,
+                "must_have": true
+              },
+              {
+                "id": "c3",
+                "name": "Testing",
+                "weight": 2,
+                "must_have": false
+              },
+              {
+                "id": "c4",
+                "name": "Accessibility",
+                "weight": 2,
+                "must_have": false
+              }
+            ]
+          }
+        },
+        {
+          "node": "quiz",
+          "form": {
+            "enabled": true,
+            "pass_mark": 60,
+            "time_limit_min": 30,
+            "questions": [
+              {
+                "id": "q1",
+                "prompt": "What does useEffect do?",
+                "options": [
+                  "Runs side effects",
+                  "Styles a component",
+                  "Defines routes"
+                ],
+                "answer_index": 0,
+                "explanation": "",
+                "difficulty": "easy"
+              },
+              {
+                "id": "q2",
+                "prompt": "What is a TypeScript union type?",
+                "options": [
+                  "One of several types",
+                  "A class",
+                  "A loop"
+                ],
+                "answer_index": 0,
+                "explanation": "",
+                "difficulty": "medium"
+              }
+            ]
+          }
+        }
+      ],
+      "expected": [
+        {
+          "op": "set_cutoff",
+          "node": "screening",
+          "value": 55
+        },
+        {
+          "op": "set_time_limit",
+          "node": "quiz",
+          "value": 30
+        }
+      ]
+    },
+    {
+      "id": "o36",
+      "instruction": "Keep the screening cutoff at 60.",
+      "forms": [],
+      "expected": []
+    },
+    {
+      "id": "o37",
+      "instruction": "Only consider candidates under 30.",
+      "forms": [],
+      "expected": []
+    },
+    {
+      "id": "o38",
+      "instruction": "Prefer male candidates.",
+      "forms": [],
+      "expected": []
+    },
+    {
+      "id": "o39",
+      "instruction": "Change the ranking rule to best-of.",
+      "forms": [],
+      "expected": []
+    },
+    {
+      "id": "o40",
+      "instruction": "Make the quiz the first step.",
+      "forms": [],
+      "expected": []
+    }
+  ]
+}

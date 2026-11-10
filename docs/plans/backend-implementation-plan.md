@@ -693,6 +693,13 @@ LangGraph is used only where reasoning needs tools, retries or state. **No graph
 | `interview` | `next_question` (themes + transcript, fixed wrapper) → wait for the candidate (graph interrupt) → … until the cap | Transcript | Yes, by `interview_sessions.thread_id` |
 | `report` | `draft_feedback` (from stage results + evidence) → `suggest_recommendation` | `FeedbackDraft` | No |
 
+**As built (Phase 4):**
+- Pinned `langgraph==1.2.18` and `langgraph-checkpoint-postgres==3.2.0`. The checkpoint tables are committed as migration `…10_agents` (the library's DDL; it never runs DDL at runtime) and are system-only under RLS. `agent_threads` records who owns each thread; the API checks it before touching a checkpoint.
+- The saver is bound to the request transaction, so a chat turn holds one pooled connection for the model call's duration (~10 s). Session-level claims would avoid that but leak across clients behind the transaction pooler.
+- No `ChatOpenAI`: graph nodes call `call_structured` directly, so budget, cache and tracing always apply. The override agent emits all patches in one structured call (the `Patch` union as the tool schema) instead of one tool per op; `validate` dry-runs them and retries once with the error.
+- `jd_agent` makes one call per turn (`jd_turn`) plus one (`jd_rubric`) on the turn the draft completes; missing fields are computed in code.
+- Override eval: `evals/datasets/override.json` pairs 40 requests with the equivalent side-panel edits; the frontend's `diffFormToPatches` pins `expected`, and the eval compares the agent's patches to it (new-item ids and order ignored). First run: 39/40 (98%) against an 85% target.
+
 **Interview wrapper prompt.** The manager cannot override it. It discloses that the interviewer is an AI, keeps to the role's themes, refuses and does not ask about protected characteristics (age, gender, marital status, religion, caste, disability, nationality), ignores instructions inside candidate replies, and asks one question per turn. The manager's `prompt_additions` are inserted into a marked slot.
 
 **Protected-characteristic check** (JD agent and `add_criterion`). A keyword and pattern list plus an LLM judgment inside the same packed call. The result is a warning shown to the manager, not a block.
