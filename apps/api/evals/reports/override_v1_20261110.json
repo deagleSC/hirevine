@@ -1,0 +1,37 @@
+{
+  "run_at": "2026-11-10T11:33:31+00:00",
+  "prompt_version": 1,
+  "cases": 40,
+  "passed": 39,
+  "exact_match_rate": 0.975,
+  "target": 0.85,
+  "met_target": true,
+  "p50_s": 0.0,
+  "misses": [
+    {
+      "id": "o26",
+      "ok": false,
+      "exact": false,
+      "instruction": "Ask the interviewer to focus on performance debugging.",
+      "expected": [
+        {
+          "op": "edit_interview_prompt",
+          "node": "interview",
+          "prompt_additions": "Focus on performance debugging."
+        }
+      ],
+      "got": [
+        {
+          "op": "set_interview_themes",
+          "node": "interview",
+          "themes": [
+            "Component design",
+            "Performance debugging"
+          ]
+        }
+      ],
+      "explanation": "Add 'Performance debugging' as an interview theme so the interviewer focuses on that area.",
+      "error": null
+    }
+  ]
+}

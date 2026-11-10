@@ -3,12 +3,13 @@ create a new version. RLS limits every query to the manager's own org's jobs."""
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Annotated, Literal
 from uuid import UUID
 
 from fastapi import APIRouter
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints
 
+from app.agents import common, override_agent
 from app.core.auth import PrincipalDep, require_role, user_tx
 from app.core.errors import ERROR_RESPONSES
 from app.domain.patches import Patch
@@ -66,3 +67,23 @@ async def undo(job_id: UUID, principal: PrincipalDep) -> svc.Applied:
     async with user_tx(principal) as (tx, user):
         require_role(user, "manager")
         return await svc.undo(tx, job_id, actor=user.user_id)
+
+
+class OverrideRequest(BaseModel):
+    thread_id: UUID | None = None
+    message: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
+
+
+@router.post("/chat", response_model=override_agent.OverrideResult)
+async def chat(job_id: UUID, body: OverrideRequest, principal: PrincipalDep) -> override_agent.OverrideResult:
+    """Natural-language edit → proposed patches. Applies nothing: the UI previews and applies."""
+    async with user_tx(principal) as (tx, user):
+        require_role(user, "manager")
+        current = await svc.latest(tx, job_id)  # 404 for jobs the caller cannot see
+        if body.thread_id is None:
+            thread_id = await common.new_thread(tx, user, "override", job_id)
+        else:
+            await common.own_thread(tx, user, body.thread_id, "override", job_id)
+            thread_id = body.thread_id
+        async with common.llm_errors(), common.checkpointer(tx) as saver:
+            return await override_agent.run(saver, thread_id, current.definition, body.message)

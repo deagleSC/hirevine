@@ -6,7 +6,8 @@
     "build": "next build",
     "start": "next start -p 3000",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@hirevine/api-client": "workspace:^",
@@ -19,7 +20,11 @@
     "react-dom": "19",
     "lucide-react": "^0.545.0",
     "next-themes": "^0.4.6",
-    "sonner": "^2.0.7"
+    "sonner": "^2.0.7",
+    "@xyflow/react": "12.10.2",
+    "react-hook-form": "7.71.1",
+    "@hookform/resolvers": "5.2.2",
+    "zod": "4.3.6"
   },
   "devDependencies": {
     "@hirevine/config": "workspace:^",
@@ -29,6 +34,9 @@
     "eslint": "9",
     "typescript": "5",
     "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4"
+    "tailwindcss": "^4",
+    "@playwright/test": "1.64.1",
+    "pg": "8.16.3",
+    "@types/pg": "8.15.5"
   }
 }

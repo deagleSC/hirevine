@@ -13,6 +13,7 @@ from pydantic import BaseModel
 
 from app.api.routers import me
 from app.api.routers.candidate import applications as candidate_applications
+from app.api.routers.manager import jobs as manager_jobs
 from app.api.routers.manager import org as manager_org
 from app.api.routers.manager import workflows as manager_workflows
 from app.core.config import get_settings
@@ -72,6 +73,7 @@ def create_app() -> FastAPI:
 
     app.include_router(me.router)
     app.include_router(manager_org.router)
+    app.include_router(manager_jobs.router)
     app.include_router(manager_workflows.router)
     app.include_router(candidate_applications.router)
 

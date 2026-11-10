@@ -1,4 +1,16 @@
 {
+  "jd_rubric": {
+    "version": 1,
+    "hash": "55ea9a2061ea21af"
+  },
+  "jd_turn": {
+    "version": 1,
+    "hash": "30fed332acba744d"
+  },
+  "override_patches": {
+    "version": 1,
+    "hash": "18bb16902a94fe49"
+  },
   "smoke_patch": {
     "version": 1,
     "hash": "05cf37652d4a496f"

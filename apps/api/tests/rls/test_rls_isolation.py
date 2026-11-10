@@ -159,8 +159,9 @@ def test_manager_sees_only_candidates_who_applied_to_their_org(world: World):
 # --------------------------------------------------------------------- candidates
 
 def test_candidate_sees_only_published_jobs(world: World):
+    mine = (world.job_a, world.job_b, world.job_a_draft)  # other tests also publish jobs
     with as_claims(candidate_claims(world.cand_x)) as conn:
-        assert ids(conn, "select id from jobs") == {world.job_a, world.job_b}
+        assert ids(conn, "select id from jobs where id = any(%s)", (list(mine),)) == {world.job_a, world.job_b}
 
 
 def test_candidate_cannot_read_workflows(world: World):

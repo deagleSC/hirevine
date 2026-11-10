@@ -49,6 +49,13 @@ pnpm --filter @hirevine/api smoke                       # pick the primary model
 cd apps/api && uv run python -m evals.smoke_test --models a,b --tasks patch   # a subset
 ```
 
+The workflow editing agent has its own eval (40 requests, target 85% matching what a hand edit
+produces). Request-path calls are limited to `LLM_SYNC_RPM_CAP` per minute, so raise it for the run:
+
+```bash
+cd apps/api && LLM_SYNC_RPM_CAP=15 uv run python -m evals.override_eval
+```
+
 After editing a prompt in `apps/api/app/llm/prompts/`, bump its `version` and run
 `uv run python -m app.llm.prompts` to update the lock file (a test fails otherwise).
 
@@ -58,6 +65,15 @@ After editing a prompt in `apps/api/app/llm/prompts/`, bump its `version` and ru
 pnpm turbo run lint typecheck test build   # everything
 cd apps/api && uv run pytest -q            # backend only (creates the hirevine_test database)
 cd apps/api && INNGEST_DEV_TESTS=1 uv run pytest tests/jobs   # + the Inngest dev-server test
+pnpm --filter @hirevine/manager e2e        # editor E2E: local DB + API :8100 + app :3100
+```
+
+The E2E signs in with a real Supabase test manager. Put its credentials in
+`apps/manager/.env.e2e.local` (gitignored):
+
+```bash
+E2E_MANAGER_EMAIL=...
+E2E_MANAGER_PASSWORD=...
 ```
 
 After changing API routes, regenerate the typed client: `pnpm gen:api`.
