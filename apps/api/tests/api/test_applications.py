@@ -138,6 +138,8 @@ async def test_public_board_shows_published_jobs_and_stages_only(client, migrate
         {"type": "final", "time_limit_min": None, "question_count": None, "turn_cap": None}]
     assert "criteria" not in str(detail) and "cutoff" not in str(detail)
     assert (await client.get("/v1/public/share/not-a-real-slug")).status_code == 404
+    consent = (await client.get("/v1/public/consent")).json()
+    assert consent == {"text_version": CONSENT["text_version"], "providers": get_settings().consent_providers}
 
 
 # ------------------------------------------------------------------ apply validation

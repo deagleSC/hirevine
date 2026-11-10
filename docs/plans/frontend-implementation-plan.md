@@ -405,6 +405,8 @@ Phase 9 can overlap with phases 6–7 once applications exist (§15).
 
 ---
 
+**As built (Phase 5):** `/jobs` (search + location), `/jobs/[jobId]` (stages from `/public/jobs/{id}`), `/a/[slug]`, the apply page (direct XHR upload with progress → consent with the processor list and version from `/v1/public/consent` → submit), tracker cards with status badges, and `/applications/[appId]`. Manager: `/campaigns/[campaignId]` (stage strip, tabs All / Needs review / Possible injection / Passed screening, 15 s polling, retry) and the candidate page with `EvidenceList` ↔ `ResumeViewer` citation sync. Shared: `StatusBadge`, `FlagBadges`, `EvidenceList`, `CitationChip`, `ResumeViewer` in `packages/ui/blocks`. Deferred: the job board is client-rendered (no SSR first page or infinite scroll yet), there is no screening-questions step (workflows have no questions yet), and manual scoring and the AI-pause toggle arrive with their endpoints. E2E `monitor.spec.ts` is the exit check.
+
 ## 13. Open items
 
 | Item | Notes |

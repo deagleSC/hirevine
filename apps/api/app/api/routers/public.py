@@ -8,6 +8,7 @@ from uuid import UUID
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
+from app.core.config import get_settings
 from app.core.db import transaction
 from app.core.errors import ERROR_RESPONSES, AppError
 from app.domain.workflow import Workflow
@@ -109,3 +110,15 @@ async def resolve_share(slug: str) -> PublicJobDetail:
     if row is None:
         raise AppError(404, "job_not_found", "This link is no longer active.")
     return await _detail(row["job_id"])
+
+
+class ConsentInfo(BaseModel):
+    text_version: str
+    providers: list[str]
+
+
+@router.get("/consent", response_model=ConsentInfo)
+async def consent() -> ConsentInfo:
+    """The consent version applications must quote, and the processors named in the consent text (§18)."""
+    s = get_settings()
+    return ConsentInfo(text_version=s.consent_text_version, providers=s.consent_providers)

@@ -54,7 +54,7 @@ class ConsentIn(BaseModel):
     text_version: str
 
 
-class ApplyRequest(BaseModel):
+class ApplicationCreate(BaseModel):
     job_id: UUID
     resume_path: str
     consent: ConsentIn
@@ -62,7 +62,7 @@ class ApplyRequest(BaseModel):
     screening_answers: dict[str, str] = Field(default_factory=dict, max_length=20)
 
 
-class Applied(BaseModel):
+class ApplicationCreated(BaseModel):
     id: UUID
     status: Literal["processing"] = "processing"
 
@@ -84,6 +84,12 @@ class StageCount(BaseModel):
     count: int
 
 
+class MonitorNode(BaseModel):
+    id: str
+    type: Literal["screening", "quiz", "interview", "final"]
+    enabled: bool
+
+
 class CampaignMonitor(BaseModel):
     id: UUID
     job_id: UUID
@@ -94,7 +100,7 @@ class CampaignMonitor(BaseModel):
     processing: int
     needs_review: int
     counts: list[StageCount]
-    nodes: list[dict[str, Any]]
+    nodes: list[MonitorNode]
 
 
 class ApplicationRow(BaseModel):
@@ -208,7 +214,7 @@ async def upload_url(tx: Tx, user: CurrentUser, body: UploadRequest) -> UploadUr
     return UploadUrl(resume_path=path, upload_url=signed.url, token=signed.token)
 
 
-async def apply(tx: Tx, user: CurrentUser, body: ApplyRequest, client_ip: str | None) -> Applied:
+async def apply(tx: Tx, user: CurrentUser, body: ApplicationCreate, client_ip: str | None) -> ApplicationCreated:
     s = get_settings()
     if not body.adult_confirmed:
         raise AppError(422, "adult_required", "You must be 18 or older to apply.")
@@ -259,7 +265,7 @@ async def apply(tx: Tx, user: CurrentUser, body: ApplyRequest, client_ip: str | 
     await dispatcher.enqueue(tx, "screening", JobRefs(org_id=org["org_id"] if org else None,
                                                       application_id=app_id, campaign_id=camp["id"],
                                                       job_id=body.job_id))
-    return Applied(id=app_id)
+    return ApplicationCreated(id=app_id)
 
 
 _TRACKER_SQL = """
@@ -338,7 +344,7 @@ async def monitor(tx: Tx, campaign_id: UUID) -> CampaignMonitor:
         total=agg["total"], processing=agg["processing"], needs_review=agg["needs_review"],
         counts=[StageCount(node_id=r["node_id"], node_type=types.get(r["node_id"], "unknown"), status=r["status"],
                            count=r["n"]) for r in counts],
-        nodes=[{"id": n.id, "type": n.type, "enabled": getattr(n, "enabled", True)} for n in wf.nodes],
+        nodes=[MonitorNode(id=n.id, type=n.type, enabled=getattr(n, "enabled", True)) for n in wf.nodes],
     )
 
 

@@ -68,7 +68,15 @@ export default function JobsPage() {
                   <TableCell className="hidden text-muted-foreground sm:table-cell">
                     {job.workflow_version ? `Version ${job.workflow_version}` : "—"}
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">{job.campaign?.applicants ?? "—"}</TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {job.campaign ? (
+                      <Link href={`/campaigns/${job.campaign.id}`} className="hover:underline">
+                        {job.campaign.applicants}
+                      </Link>
+                    ) : (
+                      "—"
+                    )}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

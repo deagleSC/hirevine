@@ -55,6 +55,62 @@
         "title": "AddQuizQuestion",
         "type": "object"
       },
+      "ApplicationCreate": {
+        "properties": {
+          "adult_confirmed": {
+            "title": "Adult Confirmed",
+            "type": "boolean"
+          },
+          "consent": {
+            "$ref": "#/components/schemas/ConsentIn"
+          },
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "resume_path": {
+            "title": "Resume Path",
+            "type": "string"
+          },
+          "screening_answers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "maxProperties": 20,
+            "title": "Screening Answers",
+            "type": "object"
+          }
+        },
+        "required": [
+          "job_id",
+          "resume_path",
+          "consent",
+          "adult_confirmed"
+        ],
+        "title": "ApplicationCreate",
+        "type": "object"
+      },
+      "ApplicationCreated": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "const": "processing",
+            "default": "processing",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "ApplicationCreated",
+        "type": "object"
+      },
       "ApplicationDetail": {
         "properties": {
           "campaign_id": {
@@ -296,6 +352,172 @@
         "title": "ApplicationRow",
         "type": "object"
       },
+      "Applied": {
+        "properties": {
+          "affected_stage_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Affected Stage Note"
+          },
+          "affects_running_campaign": {
+            "title": "Affects Running Campaign",
+            "type": "boolean"
+          },
+          "base_version": {
+            "title": "Base Version",
+            "type": "integer"
+          },
+          "descriptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Descriptions",
+            "type": "array"
+          },
+          "diff": {
+            "items": {
+              "$ref": "#/components/schemas/DiffEntry"
+            },
+            "title": "Diff",
+            "type": "array"
+          },
+          "repinned_applications": {
+            "default": 0,
+            "title": "Repinned Applications",
+            "type": "integer"
+          },
+          "resulting_definition": {
+            "$ref": "#/components/schemas/Workflow"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/Warning"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "base_version",
+          "diff",
+          "resulting_definition",
+          "warnings",
+          "descriptions",
+          "affects_running_campaign",
+          "version"
+        ],
+        "title": "Applied",
+        "type": "object"
+      },
+      "ApplyRequest": {
+        "properties": {
+          "base_version": {
+            "minimum": 1.0,
+            "title": "Base Version",
+            "type": "integer"
+          },
+          "patches": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "add_criterion": "#/components/schemas/AddCriterion",
+                  "add_quiz_question": "#/components/schemas/AddQuizQuestion",
+                  "edit_interview_prompt": "#/components/schemas/EditInterviewPrompt",
+                  "remove_criterion": "#/components/schemas/RemoveCriterion",
+                  "remove_quiz_question": "#/components/schemas/RemoveQuizQuestion",
+                  "replace_quiz_question": "#/components/schemas/ReplaceQuizQuestion",
+                  "set_cutoff": "#/components/schemas/SetCutoff",
+                  "set_interview_themes": "#/components/schemas/SetInterviewThemes",
+                  "set_notify": "#/components/schemas/SetNotify",
+                  "set_pass_mark": "#/components/schemas/SetPassMark",
+                  "set_time_limit": "#/components/schemas/SetTimeLimit",
+                  "set_turn_cap": "#/components/schemas/SetTurnCap",
+                  "toggle_node": "#/components/schemas/ToggleNode",
+                  "update_criterion": "#/components/schemas/UpdateCriterion",
+                  "update_interview_rubric": "#/components/schemas/UpdateInterviewRubric"
+                },
+                "propertyName": "op"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/SetCutoff"
+                },
+                {
+                  "$ref": "#/components/schemas/SetPassMark"
+                },
+                {
+                  "$ref": "#/components/schemas/SetTimeLimit"
+                },
+                {
+                  "$ref": "#/components/schemas/AddCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/UpdateCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/RemoveCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/AddQuizQuestion"
+                },
+                {
+                  "$ref": "#/components/schemas/ReplaceQuizQuestion"
+                },
+                {
+                  "$ref": "#/components/schemas/RemoveQuizQuestion"
+                },
+                {
+                  "$ref": "#/components/schemas/EditInterviewPrompt"
+                },
+                {
+                  "$ref": "#/components/schemas/SetInterviewThemes"
+                },
+                {
+                  "$ref": "#/components/schemas/UpdateInterviewRubric"
+                },
+                {
+                  "$ref": "#/components/schemas/SetTurnCap"
+                },
+                {
+                  "$ref": "#/components/schemas/ToggleNode"
+                },
+                {
+                  "$ref": "#/components/schemas/SetNotify"
+                }
+              ]
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "title": "Patches",
+            "type": "array"
+          },
+          "source": {
+            "default": "panel",
+            "enum": [
+              "panel",
+              "chat"
+            ],
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "base_version",
+          "patches"
+        ],
+        "title": "ApplyRequest",
+        "type": "object"
+      },
       "CampaignMonitor": {
         "properties": {
           "ai_paused": {
@@ -329,8 +551,7 @@
           },
           "nodes": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/MonitorNode"
             },
             "title": "Nodes",
             "type": "array"
@@ -464,6 +685,27 @@
           "text_version"
         ],
         "title": "ConsentIn",
+        "type": "object"
+      },
+      "ConsentInfo": {
+        "properties": {
+          "providers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Providers",
+            "type": "array"
+          },
+          "text_version": {
+            "title": "Text Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text_version",
+          "providers"
+        ],
+        "title": "ConsentInfo",
         "type": "object"
       },
       "Created": {
@@ -1269,6 +1511,35 @@
           "display_name"
         ],
         "title": "Me",
+        "type": "object"
+      },
+      "MonitorNode": {
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "screening",
+              "quiz",
+              "interview",
+              "final"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "enabled"
+        ],
+        "title": "MonitorNode",
         "type": "object"
       },
       "Organization": {
@@ -2935,228 +3206,6 @@
         ],
         "title": "WorkflowVersion",
         "type": "object"
-      },
-      "app__api__routers__manager__workflows__ApplyRequest": {
-        "properties": {
-          "base_version": {
-            "minimum": 1.0,
-            "title": "Base Version",
-            "type": "integer"
-          },
-          "patches": {
-            "items": {
-              "discriminator": {
-                "mapping": {
-                  "add_criterion": "#/components/schemas/AddCriterion",
-                  "add_quiz_question": "#/components/schemas/AddQuizQuestion",
-                  "edit_interview_prompt": "#/components/schemas/EditInterviewPrompt",
-                  "remove_criterion": "#/components/schemas/RemoveCriterion",
-                  "remove_quiz_question": "#/components/schemas/RemoveQuizQuestion",
-                  "replace_quiz_question": "#/components/schemas/ReplaceQuizQuestion",
-                  "set_cutoff": "#/components/schemas/SetCutoff",
-                  "set_interview_themes": "#/components/schemas/SetInterviewThemes",
-                  "set_notify": "#/components/schemas/SetNotify",
-                  "set_pass_mark": "#/components/schemas/SetPassMark",
-                  "set_time_limit": "#/components/schemas/SetTimeLimit",
-                  "set_turn_cap": "#/components/schemas/SetTurnCap",
-                  "toggle_node": "#/components/schemas/ToggleNode",
-                  "update_criterion": "#/components/schemas/UpdateCriterion",
-                  "update_interview_rubric": "#/components/schemas/UpdateInterviewRubric"
-                },
-                "propertyName": "op"
-              },
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/SetCutoff"
-                },
-                {
-                  "$ref": "#/components/schemas/SetPassMark"
-                },
-                {
-                  "$ref": "#/components/schemas/SetTimeLimit"
-                },
-                {
-                  "$ref": "#/components/schemas/AddCriterion"
-                },
-                {
-                  "$ref": "#/components/schemas/UpdateCriterion"
-                },
-                {
-                  "$ref": "#/components/schemas/RemoveCriterion"
-                },
-                {
-                  "$ref": "#/components/schemas/AddQuizQuestion"
-                },
-                {
-                  "$ref": "#/components/schemas/ReplaceQuizQuestion"
-                },
-                {
-                  "$ref": "#/components/schemas/RemoveQuizQuestion"
-                },
-                {
-                  "$ref": "#/components/schemas/EditInterviewPrompt"
-                },
-                {
-                  "$ref": "#/components/schemas/SetInterviewThemes"
-                },
-                {
-                  "$ref": "#/components/schemas/UpdateInterviewRubric"
-                },
-                {
-                  "$ref": "#/components/schemas/SetTurnCap"
-                },
-                {
-                  "$ref": "#/components/schemas/ToggleNode"
-                },
-                {
-                  "$ref": "#/components/schemas/SetNotify"
-                }
-              ]
-            },
-            "maxItems": 50,
-            "minItems": 1,
-            "title": "Patches",
-            "type": "array"
-          },
-          "source": {
-            "default": "panel",
-            "enum": [
-              "panel",
-              "chat"
-            ],
-            "title": "Source",
-            "type": "string"
-          }
-        },
-        "required": [
-          "base_version",
-          "patches"
-        ],
-        "title": "ApplyRequest",
-        "type": "object"
-      },
-      "app__services__applications__Applied": {
-        "properties": {
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "status": {
-            "const": "processing",
-            "default": "processing",
-            "title": "Status",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id"
-        ],
-        "title": "Applied",
-        "type": "object"
-      },
-      "app__services__applications__ApplyRequest": {
-        "properties": {
-          "adult_confirmed": {
-            "title": "Adult Confirmed",
-            "type": "boolean"
-          },
-          "consent": {
-            "$ref": "#/components/schemas/ConsentIn"
-          },
-          "job_id": {
-            "format": "uuid",
-            "title": "Job Id",
-            "type": "string"
-          },
-          "resume_path": {
-            "title": "Resume Path",
-            "type": "string"
-          },
-          "screening_answers": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "maxProperties": 20,
-            "title": "Screening Answers",
-            "type": "object"
-          }
-        },
-        "required": [
-          "job_id",
-          "resume_path",
-          "consent",
-          "adult_confirmed"
-        ],
-        "title": "ApplyRequest",
-        "type": "object"
-      },
-      "app__services__workflows__Applied": {
-        "properties": {
-          "affected_stage_note": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Affected Stage Note"
-          },
-          "affects_running_campaign": {
-            "title": "Affects Running Campaign",
-            "type": "boolean"
-          },
-          "base_version": {
-            "title": "Base Version",
-            "type": "integer"
-          },
-          "descriptions": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Descriptions",
-            "type": "array"
-          },
-          "diff": {
-            "items": {
-              "$ref": "#/components/schemas/DiffEntry"
-            },
-            "title": "Diff",
-            "type": "array"
-          },
-          "repinned_applications": {
-            "default": 0,
-            "title": "Repinned Applications",
-            "type": "integer"
-          },
-          "resulting_definition": {
-            "$ref": "#/components/schemas/Workflow"
-          },
-          "version": {
-            "title": "Version",
-            "type": "integer"
-          },
-          "warnings": {
-            "items": {
-              "$ref": "#/components/schemas/Warning"
-            },
-            "title": "Warnings",
-            "type": "array"
-          }
-        },
-        "required": [
-          "base_version",
-          "diff",
-          "resulting_definition",
-          "warnings",
-          "descriptions",
-          "affects_running_campaign",
-          "version"
-        ],
-        "title": "Applied",
-        "type": "object"
       }
     },
     "securitySchemes": {
@@ -3323,7 +3372,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/app__services__applications__ApplyRequest"
+                "$ref": "#/components/schemas/ApplicationCreate"
               }
             }
           },
@@ -3334,7 +3383,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__services__applications__Applied"
+                  "$ref": "#/components/schemas/ApplicationCreated"
                 }
               }
             },
@@ -4765,7 +4814,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/app__api__routers__manager__workflows__ApplyRequest"
+                "$ref": "#/components/schemas/ApplyRequest"
               }
             }
           },
@@ -4776,7 +4825,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__services__workflows__Applied"
+                  "$ref": "#/components/schemas/Applied"
                 }
               }
             },
@@ -5064,7 +5113,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__services__workflows__Applied"
+                  "$ref": "#/components/schemas/Applied"
                 }
               }
             },
@@ -5560,6 +5609,78 @@
         "summary": "Create Profile",
         "tags": [
           "me"
+        ]
+      }
+    },
+    "/v1/public/consent": {
+      "get": {
+        "description": "The consent version applications must quote, and the processors named in the consent text (\u00a718).",
+        "operationId": "consent_v1_public_consent_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Consent",
+        "tags": [
+          "public"
         ]
       }
     },

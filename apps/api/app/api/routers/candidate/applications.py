@@ -21,8 +21,8 @@ async def upload_url(body: svc.UploadRequest, principal: PrincipalDep) -> svc.Up
         return await svc.upload_url(tx, user, body)
 
 
-@router.post("/applications", response_model=svc.Applied, status_code=202)
-async def apply(body: svc.ApplyRequest, request: Request, principal: PrincipalDep) -> svc.Applied:
+@router.post("/applications", response_model=svc.ApplicationCreated, status_code=202)
+async def apply(body: svc.ApplicationCreate, request: Request, principal: PrincipalDep) -> svc.ApplicationCreated:
     """Create the application with consent, then start screening in the background."""
     ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (
         request.client.host if request.client else None)
