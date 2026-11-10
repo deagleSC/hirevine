@@ -23,6 +23,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import openai
 from pydantic import BaseModel
 
 from app.core.config import get_settings
@@ -116,9 +117,14 @@ async def run_model(
     call: Callable[..., Awaitable[StructuredResult[Any]]] = call_structured,
 ) -> ModelReport:
     rep = ModelReport(model)
+    gone = False
     for name in tasks:
+        if gone:
+            break
         task = TASKS[name]
         for item in data[name]:
+            if gone:
+                break
             rep.calls += 1
             started = time.monotonic()
             try:
@@ -130,6 +136,11 @@ async def run_model(
                 raise
             except NeedsReview:
                 rep.needs_review += 1
+                continue
+            except openai.NotFoundError:
+                # The model id no longer exists on OpenRouter; don't spend more budget on it.
+                rep.errors["model_not_found"] = 1
+                gone = True
                 continue
             except RateLimited as exc:
                 rep.errors["rate_limited"] = rep.errors.get("rate_limited", 0) + 1
@@ -154,7 +165,7 @@ async def run_model(
 
 def pick_primary(summaries: list[dict[str, Any]]) -> str | None:
     """Most valid output, then best task checks, then lowest p95 latency."""
-    ranked = [s for s in summaries if s["calls"]]
+    ranked = [s for s in summaries if s["calls"] and s["valid_rate"] > 0]
     if not ranked:
         return None
 

@@ -1,0 +1,51 @@
+{
+  "run_at": "2026-11-10T10:26:45+00:00",
+  "tasks": [
+    "screen",
+    "quiz",
+    "patch"
+  ],
+  "models": [
+    {
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "calls": 8,
+      "valid_rate": 1.0,
+      "valid_first_try_rate": 1.0,
+      "needs_review": 0,
+      "errors": {},
+      "served_by_other_model": 0,
+      "p50_s": 9.83,
+      "p95_s": 15.77,
+      "checks": {
+        "screen.citation_validity": 1.0,
+        "screen.covers_all_criteria": 1.0,
+        "screen.injection_resisted": 1.0,
+        "quiz.right_count": 1.0,
+        "quiz.distinct_options": 1.0,
+        "patch.exact_match": 1.0
+      }
+    },
+    {
+      "model": "google/gemma-4-26b-a4b-it:free",
+      "calls": 8,
+      "valid_rate": 0.125,
+      "valid_first_try_rate": 0.125,
+      "needs_review": 0,
+      "errors": {
+        "rate_limited": 7
+      },
+      "served_by_other_model": 0,
+      "p50_s": 2.02,
+      "p95_s": 2.02,
+      "checks": {
+        "patch.exact_match": 1.0
+      }
+    }
+  ],
+  "primary": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "prompt_versions": {
+    "smoke_screen": 1,
+    "smoke_quiz": 1,
+    "smoke_patch": 1
+  }
+}
