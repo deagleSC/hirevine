@@ -271,3 +271,47 @@ def test_manager_profile_requires_org_name(world: World):
         with pytest.raises(psycopg.Error) as exc:
             conn.execute("select app.create_profile('manager', 'No Org', '  ', false)")
     assert exc.value.sqlstate == "Z1003"
+
+
+# ------------------------------------------------------------ role escalation
+
+def test_create_profile_rejects_unknown_roles(world: World):
+    uid = create_auth_user(world.db, "admin-wannabe@x.test")
+    for role in ("admin", "system", "public"):
+        with as_claims({"sub": str(uid)}) as conn:
+            with pytest.raises(psycopg.Error) as exc:
+                conn.execute("select app.create_profile(%s, 'Eve', 'Evil Org', true)", (role,))
+        assert exc.value.sqlstate == "22023"
+
+
+def test_candidate_cannot_become_manager_or_join_an_org(world: World):
+    with pytest.raises(psycopg.Error) as exc:
+        create_profile(world.cand_x["id"], "manager", "Candidate X", "Takeover Org")
+    assert exc.value.sqlstate == "Z1001"
+    with admin(world.db) as conn:
+        assert conn.execute("select 1 from organizations where name = 'Takeover Org'").fetchone() is None
+
+
+@pytest.mark.parametrize("who", ["cand_x", "mgr_a"])
+def test_users_cannot_edit_their_own_profile_row(world: World, who: str):
+    profile = getattr(world, who)
+    claims = candidate_claims(profile) if who == "cand_x" else manager_claims(profile)
+    with as_claims(claims) as conn:
+        updated = conn.execute(
+            "update profiles set role = 'manager', org_id = %s where id = %s",
+            (world.mgr_b["org_id"], profile["id"]),
+        )
+        assert updated.rowcount == 0
+    with admin(world.db) as conn:
+        row = conn.execute("select role, org_id from profiles where id = %s", (profile["id"],)).fetchone()
+    assert row["role"] == profile["role"] and row["org_id"] == profile["org_id"]
+
+
+def test_users_cannot_insert_profiles_directly(world: World):
+    uid = create_auth_user(world.db, "direct-insert@x.test")
+    with as_claims({"sub": str(uid)}) as conn:
+        with pytest.raises(psycopg.errors.InsufficientPrivilege):
+            conn.execute(
+                "insert into profiles (id, role, org_id, display_name) values (%s, 'manager', %s, 'Eve')",
+                (uid, world.mgr_a["org_id"]),
+            )
