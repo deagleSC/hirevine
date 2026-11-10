@@ -1,0 +1,4 @@
+# Known historical findings, reviewed and neutralised. Add a line only after the secret is revoked.
+# Supabase access token for the e2e test user, committed in 8b67f26 and untracked in ce19594.
+# It expired 2026-11-10 12:45 UTC.
+8b67f265a7693020bb292fcf65ac959eec5c08dd:apps/manager/e2e/.state.json:jwt:1
