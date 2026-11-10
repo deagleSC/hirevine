@@ -11,6 +11,10 @@
     "version": 1,
     "hash": "18bb16902a94fe49"
   },
+  "screening_score": {
+    "version": 1,
+    "hash": "f0d286ede38645b5"
+  },
   "smoke_patch": {
     "version": 1,
     "hash": "05cf37652d4a496f"

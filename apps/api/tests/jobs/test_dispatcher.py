@@ -103,7 +103,8 @@ async def test_housekeeping_resends_stuck_runs_and_resumes_deferred(manager, mig
         ).fetchone()["id"]
         yesterday = datetime.now(UTC) - timedelta(days=1)
         deferred = conn.execute(
-            "insert into job_runs (type, org_id, status, updated_at) values ('selftest', %s, 'deferred_budget', %s)"
+            "insert into job_runs (type, org_id, status, updated_at, attempts)"
+            " values ('selftest', %s, 'deferred_budget', %s, 1)"
             " returning id", (manager["org_id"], yesterday)).fetchone()["id"]
         deferred_today = conn.execute(
             "insert into job_runs (type, org_id, status) values ('selftest', %s, 'deferred_budget') returning id",
@@ -112,7 +113,9 @@ async def test_housekeeping_resends_stuck_runs_and_resumes_deferred(manager, mig
     assert await housekeeping.resend_stuck_runs() == 1
     assert await housekeeping.resume_budget_deferred() == 1
     sent = {e.id for e in fake.sent}
-    assert sent == {str(stuck), str(deferred)}
+    # The stuck run never started: same id, so a duplicate send is dropped. The deferred run did
+    # start, so its resume needs a new id or Inngest would drop it as a repeat within 24 h.
+    assert sent == {str(stuck), f"{deferred}:1"}
     assert str(fresh) not in sent and str(deferred_today) not in sent
     assert (await runs.get(deferred))["status"] == "queued"
     assert (await runs.get(deferred_today))["status"] == "deferred_budget"

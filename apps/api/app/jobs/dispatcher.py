@@ -25,11 +25,19 @@ log = logging.getLogger("hirevine.jobs")
 # job type → Inngest event name. Later phases add screening, quiz, interview, report, ...
 EVENTS: dict[str, str] = {
     "selftest": "selftest/requested",
+    "screening": "application/submitted",
 }
 
 
-def event_for(type: str, run_id: UUID, refs: JobRefs) -> inngest.Event:
-    return inngest.Event(name=EVENTS[type], id=str(run_id), data=refs.event_data(run_id))
+def event_id(run_id: UUID, attempts: int = 0) -> str:
+    """Inngest drops a repeated event id for 24 h. A run that has not started yet keeps its id, so
+    re-sending a lost event cannot start it twice; a run resumed after it started (e.g. deferred on
+    the daily budget) gets a new id per attempt, or the resume could be dropped until the next day."""
+    return str(run_id) if attempts == 0 else f"{run_id}:{attempts}"
+
+
+def event_for(type: str, run_id: UUID, refs: JobRefs, attempts: int = 0) -> inngest.Event:
+    return inngest.Event(name=EVENTS[type], id=event_id(run_id, attempts), data=refs.event_data(run_id))
 
 
 class JobDispatcher(Protocol):
@@ -59,7 +67,8 @@ class InngestDispatcher:
 
     async def resend(self, run: dict[str, object]) -> None:
         run_id = UUID(str(run["id"]))
-        await self.client.send(event_for(str(run["type"]), run_id, runs.refs_of(run)))
+        attempts = int(str(run.get("attempts") or 0))
+        await self.client.send(event_for(str(run["type"]), run_id, runs.refs_of(run), attempts))
 
 
 dispatcher: JobDispatcher = InngestDispatcher()

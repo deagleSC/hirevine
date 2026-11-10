@@ -11,8 +11,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from app.api.routers import me
+from app.api.routers import me, public
 from app.api.routers.candidate import applications as candidate_applications
+from app.api.routers.manager import campaigns as manager_campaigns
 from app.api.routers.manager import jobs as manager_jobs
 from app.api.routers.manager import org as manager_org
 from app.api.routers.manager import workflows as manager_workflows
@@ -75,7 +76,9 @@ def create_app() -> FastAPI:
     app.include_router(manager_org.router)
     app.include_router(manager_jobs.router)
     app.include_router(manager_workflows.router)
+    app.include_router(manager_campaigns.router)
     app.include_router(candidate_applications.router)
+    app.include_router(public.router)
 
     # Inngest calls this endpoint to run function steps; it verifies request signatures in production.
     # The SDK refuses to start in production without a signing key, so a missing key must not take

@@ -750,6 +750,18 @@ def must_have_flags(scores, criteria) -> list[str]:
 
    The cutoff applies to the weighted score only. Then `transition()` is called with the evidence JSON: `[{criterion_id, weight, score, rationale, quote, line_no, verified}]`.
 
+**As built (Phase 5):**
+- Migration `…11_screening`: `embeddings` (pgvector, HNSW, system-only, deleted with their application by trigger), `applications.prefilter_score`, a `public` read policy on open campaigns (the job board joins them), and the private `resumes` bucket (created only where the `storage` schema exists). Local Postgres needs pgvector built against it.
+- PyMuPDF is pinned below 2.0: 2.x pulls `pymupdf4llm` → `onnxruntime`/`numpy`, which the bundle budget cannot afford.
+- File type is sniffed from bytes. PDF white/tiny text and DOCX hidden/white runs are collected as hidden text and flagged `hidden_text`. Hidden PDF text also appears in the extracted lines, so the phrase scan sees it too.
+- spaCy NER runs only if spaCy and `en_core_web_sm` are installed; the regex and keyword rules always run. Phones need 10–15 digits so year ranges survive. The first three lines lose a bare name, but not a job title.
+- Screening is plain async code (`agents/screening.py`), not a LangGraph graph: the Inngest steps already persist between `score` and `verify_citations`, and there is no conversation to checkpoint. The draft scores sit on the open `stage_results` row (`evidence = {"draft": …}`) between the two steps; the detail endpoint never shows drafts.
+- Quotes are matched after normalising case, whitespace and punctuation, so a quote may cross a line break; placeholder-only and very short quotes never verify.
+- Model errors in a step: budget → run `deferred_budget` and the function ends (housekeeping re-sends after 00:00 UTC); rate limit → `RetryAfterError`; invalid output twice or no model → stage `needs_review` with `model_failed`.
+- Inngest event ids: the run id until the run first starts, then `run_id:attempts`. Before this, a run resumed after a budget deferral reused its id and could be dropped by Inngest's 24 h de-duplication.
+- Dev/test use `MemoryStorage` and a hashing embedder when `SUPABASE_SERVICE_KEY` / `EMBED_FUNCTION_URL` are unset; production refuses to start the job without them.
+- Not yet: the prefilter only records `prefilter_score` (shortlisting when the budget is short is not wired), and the screening evals (rank agreement, precision, citation validity) need a labelled dataset.
+
 ---
 
 ## 14. Quiz
