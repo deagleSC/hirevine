@@ -1,26 +1,35 @@
-import { AppShell } from "@hirevine/ui";
-import Link from "next/link";
+"use client";
+
+import { CandidateShell } from "@/components/candidate-shell";
+import { NavUser } from "@hirevine/ui/blocks/nav-user";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 
-import { SignOutButton } from "./sign-out-button";
+import { useMe } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const me = useMe();
+
   return (
-    <AppShell
-      product="Hirevine"
-      nav={
-        <>
-          <Link href="/jobs" className="text-muted-foreground hover:text-foreground">
-            Jobs
-          </Link>
-          <Link href="/applications" className="text-muted-foreground hover:text-foreground">
-            My applications
-          </Link>
-        </>
+    <CandidateShell
+      subtitle="Candidate"
+      footer={
+        <NavUser
+          user={me.data ? { name: me.data.display_name, subtitle: me.data.email } : undefined}
+          onSignOut={async () => {
+            await supabase().auth.signOut();
+            queryClient.clear();
+            router.replace("/sign-in");
+            router.refresh();
+          }}
+        />
       }
-      actions={<SignOutButton />}
     >
       {children}
-    </AppShell>
+    </CandidateShell>
   );
 }

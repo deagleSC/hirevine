@@ -1,23 +1,25 @@
-import { AppShell, Button } from "@hirevine/ui";
+import { CandidateShell } from "@/components/candidate-shell";
+import { Button } from "@hirevine/ui/components/button";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+
 export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
-    <AppShell
-      product="Hirevine"
-      nav={
-        <Link href="/jobs" className="text-muted-foreground hover:text-foreground">
-          Jobs
-        </Link>
-      }
+    <CandidateShell
+      subtitle="Job search"
       actions={
-        <Button asChild variant="outline" size="sm">
-          <Link href="/applications">My applications</Link>
-        </Button>
+        <>
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/sign-in">Sign in</Link>
+          </Button>
+          <Button asChild size="sm">
+            <Link href="/sign-up">Create account</Link>
+          </Button>
+        </>
       }
     >
       {children}
-    </AppShell>
+    </CandidateShell>
   );
 }

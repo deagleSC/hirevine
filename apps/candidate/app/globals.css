@@ -1,3 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "@hirevine/ui/globals.css";
+@source "../app";
+@source "../components";
+@source "../lib";
