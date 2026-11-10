@@ -30,7 +30,7 @@ __pycache__/
 
 # generated from apps/api/openapi.json by `pnpm gen:api`
 packages/api-client/src/schema.d.ts
-e2e/.state.json
+apps/manager/e2e/.state.json
 test-results/
 playwright-report/
 .next-e2e/
