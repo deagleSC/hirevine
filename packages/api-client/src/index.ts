@@ -15,3 +15,15 @@ export {
   type Processing,
   type ProcessingStatus,
 } from "./processing";
+export * from "./zod/workflow";
+export {
+  diffFormToPatches,
+  formFromNode,
+  type DiffOptions,
+  type FinalForm,
+  type InterviewForm,
+  type NodeForm,
+  type QuizForm,
+  type ScreeningForm,
+} from "./workflow/diff-form";
+export { humanizeDiff, type DiffEntry, type DiffRow } from "./workflow/humanize";

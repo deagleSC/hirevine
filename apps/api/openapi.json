@@ -1,6 +1,60 @@
 {
   "components": {
     "schemas": {
+      "AddCriterion": {
+        "additionalProperties": false,
+        "properties": {
+          "criterion": {
+            "$ref": "#/components/schemas/Criterion"
+          },
+          "node": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Node",
+            "type": "string"
+          },
+          "op": {
+            "const": "add_criterion",
+            "title": "Op",
+            "type": "string"
+          }
+        },
+        "required": [
+          "op",
+          "node",
+          "criterion"
+        ],
+        "title": "AddCriterion",
+        "type": "object"
+      },
+      "AddQuizQuestion": {
+        "additionalProperties": false,
+        "properties": {
+          "node": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Node",
+            "type": "string"
+          },
+          "op": {
+            "const": "add_quiz_question",
+            "title": "Op",
+            "type": "string"
+          },
+          "question": {
+            "$ref": "#/components/schemas/QuizQuestion"
+          }
+        },
+        "required": [
+          "op",
+          "node",
+          "question"
+        ],
+        "title": "AddQuizQuestion",
+        "type": "object"
+      },
       "ApplicationSummary": {
         "properties": {
           "campaign_id": {
@@ -25,6 +79,316 @@
           "created_at"
         ],
         "title": "ApplicationSummary",
+        "type": "object"
+      },
+      "Applied": {
+        "properties": {
+          "affected_stage_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Affected Stage Note"
+          },
+          "affects_running_campaign": {
+            "title": "Affects Running Campaign",
+            "type": "boolean"
+          },
+          "base_version": {
+            "title": "Base Version",
+            "type": "integer"
+          },
+          "descriptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Descriptions",
+            "type": "array"
+          },
+          "diff": {
+            "items": {
+              "$ref": "#/components/schemas/DiffEntry"
+            },
+            "title": "Diff",
+            "type": "array"
+          },
+          "repinned_applications": {
+            "default": 0,
+            "title": "Repinned Applications",
+            "type": "integer"
+          },
+          "resulting_definition": {
+            "$ref": "#/components/schemas/Workflow"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/Warning"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "base_version",
+          "diff",
+          "resulting_definition",
+          "warnings",
+          "descriptions",
+          "affects_running_campaign",
+          "version"
+        ],
+        "title": "Applied",
+        "type": "object"
+      },
+      "ApplyRequest": {
+        "properties": {
+          "base_version": {
+            "minimum": 1.0,
+            "title": "Base Version",
+            "type": "integer"
+          },
+          "patches": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "add_criterion": "#/components/schemas/AddCriterion",
+                  "add_quiz_question": "#/components/schemas/AddQuizQuestion",
+                  "edit_interview_prompt": "#/components/schemas/EditInterviewPrompt",
+                  "remove_criterion": "#/components/schemas/RemoveCriterion",
+                  "remove_quiz_question": "#/components/schemas/RemoveQuizQuestion",
+                  "replace_quiz_question": "#/components/schemas/ReplaceQuizQuestion",
+                  "set_cutoff": "#/components/schemas/SetCutoff",
+                  "set_interview_themes": "#/components/schemas/SetInterviewThemes",
+                  "set_notify": "#/components/schemas/SetNotify",
+                  "set_pass_mark": "#/components/schemas/SetPassMark",
+                  "set_time_limit": "#/components/schemas/SetTimeLimit",
+                  "set_turn_cap": "#/components/schemas/SetTurnCap",
+                  "toggle_node": "#/components/schemas/ToggleNode",
+                  "update_criterion": "#/components/schemas/UpdateCriterion",
+                  "update_interview_rubric": "#/components/schemas/UpdateInterviewRubric"
+                },
+                "propertyName": "op"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/SetCutoff"
+                },
+                {
+                  "$ref": "#/components/schemas/SetPassMark"
+                },
+                {
+                  "$ref": "#/components/schemas/SetTimeLimit"
+                },
+                {
+                  "$ref": "#/components/schemas/AddCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/UpdateCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/RemoveCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/AddQuizQuestion"
+                },
+                {
+                  "$ref": "#/components/schemas/ReplaceQuizQuestion"
+                },
+                {
+                  "$ref": "#/components/schemas/RemoveQuizQuestion"
+                },
+                {
+                  "$ref": "#/components/schemas/EditInterviewPrompt"
+                },
+                {
+                  "$ref": "#/components/schemas/SetInterviewThemes"
+                },
+                {
+                  "$ref": "#/components/schemas/UpdateInterviewRubric"
+                },
+                {
+                  "$ref": "#/components/schemas/SetTurnCap"
+                },
+                {
+                  "$ref": "#/components/schemas/ToggleNode"
+                },
+                {
+                  "$ref": "#/components/schemas/SetNotify"
+                }
+              ]
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "title": "Patches",
+            "type": "array"
+          },
+          "source": {
+            "default": "panel",
+            "enum": [
+              "panel",
+              "chat"
+            ],
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "base_version",
+          "patches"
+        ],
+        "title": "ApplyRequest",
+        "type": "object"
+      },
+      "Criterion": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Id",
+            "type": "string"
+          },
+          "must_have": {
+            "default": false,
+            "title": "Must Have",
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "weight": {
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Weight",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "weight"
+        ],
+        "title": "Criterion",
+        "type": "object"
+      },
+      "CriterionFields": {
+        "additionalProperties": false,
+        "properties": {
+          "must_have": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Must Have"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "weight": {
+            "anyOf": [
+              {
+                "maximum": 5.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight"
+          }
+        },
+        "title": "CriterionFields",
+        "type": "object"
+      },
+      "DiffEntry": {
+        "description": "One changed value. `path` uses ids, e.g. `n1.cutoff`, `n1.criteria[c2].weight`.",
+        "properties": {
+          "after": {
+            "title": "After"
+          },
+          "before": {
+            "title": "Before"
+          },
+          "kind": {
+            "enum": [
+              "added",
+              "removed",
+              "changed"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "node_id": {
+            "title": "Node Id",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "kind",
+          "node_id"
+        ],
+        "title": "DiffEntry",
+        "type": "object"
+      },
+      "EditInterviewPrompt": {
+        "additionalProperties": false,
+        "properties": {
+          "node": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Node",
+            "type": "string"
+          },
+          "op": {
+            "const": "edit_interview_prompt",
+            "title": "Op",
+            "type": "string"
+          },
+          "prompt_additions": {
+            "maxLength": 2000,
+            "title": "Prompt Additions",
+            "type": "string"
+          }
+        },
+        "required": [
+          "op",
+          "node",
+          "prompt_additions"
+        ],
+        "title": "EditInterviewPrompt",
         "type": "object"
       },
       "ErrorBody": {
@@ -69,6 +433,51 @@
         "title": "ErrorEnvelope",
         "type": "object"
       },
+      "FinalConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "notify_on_complete": {
+            "default": true,
+            "title": "Notify On Complete",
+            "type": "boolean"
+          },
+          "ranking": {
+            "const": "weighted_mean",
+            "default": "weighted_mean",
+            "title": "Ranking",
+            "type": "string"
+          }
+        },
+        "title": "FinalConfig",
+        "type": "object"
+      },
+      "FinalNode": {
+        "additionalProperties": false,
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/FinalConfig"
+          },
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Id",
+            "type": "string"
+          },
+          "type": {
+            "const": "final",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "config"
+        ],
+        "title": "FinalNode",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -104,6 +513,85 @@
           "ok"
         ],
         "title": "Health",
+        "type": "object"
+      },
+      "InterviewConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "pass_threshold": {
+            "default": 60,
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Pass Threshold",
+            "type": "integer"
+          },
+          "prompt_additions": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Prompt Additions",
+            "type": "string"
+          },
+          "rubric": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/RubricItem"
+            },
+            "maxItems": 10,
+            "title": "Rubric",
+            "type": "array"
+          },
+          "themes": {
+            "default": [],
+            "items": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 10,
+            "title": "Themes",
+            "type": "array"
+          },
+          "turn_cap": {
+            "default": 6,
+            "maximum": 10.0,
+            "minimum": 3.0,
+            "title": "Turn Cap",
+            "type": "integer"
+          }
+        },
+        "title": "InterviewConfig",
+        "type": "object"
+      },
+      "InterviewNode": {
+        "additionalProperties": false,
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/InterviewConfig"
+          },
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Id",
+            "type": "string"
+          },
+          "type": {
+            "const": "interview",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "config"
+        ],
+        "title": "InterviewNode",
         "type": "object"
       },
       "Me": {
@@ -188,6 +676,153 @@
         "title": "Organization",
         "type": "object"
       },
+      "PatchRequest": {
+        "properties": {
+          "base_version": {
+            "minimum": 1.0,
+            "title": "Base Version",
+            "type": "integer"
+          },
+          "patches": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "add_criterion": "#/components/schemas/AddCriterion",
+                  "add_quiz_question": "#/components/schemas/AddQuizQuestion",
+                  "edit_interview_prompt": "#/components/schemas/EditInterviewPrompt",
+                  "remove_criterion": "#/components/schemas/RemoveCriterion",
+                  "remove_quiz_question": "#/components/schemas/RemoveQuizQuestion",
+                  "replace_quiz_question": "#/components/schemas/ReplaceQuizQuestion",
+                  "set_cutoff": "#/components/schemas/SetCutoff",
+                  "set_interview_themes": "#/components/schemas/SetInterviewThemes",
+                  "set_notify": "#/components/schemas/SetNotify",
+                  "set_pass_mark": "#/components/schemas/SetPassMark",
+                  "set_time_limit": "#/components/schemas/SetTimeLimit",
+                  "set_turn_cap": "#/components/schemas/SetTurnCap",
+                  "toggle_node": "#/components/schemas/ToggleNode",
+                  "update_criterion": "#/components/schemas/UpdateCriterion",
+                  "update_interview_rubric": "#/components/schemas/UpdateInterviewRubric"
+                },
+                "propertyName": "op"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/SetCutoff"
+                },
+                {
+                  "$ref": "#/components/schemas/SetPassMark"
+                },
+                {
+                  "$ref": "#/components/schemas/SetTimeLimit"
+                },
+                {
+                  "$ref": "#/components/schemas/AddCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/UpdateCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/RemoveCriterion"
+                },
+                {
+                  "$ref": "#/components/schemas/AddQuizQuestion"
+                },
+                {
+                  "$ref": "#/components/schemas/ReplaceQuizQuestion"
+                },
+                {
+                  "$ref": "#/components/schemas/RemoveQuizQuestion"
+                },
+                {
+                  "$ref": "#/components/schemas/EditInterviewPrompt"
+                },
+                {
+                  "$ref": "#/components/schemas/SetInterviewThemes"
+                },
+                {
+                  "$ref": "#/components/schemas/UpdateInterviewRubric"
+                },
+                {
+                  "$ref": "#/components/schemas/SetTurnCap"
+                },
+                {
+                  "$ref": "#/components/schemas/ToggleNode"
+                },
+                {
+                  "$ref": "#/components/schemas/SetNotify"
+                }
+              ]
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "title": "Patches",
+            "type": "array"
+          }
+        },
+        "required": [
+          "base_version",
+          "patches"
+        ],
+        "title": "PatchRequest",
+        "type": "object"
+      },
+      "Preview": {
+        "properties": {
+          "affected_stage_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Affected Stage Note"
+          },
+          "affects_running_campaign": {
+            "title": "Affects Running Campaign",
+            "type": "boolean"
+          },
+          "base_version": {
+            "title": "Base Version",
+            "type": "integer"
+          },
+          "descriptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Descriptions",
+            "type": "array"
+          },
+          "diff": {
+            "items": {
+              "$ref": "#/components/schemas/DiffEntry"
+            },
+            "title": "Diff",
+            "type": "array"
+          },
+          "resulting_definition": {
+            "$ref": "#/components/schemas/Workflow"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/Warning"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "base_version",
+          "diff",
+          "resulting_definition",
+          "warnings",
+          "descriptions",
+          "affects_running_campaign"
+        ],
+        "title": "Preview",
+        "type": "object"
+      },
       "ProfileCreate": {
         "properties": {
           "adult_confirmed": {
@@ -229,6 +864,312 @@
         "title": "ProfileCreate",
         "type": "object"
       },
+      "QuizConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "pass_mark": {
+            "default": 60,
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Pass Mark",
+            "type": "integer"
+          },
+          "questions": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/QuizQuestion"
+            },
+            "maxItems": 30,
+            "title": "Questions",
+            "type": "array"
+          },
+          "time_limit_min": {
+            "default": 20,
+            "maximum": 120.0,
+            "minimum": 5.0,
+            "title": "Time Limit Min",
+            "type": "integer"
+          }
+        },
+        "title": "QuizConfig",
+        "type": "object"
+      },
+      "QuizNode": {
+        "additionalProperties": false,
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/QuizConfig"
+          },
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Id",
+            "type": "string"
+          },
+          "type": {
+            "const": "quiz",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "config"
+        ],
+        "title": "QuizNode",
+        "type": "object"
+      },
+      "QuizQuestion": {
+        "additionalProperties": false,
+        "properties": {
+          "answer_index": {
+            "title": "Answer Index",
+            "type": "integer"
+          },
+          "difficulty": {
+            "default": "medium",
+            "enum": [
+              "easy",
+              "medium",
+              "hard"
+            ],
+            "title": "Difficulty",
+            "type": "string"
+          },
+          "explanation": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Explanation",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Id",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "maxLength": 300,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 5,
+            "minItems": 3,
+            "title": "Options",
+            "type": "array"
+          },
+          "prompt": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Prompt",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "prompt",
+          "options",
+          "answer_index"
+        ],
+        "title": "QuizQuestion",
+        "type": "object"
+      },
+      "RemoveCriterion": {
+        "additionalProperties": false,
+        "properties": {
+          "criterion_id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Criterion Id",
+            "type": "string"
+          },
+          "node": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Node",
+            "type": "string"
+          },
+          "op": {
+            "const": "remove_criterion",
+            "title": "Op",
+            "type": "string"
+          }
+        },
+        "required": [
+          "op",
+          "node",
+          "criterion_id"
+        ],
+        "title": "RemoveCriterion",
+        "type": "object"
+      },
+      "RemoveQuizQuestion": {
+        "additionalProperties": false,
+        "properties": {
+          "node": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Node",
+            "type": "string"
+          },
+          "op": {
+            "const": "remove_quiz_question",
+            "title": "Op",
+            "type": "string"
+          },
+          "question_id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Question Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "op",
+          "node",
+          "question_id"
+        ],
+        "title": "RemoveQuizQuestion",
+        "type": "object"
+      },
+      "ReplaceQuizQuestion": {
+        "additionalProperties": false,
+        "properties": {
+          "node": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Node",
+            "type": "string"
+          },
+          "op": {
+            "const": "replace_quiz_question",
+            "title": "Op",
+            "type": "string"
+          },
+          "question": {
+            "$ref": "#/components/schemas/QuizQuestion"
+          },
+          "question_id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Question Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "op",
+          "node",
+          "question_id",
+          "question"
+        ],
+        "title": "ReplaceQuizQuestion",
+        "type": "object"
+      },
+      "RubricItem": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "weight": {
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Weight",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "weight"
+        ],
+        "title": "RubricItem",
+        "type": "object"
+      },
+      "ScreeningConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "criteria": {
+            "items": {
+              "$ref": "#/components/schemas/Criterion"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Criteria",
+            "type": "array"
+          },
+          "cutoff": {
+            "default": 60,
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Cutoff",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "criteria"
+        ],
+        "title": "ScreeningConfig",
+        "type": "object"
+      },
+      "ScreeningNode": {
+        "additionalProperties": false,
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/ScreeningConfig"
+          },
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Id",
+            "type": "string"
+          },
+          "type": {
+            "const": "screening",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "config"
+        ],
+        "title": "ScreeningNode",
+        "type": "object"
+      },
       "ServiceInfo": {
         "properties": {
           "docs": {
@@ -253,6 +1194,276 @@
           }
         },
         "title": "ServiceInfo",
+        "type": "object"
+      },
+      "SetCutoff": {
+        "additionalProperties": false,
+        "properties": {
+          "node": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Node",
+            "type": "string"
+          },
+          "op": {
+            "const": "set_cutoff",
+            "title": "Op",
+            "type": "string"
+          },
+          "value": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Value",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "op",
+          "node",
+          "value"
+        ],
+        "title": "SetCutoff",
+        "type": "object"
+      },
+      "SetInterviewThemes": {
+        "additionalProperties": false,
+        "properties": {
+          "node": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Node",
+            "type": "string"
+          },
+          "op": {
+            "const": "set_interview_themes",
+            "title": "Op",
+            "type": "string"
+          },
+          "themes": {
+            "items": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 10,
+            "title": "Themes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "op",
+          "node",
+          "themes"
+        ],
+        "title": "SetInterviewThemes",
+        "type": "object"
+      },
+      "SetNotify": {
+        "additionalProperties": false,
+        "properties": {
+          "op": {
+            "const": "set_notify",
+            "title": "Op",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "op",
+          "value"
+        ],
+        "title": "SetNotify",
+        "type": "object"
+      },
+      "SetPassMark": {
+        "additionalProperties": false,
+        "description": "Quiz pass mark, or the interview's pass threshold.",
+        "properties": {
+          "node": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Node",
+            "type": "string"
+          },
+          "op": {
+            "const": "set_pass_mark",
+            "title": "Op",
+            "type": "string"
+          },
+          "value": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Value",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "op",
+          "node",
+          "value"
+        ],
+        "title": "SetPassMark",
+        "type": "object"
+      },
+      "SetTimeLimit": {
+        "additionalProperties": false,
+        "properties": {
+          "node": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Node",
+            "type": "string"
+          },
+          "op": {
+            "const": "set_time_limit",
+            "title": "Op",
+            "type": "string"
+          },
+          "value": {
+            "maximum": 120.0,
+            "minimum": 5.0,
+            "title": "Value",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "op",
+          "node",
+          "value"
+        ],
+        "title": "SetTimeLimit",
+        "type": "object"
+      },
+      "SetTurnCap": {
+        "additionalProperties": false,
+        "properties": {
+          "node": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Node",
+            "type": "string"
+          },
+          "op": {
+            "const": "set_turn_cap",
+            "title": "Op",
+            "type": "string"
+          },
+          "value": {
+            "maximum": 10.0,
+            "minimum": 3.0,
+            "title": "Value",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "op",
+          "node",
+          "value"
+        ],
+        "title": "SetTurnCap",
+        "type": "object"
+      },
+      "ToggleNode": {
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "node": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Node",
+            "type": "string"
+          },
+          "op": {
+            "const": "toggle_node",
+            "title": "Op",
+            "type": "string"
+          }
+        },
+        "required": [
+          "op",
+          "node",
+          "enabled"
+        ],
+        "title": "ToggleNode",
+        "type": "object"
+      },
+      "UpdateCriterion": {
+        "additionalProperties": false,
+        "properties": {
+          "criterion_id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Criterion Id",
+            "type": "string"
+          },
+          "fields": {
+            "$ref": "#/components/schemas/CriterionFields"
+          },
+          "node": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Node",
+            "type": "string"
+          },
+          "op": {
+            "const": "update_criterion",
+            "title": "Op",
+            "type": "string"
+          }
+        },
+        "required": [
+          "op",
+          "node",
+          "criterion_id",
+          "fields"
+        ],
+        "title": "UpdateCriterion",
+        "type": "object"
+      },
+      "UpdateInterviewRubric": {
+        "additionalProperties": false,
+        "properties": {
+          "node": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Node",
+            "type": "string"
+          },
+          "op": {
+            "const": "update_interview_rubric",
+            "title": "Op",
+            "type": "string"
+          },
+          "rubric": {
+            "items": {
+              "$ref": "#/components/schemas/RubricItem"
+            },
+            "maxItems": 10,
+            "title": "Rubric",
+            "type": "array"
+          }
+        },
+        "required": [
+          "op",
+          "node",
+          "rubric"
+        ],
+        "title": "UpdateInterviewRubric",
         "type": "object"
       },
       "ValidationError": {
@@ -293,6 +1504,176 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "VersionSummary": {
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "parent_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Version"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "parent_version",
+          "created_at",
+          "created_by"
+        ],
+        "title": "VersionSummary",
+        "type": "object"
+      },
+      "Warning": {
+        "properties": {
+          "code": {
+            "const": "protected_characteristic",
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "patch_index": {
+            "title": "Patch Index",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "patch_index",
+          "code",
+          "message"
+        ],
+        "title": "Warning",
+        "type": "object"
+      },
+      "Workflow": {
+        "additionalProperties": false,
+        "properties": {
+          "edges": {
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Edges",
+            "type": "array"
+          },
+          "nodes": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "final": "#/components/schemas/FinalNode",
+                  "interview": "#/components/schemas/InterviewNode",
+                  "quiz": "#/components/schemas/QuizNode",
+                  "screening": "#/components/schemas/ScreeningNode"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/ScreeningNode"
+                },
+                {
+                  "$ref": "#/components/schemas/QuizNode"
+                },
+                {
+                  "$ref": "#/components/schemas/InterviewNode"
+                },
+                {
+                  "$ref": "#/components/schemas/FinalNode"
+                }
+              ]
+            },
+            "title": "Nodes",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "nodes",
+          "edges"
+        ],
+        "title": "Workflow",
+        "type": "object"
+      },
+      "WorkflowVersion": {
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "definition": {
+            "$ref": "#/components/schemas/Workflow"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "parent_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Version"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "parent_version",
+          "definition",
+          "created_at"
+        ],
+        "title": "WorkflowVersion",
         "type": "object"
       }
     },
@@ -451,6 +1832,573 @@
         "summary": "List Applications",
         "tags": [
           "candidate"
+        ]
+      }
+    },
+    "/v1/manager/jobs/{job_id}/workflow": {
+      "get": {
+        "operationId": "get_workflow_v1_manager_jobs__job_id__workflow_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowVersion"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Workflow",
+        "tags": [
+          "manager",
+          "workflow"
+        ]
+      }
+    },
+    "/v1/manager/jobs/{job_id}/workflow/apply": {
+      "post": {
+        "operationId": "apply_v1_manager_jobs__job_id__workflow_apply_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Applied"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Apply",
+        "tags": [
+          "manager",
+          "workflow"
+        ]
+      }
+    },
+    "/v1/manager/jobs/{job_id}/workflow/preview": {
+      "post": {
+        "operationId": "preview_v1_manager_jobs__job_id__workflow_preview_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Preview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Preview",
+        "tags": [
+          "manager",
+          "workflow"
+        ]
+      }
+    },
+    "/v1/manager/jobs/{job_id}/workflow/undo": {
+      "post": {
+        "operationId": "undo_v1_manager_jobs__job_id__workflow_undo_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Applied"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Undo",
+        "tags": [
+          "manager",
+          "workflow"
+        ]
+      }
+    },
+    "/v1/manager/jobs/{job_id}/workflow/versions": {
+      "get": {
+        "operationId": "list_versions_v1_manager_jobs__job_id__workflow_versions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/VersionSummary"
+                  },
+                  "title": "Response List Versions V1 Manager Jobs  Job Id  Workflow Versions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Versions",
+        "tags": [
+          "manager",
+          "workflow"
+        ]
+      }
+    },
+    "/v1/manager/jobs/{job_id}/workflow/versions/{version}": {
+      "get": {
+        "operationId": "get_version_v1_manager_jobs__job_id__workflow_versions__version__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowVersion"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Version",
+        "tags": [
+          "manager",
+          "workflow"
         ]
       }
     },

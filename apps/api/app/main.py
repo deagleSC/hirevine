@@ -14,6 +14,7 @@ from pydantic import BaseModel
 from app.api.routers import me
 from app.api.routers.candidate import applications as candidate_applications
 from app.api.routers.manager import org as manager_org
+from app.api.routers.manager import workflows as manager_workflows
 from app.core.config import get_settings
 from app.core.db import close_pool, transaction
 from app.core.errors import install_error_handlers
@@ -71,6 +72,7 @@ def create_app() -> FastAPI:
 
     app.include_router(me.router)
     app.include_router(manager_org.router)
+    app.include_router(manager_workflows.router)
     app.include_router(candidate_applications.router)
 
     # Inngest calls this endpoint to run function steps; it verifies request signatures in production.
