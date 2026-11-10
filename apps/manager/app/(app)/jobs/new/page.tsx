@@ -26,7 +26,11 @@ const FIELD_LABEL: Record<string, string> = {
 
 function Messages({ state, pending }: { state?: JdChatState; pending: boolean }) {
   const end = useRef<HTMLDivElement>(null);
-  useEffect(() => end.current?.scrollIntoView({ behavior: "smooth", block: "end" }), [state?.messages.length, pending]);
+  // Braces matter: an effect's return value is its cleanup, and newer browsers return a
+  // Promise from scrollIntoView, which React would then try to call on unmount.
+  useEffect(() => {
+    end.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [state?.messages.length, pending]);
   const messages = state?.messages ?? [];
   return (
     <div className="flex flex-col gap-3" aria-live="polite">
