@@ -57,6 +57,11 @@ test("edit → preview → apply → undo", async ({ page }) => {
   await expect(page.getByLabel("Criterion 2 weight")).toHaveValue("5");
   await page.getByTestId("stage-quiz").click();
   await shot(page, "editor-quiz-panel");
+
+  await page.getByRole("button", { name: "Edit by chat" }).click();
+  await expect(page.getByRole("button", { name: "Skip the quiz" })).toBeVisible();
+  await shot(page, "chat-drawer");
+  await page.keyboard.press("Escape");
 });
 
 test("a stale edit opens the conflict dialog and re-previews against the latest version", async ({ page, request }) => {

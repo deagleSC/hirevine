@@ -7,12 +7,28 @@ import { Alert, AlertDescription, AlertTitle } from "@hirevine/ui/components/ale
 import { Badge } from "@hirevine/ui/components/badge";
 import { Button } from "@hirevine/ui/components/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@hirevine/ui/components/card";
+import {
+  Conversation,
+  ConversationContent,
+  ConversationEmptyState,
+  ConversationScrollButton,
+} from "@hirevine/ui/ai-elements/conversation";
+import { Message, MessageContent, MessageResponse } from "@hirevine/ui/ai-elements/message";
+import {
+  PromptInput,
+  PromptInputBody,
+  PromptInputFooter,
+  PromptInputProvider,
+  PromptInputSubmit,
+  PromptInputTextarea,
+  PromptInputTools,
+  type PromptInputMessage,
+} from "@hirevine/ui/ai-elements/prompt-input";
+import { Suggestion } from "@hirevine/ui/ai-elements/suggestion";
 import { Spinner } from "@hirevine/ui/components/spinner";
-import { Textarea } from "@hirevine/ui/components/textarea";
-import { cn } from "@hirevine/ui/lib/utils";
-import { AlertTriangle, ArrowUp } from "lucide-react";
+import { AlertTriangle, BriefcaseBusiness } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { Suspense, useState } from "react";
 import { toast } from "sonner";
 
 import { useConfirmJob, useJdChat, useSendJdMessage, type JdChatState } from "@/lib/jobs";
@@ -24,40 +40,50 @@ const FIELD_LABEL: Record<string, string> = {
   must_have_skills: "Must-have skills",
 };
 
-function Messages({ state, pending }: { state?: JdChatState; pending: boolean }) {
-  const end = useRef<HTMLDivElement>(null);
-  // Braces matter: an effect's return value is its cleanup, and newer browsers return a
-  // Promise from scrollIntoView, which React would then try to call on unmount.
-  useEffect(() => {
-    end.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [state?.messages.length, pending]);
+const STARTERS = [
+  "We're hiring a senior React engineer, remote, must know TypeScript.",
+  "Data analyst in Bengaluru: SQL and Python required, 2–4 years.",
+  "Mid-level backend engineer for our payments team, Go or Java.",
+];
+
+function Messages({ state, pending, onStarter }: { state?: JdChatState; pending: boolean; onStarter: (text: string) => void }) {
   const messages = state?.messages ?? [];
-  return (
-    <div className="flex flex-col gap-3" aria-live="polite">
-      {messages.length === 0 ? (
-        <p className="rounded-lg bg-muted/50 p-4 text-sm text-muted-foreground">
-          Describe the role in your own words: what the person will do, the must-have skills, seniority and location.
-          Hirevine asks for anything missing, then proposes a screening pipeline you can edit.
-        </p>
-      ) : null}
-      {messages.map((m, i) => (
-        <div
-          key={i}
-          className={cn(
-            "max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm",
-            m.role === "user" ? "self-end bg-primary text-primary-foreground" : "self-start bg-muted",
-          )}
-        >
-          {m.content}
+  if (messages.length === 0 && !pending) {
+    return (
+      <ConversationEmptyState>
+        <BriefcaseBusiness className="size-8 text-muted-foreground" />
+        <div className="space-y-1">
+          <h3 className="text-sm font-medium">Describe the role</h3>
+          <p className="max-w-md text-sm text-muted-foreground">
+            What the person will do, the must-have skills, seniority and location. Hirevine asks for anything missing, then
+            proposes a screening pipeline you can edit.
+          </p>
         </div>
+        <div className="flex flex-col items-center gap-2">
+          {STARTERS.map((s) => (
+            <Suggestion key={s} suggestion={s} onClick={onStarter} className="h-auto whitespace-normal py-1.5" />
+          ))}
+        </div>
+      </ConversationEmptyState>
+    );
+  }
+  return (
+    <>
+      {messages.map((m, i) => (
+        <Message key={i} from={m.role}>
+          <MessageContent>{m.role === "assistant" ? <MessageResponse>{m.content}</MessageResponse> : m.content}</MessageContent>
+        </Message>
       ))}
       {pending ? (
-        <div className="flex items-center gap-2 self-start rounded-2xl bg-muted px-4 py-2.5 text-sm text-muted-foreground">
-          <Spinner /> Thinking…
-        </div>
+        <Message from="assistant">
+          <MessageContent>
+            <span className="flex items-center gap-2 text-muted-foreground">
+              <Spinner /> Thinking…
+            </span>
+          </MessageContent>
+        </Message>
       ) : null}
-      <div ref={end} />
-    </div>
+    </>
   );
 }
 
@@ -124,32 +150,24 @@ function NewJobChat() {
   const router = useRouter();
   const params = useSearchParams();
   const [threadId, setThreadId] = useState<string | null>(params.get("thread"));
-  const [draft, setDraft] = useState("");
   const chat = useJdChat(threadId);
   const send = useSendJdMessage();
   const confirm = useConfirmJob();
   const state = send.data && send.data.thread_id === threadId ? send.data : chat.data;
 
-  async function submit(e?: FormEvent) {
-    e?.preventDefault();
-    const message = draft.trim();
+  /** Throws on failure so PromptInput keeps the text for a retry. */
+  async function sendMessage(text: string) {
+    const message = text.trim();
     if (!message || send.isPending) return;
     try {
       const next = await send.mutateAsync({ thread_id: threadId ?? undefined, message });
-      setDraft("");
       if (!threadId) {
         setThreadId(next.thread_id);
         router.replace(`/jobs/new?thread=${next.thread_id}`, { scroll: false });
       }
     } catch (err) {
       toast.error(messageFor(err));
-    }
-  }
-
-  function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      void submit();
+      throw err;
     }
   }
 
@@ -166,9 +184,15 @@ function NewJobChat() {
   if (chat.isError) return <ErrorState message={messageFor(chat.error)} />;
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+    <div className="mx-auto flex h-[calc(100svh-6rem)] w-full max-w-3xl flex-col gap-4">
       <PageHeader title="New job" description="Describe the role. Hirevine drafts the screening pipeline." />
-      <Messages state={state} pending={send.isPending} />
+      <Conversation className="min-h-0 flex-1 rounded-xl border">
+        <ConversationContent>
+          <Messages state={state} pending={send.isPending} onStarter={(t) => void sendMessage(t).catch(() => {})} />
+          {state?.complete ? <Summary state={state} onConfirm={onConfirm} confirming={confirm.isPending} /> : null}
+        </ConversationContent>
+        <ConversationScrollButton />
+      </Conversation>
       {state && !state.complete && state.messages.length > 0 ? (
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           Still needed:
@@ -179,21 +203,23 @@ function NewJobChat() {
           ))}
         </div>
       ) : null}
-      {state?.complete ? <Summary state={state} onConfirm={onConfirm} confirming={confirm.isPending} /> : null}
-      <form onSubmit={submit} className="sticky bottom-4 flex items-end gap-2 rounded-2xl border bg-background p-2 shadow-sm">
-        <Textarea
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={onKeyDown}
-          placeholder={state?.complete ? "Ask for changes before creating the job…" : "e.g. We're hiring a senior React engineer, remote…"}
-          aria-label="Message"
-          className="max-h-40 min-h-11 resize-none border-0 shadow-none focus-visible:ring-0"
-          maxLength={4000}
-        />
-        <Button type="submit" size="icon" aria-label="Send" disabled={!draft.trim() || send.isPending}>
-          {send.isPending ? <Spinner /> : <ArrowUp />}
-        </Button>
-      </form>
+      <PromptInputProvider>
+        <PromptInput onSubmit={(msg: PromptInputMessage) => sendMessage(msg.text)}>
+          <PromptInputBody>
+            <PromptInputTextarea
+              aria-label="Message"
+              maxLength={4000}
+              placeholder={state?.complete ? "Ask for changes before creating the job…" : "Describe the role…"}
+            />
+          </PromptInputBody>
+          <PromptInputFooter>
+            <PromptInputTools>
+              <span className="px-2 text-xs text-muted-foreground">Enter to send · Shift+Enter for a new line</span>
+            </PromptInputTools>
+            <PromptInputSubmit status={send.isPending ? "submitted" : undefined} disabled={send.isPending} aria-label="Send" />
+          </PromptInputFooter>
+        </PromptInput>
+      </PromptInputProvider>
     </div>
   );
 }
