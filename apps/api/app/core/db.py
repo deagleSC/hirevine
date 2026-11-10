@@ -60,6 +60,19 @@ class Tx:
     async def set_claims(self, claims: dict[str, Any]) -> None:
         await self.conn.execute("select set_config('app.claims', %s, true)", (json.dumps(claims),))
 
+    @asynccontextmanager
+    async def as_system(self) -> AsyncIterator[None]:
+        """Run a few statements in system context inside this same transaction, then restore
+        the caller's claims. For writes users may not make themselves but that must commit or
+        roll back with their request (e.g. queuing a job_runs row)."""
+        row = await self.fetchone("select current_setting('app.claims', true) as claims")
+        previous = (row or {}).get("claims") or "{}"
+        await self.set_claims(system_claims())
+        try:
+            yield
+        finally:
+            await self.conn.execute("select set_config('app.claims', %s, true)", (previous,))
+
     def after_commit(self, callback: Callable[[], Awaitable[None]]) -> None:
         self._after_commit.append(callback)
 

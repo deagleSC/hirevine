@@ -5,6 +5,8 @@
     "openapi": "uv run python -m app.export_openapi openapi.json",
     "dev": "uv run uvicorn app.main:app --reload --port 8000",
     "lint": "uv run ruff check .",
-    "test": "uv run pytest -q"
+    "test": "uv run pytest -q",
+    "dev:jobs": "npx --yes inngest-cli@1.50.0 dev -u http://127.0.0.1:8000/api/inngest --no-discovery",
+    "smoke": "uv run python -m evals.smoke_test"
   }
 }

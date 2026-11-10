@@ -146,6 +146,8 @@ Status, ownership and anything used to filter, join or decide permissions live i
 
 **As built:** migrations are named `<timestamp>_<name>.sql` and numbered in the order the phases add them, so no file is ever inserted before one that is already applied. Phase 1 created `…01_extensions` through `…07_rls` (extensions, app schema, core tables, applications, stages, ops, RLS). The AI tables (`llm_*`, `embeddings` with pgvector, `skill_aliases`) come in Phase 2 as a new migration, and the analytics views in Phase 10.
 
+**As built (Phase 2):** `…09_ai_infra` adds `llm_cache`, `llm_budget`, `llm_rpm` and `skill_aliases`. The `embeddings` table moves to Phase 5 with the pipeline that writes it, so local development needs pgvector only from then. `llm_budget` keeps a `model_id = '*'` row per day that enforces `LLM_DAILY_CAP` across all models (OpenRouter's free cap is per account); per-model rows record which model actually served each call. Every HTTP request to OpenRouter, including the validation retry, counts against the cap.
+
 ### 4.2 Tables
 
 The product doc's tables (§9), with the columns and constraints this plan adds:
@@ -553,6 +555,8 @@ async def screen_application(ctx: inngest.Context, step: inngest.Step) -> None:
     await step.run("compute_and_transition", screening_service.finalize, app_id)
     await step.run("mark_done", runs.mark_done, run_id)
 ```
+
+**As built (Phase 2):** pinned `inngest==0.5.20` and the dev server `inngest-cli@1.50.0`. In this SDK the handler takes a single `ctx: inngest.Context` and steps are `ctx.step.run(...)`, not `(ctx, step)` as in the example above. The `selftest` function (dev/test only) is the Phase 2 exit check: `tests/jobs/test_inngest_dev_server.py`.
 
 Pin the Inngest SDK version. Check the exact signatures (`Context`/`Step`, `if_exp`, `Throttle`) against the pinned version's reference, because the doc notes some features are TypeScript-only.
 

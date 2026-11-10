@@ -11,7 +11,8 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "vitest run"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
@@ -39,6 +40,11 @@
     "react-dom": "19",
     "tailwindcss": "^4",
     "typescript": "5",
-    "next": "15"
+    "next": "15",
+    "@hirevine/api-client": "workspace:^",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "jsdom": "^27.0.0",
+    "vitest": "^5.1.0"
   }
 }

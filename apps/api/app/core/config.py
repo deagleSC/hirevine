@@ -29,6 +29,39 @@ class Settings(BaseSettings):
     )
     cron_secret: str = ""
 
+    # LLM (backend plan §11.1). Model lists are ordered: OpenRouter falls back down the list.
+    openrouter_api_key: str = ""
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    llm_structured_models: list[str] = Field(
+        default_factory=lambda: [
+            "google/gemma-4-31b-it:free",
+            "poolside/laguna-s-2.1:free",
+            "nvidia/nemotron-3-super-120b-a12b:free",
+        ]
+    )
+    llm_bulk_models: list[str] = Field(default_factory=lambda: ["nvidia/nemotron-3.5-lightning:free"])
+    llm_pilot_mode: bool = False
+    llm_pilot_allowlist: list[str] = Field(default_factory=list)
+    llm_daily_cap: int = 50
+    llm_rpm_cap: int = 20
+    # Share of llm_rpm_cap left for request-path calls once the Inngest throttles are counted
+    # (screening 10 + quiz 2 + interview 3 + report 3 = 18 of 20).
+    llm_sync_rpm_cap: int = 2
+    llm_request_timeout_s: float = 60.0
+
+    # Tracing. Off unless both keys are set.
+    langfuse_public_key: str = ""
+    langfuse_secret_key: str = ""
+    langfuse_host: str = "https://cloud.langfuse.com"
+
+    # Inngest. In dev/test the SDK talks to the local dev server (INNGEST_DEV=1) and needs no keys.
+    inngest_event_key: str = ""
+    inngest_signing_key: str = ""
+
+    @property
+    def is_dev(self) -> bool:
+        return self.app_env in ("dev", "test")
+
     @property
     def jwks_url(self) -> str:
         return f"{self.supabase_url.rstrip('/')}/auth/v1/.well-known/jwks.json"
