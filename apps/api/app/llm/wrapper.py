@@ -21,7 +21,7 @@ from pydantic import BaseModel, ValidationError
 
 from app.core.config import get_settings
 from app.llm import budget, cache, tracing
-from app.llm.errors import LLMNotConfigured, NeedsReview, RateLimited, TimeBudgetExceeded
+from app.llm.errors import BudgetExhausted, LLMNotConfigured, NeedsReview, RateLimited, TimeBudgetExceeded
 from app.llm.models import ModelRole, models_for, provider_prefs
 from app.llm.prompts import PROMPTS, Prompt
 
@@ -92,6 +92,13 @@ def _arguments(resp: Any) -> str | None:
     return m.group(1) if m else content
 
 
+def _is_daily_limit(exc: openai.RateLimitError) -> bool:
+    """OpenRouter marks its per-day free-model cap in the 429 body (`free-models-per-day`,
+    `limit_source: openrouter_free_tier_daily`)."""
+    text = str(getattr(exc, "body", "") or "") + str(exc)
+    return "free-models-per-day" in text or "openrouter_free_tier_daily" in text
+
+
 def _retry_message(error: ValidationError | json.JSONDecodeError) -> dict[str, str]:
     detail = str(error)[:2000]
     return {
@@ -154,6 +161,10 @@ async def call_structured[T: BaseModel](
                     extra_body={"models": models, "provider": provider_prefs()},
                 )
             except openai.RateLimitError as exc:
+                if _is_daily_limit(exc):
+                    # OpenRouter's account-wide free cap: waiting a minute won't help, so defer like
+                    # our own cap does (jobs resume after 00:00 UTC; chats get "daily_ai_limit").
+                    raise BudgetExhausted("OpenRouter daily free-model limit reached") from exc
                 retry_after = float(exc.response.headers.get("retry-after", 20)) if exc.response else 20.0
                 raise RateLimited("Model provider rate limit", retry_after=retry_after) from exc
 

@@ -89,6 +89,13 @@ async def test_provider_429_raises_rate_limited(router):
     assert exc.value.retry_after == 7
 
 
+async def test_provider_daily_limit_is_budget_exhausted_not_busy(router):
+    router.reply({"error": {"message": "Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day",
+                            "code": 429, "metadata": {"limit_source": "openrouter_free_tier_daily"}}}, status=429)
+    with pytest.raises(BudgetExhausted):
+        await call(router)
+
+
 async def test_empty_completion_raises_rate_limited(router):
     body = tool_response(GOOD)
     body["choices"] = []
