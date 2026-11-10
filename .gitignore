@@ -26,3 +26,7 @@ __pycache__/
 .vercel
 .idea/
 .env*
+.vscode/
+
+# generated from apps/api/openapi.json by `pnpm gen:api`
+packages/api-client/src/schema.d.ts

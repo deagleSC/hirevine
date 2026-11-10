@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
+import inngest.fast_api
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -15,11 +16,16 @@ from app.api.routers.manager import org as manager_org
 from app.core.config import get_settings
 from app.core.db import close_pool, transaction
 from app.core.errors import install_error_handlers
+from app.jobs.client import inngest_client
+from app.jobs.functions import all_functions
+from app.llm import tracing
+from app.llm.models import check_model_config
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     yield
+    tracing.flush()
     await close_pool()
 
 
@@ -37,6 +43,7 @@ class ServiceInfo(BaseModel):
 
 def create_app() -> FastAPI:
     settings = get_settings()
+    check_model_config(settings)  # pilot mode with no allowed model must not start
     app = FastAPI(title="Hirevine API", version="0.1.0", lifespan=lifespan)
     app.add_middleware(
         CORSMiddleware,
@@ -62,6 +69,13 @@ def create_app() -> FastAPI:
     app.include_router(me.router)
     app.include_router(manager_org.router)
     app.include_router(candidate_applications.router)
+
+    # Inngest calls this endpoint to run function steps; it verifies request signatures in production.
+    inngest.fast_api.serve(app, inngest_client, all_functions(), serve_path="/api/inngest")
+    for route in app.router.routes:  # internal transport, not part of the public API or generated client
+        if getattr(route, "path", None) == "/api/inngest":
+            route.include_in_schema = False  # type: ignore[attr-defined]
+    app.openapi_schema = None
     return app
 
 

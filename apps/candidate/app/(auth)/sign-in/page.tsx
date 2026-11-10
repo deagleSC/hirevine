@@ -1,7 +1,7 @@
 "use client";
 
 import { safeNextPath } from "@hirevine/api-client";
-import { CenteredPage, SignInForm } from "@hirevine/ui";
+import { SignInForm } from "@hirevine/ui/blocks/sign-in-form";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
@@ -23,12 +23,9 @@ function SignIn() {
         router.refresh();
       }}
       footer={
-        <p className="text-center text-sm text-muted-foreground">
-          New here?{" "}
-          <Link className="text-primary underline-offset-4 hover:underline" href="/sign-up">
-            Create an account
-          </Link>
-        </p>
+        <>
+          New here? <Link href="/sign-up">Create an account</Link>
+        </>
       }
     />
   );
@@ -36,10 +33,8 @@ function SignIn() {
 
 export default function SignInPage() {
   return (
-    <CenteredPage>
-      <Suspense>
-        <SignIn />
-      </Suspense>
-    </CenteredPage>
+    <Suspense>
+      <SignIn />
+    </Suspense>
   );
 }

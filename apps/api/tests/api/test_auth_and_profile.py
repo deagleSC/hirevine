@@ -169,6 +169,31 @@ async def test_role_cannot_change(client, new_user):
     assert r.json()["error"]["code"] == "role_conflict"
 
 
+async def test_candidate_cannot_switch_to_manager(client, new_user):
+    uid = new_user()
+    await make_candidate(client, uid)
+    r = await client.post("/v1/me/profile", headers=auth(uid),
+                          json={"role": "manager", "display_name": "x", "org_name": "Takeover"})
+    assert r.status_code == 409
+    assert r.json()["error"]["code"] == "role_conflict"
+    assert (await client.get("/v1/me", headers=auth(uid))).json()["role"] == "candidate"
+
+
+async def test_metadata_role_is_ignored(client, new_user):
+    """A token claiming a role in user_metadata grants nothing; the profile decides."""
+    uid = new_user()
+    await make_candidate(client, uid)
+    now = int(time.time())
+    token = jwt.encode(
+        {"sub": str(uid), "aud": "authenticated", "exp": now + 600, "role": "authenticated",
+         "user_metadata": {"role": "manager"}, "app_metadata": {"role": "admin"}},
+        JWT_SECRET, algorithm="HS256",
+    )
+    r = await client.get("/v1/manager/org", headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 403
+    assert r.json()["error"]["code"] == "wrong_app"
+
+
 async def test_candidate_must_confirm_adult(client, new_user):
     r = await client.post("/v1/me/profile", headers=auth(new_user()),
                           json={"role": "candidate", "display_name": "Young"})

@@ -12,7 +12,7 @@ frontend and backend implementation plans.
 | `apps/api` | FastAPI service: the only gateway to the database and the only caller of models (port 8000) |
 | `packages/ui` | Design tokens and shared components |
 | `packages/api-client` | Typed client generated from the API's OpenAPI document |
-| `packages/config` | Shared TypeScript, ESLint and Tailwind presets |
+| `packages/config` | Shared TypeScript and ESLint config |
 | `supabase/migrations` | Plain SQL migrations (schema, RLS) |
 
 ## Local setup
@@ -32,13 +32,32 @@ cp apps/manager/.env.example apps/manager/.env.local
 cp apps/candidate/.env.example apps/candidate/.env.local
 
 pnpm dev            # API + both apps
+pnpm --filter @hirevine/api dev:jobs   # optional: Inngest dev server for background jobs (http://localhost:8288)
 ```
+
+Background jobs run on Inngest. Locally the API talks to the Inngest dev server and needs no
+Inngest keys; without the dev server running, queued jobs simply wait.
+
+## LLM layer
+
+Model calls go through OpenRouter (`OPENROUTER_API_KEY` in `apps/api/.env`). Every call is
+cached, counted against a daily cap (`LLM_DAILY_CAP`, default 50 — OpenRouter's free limit),
+and traced to Langfuse when its keys are set.
+
+```bash
+pnpm --filter @hirevine/api smoke                       # pick the primary model; report in apps/api/evals/reports/
+cd apps/api && uv run python -m evals.smoke_test --models a,b --tasks patch   # a subset
+```
+
+After editing a prompt in `apps/api/app/llm/prompts/`, bump its `version` and run
+`uv run python -m app.llm.prompts` to update the lock file (a test fails otherwise).
 
 ## Checks
 
 ```bash
 pnpm turbo run lint typecheck test build   # everything
 cd apps/api && uv run pytest -q            # backend only (creates the hirevine_test database)
+cd apps/api && INNGEST_DEV_TESTS=1 uv run pytest tests/jobs   # + the Inngest dev-server test
 ```
 
 After changing API routes, regenerate the typed client: `pnpm gen:api`.

@@ -1,0 +1,14 @@
+{
+  "smoke_patch": {
+    "version": 1,
+    "hash": "05cf37652d4a496f"
+  },
+  "smoke_quiz": {
+    "version": 1,
+    "hash": "00830959b5095079"
+  },
+  "smoke_screen": {
+    "version": 1,
+    "hash": "17b8b50a8b1aed23"
+  }
+}

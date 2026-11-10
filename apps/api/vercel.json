@@ -1,5 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "true",
+  "buildCommand": "mkdir -p public && echo ok > public/.keep",
+  "outputDirectory": "public",
   "functions": {
     "api/index.py": { "maxDuration": 300, "memory": 2048 }
   },
