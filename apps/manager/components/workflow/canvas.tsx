@@ -16,9 +16,12 @@ import {
   type Node,
   type NodeProps,
   type NodeTypes,
+  useReactFlow,
+  useStore,
 } from "@xyflow/react";
 import { Flag, ListChecks, MessagesSquare, ScanSearch } from "lucide-react";
-import { useMemo } from "react";
+import { useTheme } from "next-themes";
+import { useEffect, useMemo } from "react";
 
 export const STAGE_LABEL = { screening: "Resume screening", quiz: "Quiz", interview: "AI interview", final: "Final review" } as const;
 const ICON = { screening: ScanSearch, quiz: ListChecks, interview: MessagesSquare, final: Flag } as const;
@@ -88,6 +91,17 @@ function StageNode({ data }: NodeProps<Node<Data>>) {
 
 const nodeTypes: NodeTypes = { stage: StageNode };
 
+/** Re-fit the view whenever the canvas is resized (e.g. the side panel collapses). */
+function FitOnResize() {
+  const { fitView } = useReactFlow();
+  const width = useStore((s) => s.width);
+  const height = useStore((s) => s.height);
+  useEffect(() => {
+    if (width && height) void fitView({ padding: 0.15, duration: 200 });
+  }, [width, height, fitView]);
+  return null;
+}
+
 export function WorkflowCanvas({
   workflow,
   selectedId,
@@ -119,8 +133,11 @@ export function WorkflowCanvas({
     return { nodes, edges };
   }, [workflow, selectedId, onToggle, readOnly]);
 
+  // Follow the app theme (next-themes), not the OS setting.
+  const { resolvedTheme } = useTheme();
+
   return (
-    <div className="h-[260px] w-full overflow-hidden rounded-xl border bg-muted/20 md:h-[320px]">
+    <div className="h-[280px] w-full bg-muted/20 sm:h-[360px] xl:h-full">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -133,9 +150,11 @@ export function WorkflowCanvas({
         proOptions={{ hideAttribution: true }}
         minZoom={0.4}
         maxZoom={1.5}
+        colorMode={resolvedTheme === "dark" ? "dark" : "light"}
       >
         <Background gap={16} />
         <Controls showInteractive={false} />
+        <FitOnResize />
       </ReactFlow>
     </div>
   );

@@ -6,7 +6,8 @@ import { ErrorState, PageSkeleton } from "@hirevine/ui/blocks/states";
 import { Badge } from "@hirevine/ui/components/badge";
 import { Button } from "@hirevine/ui/components/button";
 import { Card, CardContent } from "@hirevine/ui/components/card";
-import { History, MessageSquareText, Rocket, Undo2 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@hirevine/ui/components/collapsible";
+import { ChevronRight, History, MessageSquareText, PanelRightOpen, Rocket, Undo2 } from "lucide-react";
 import { use, useCallback, useState } from "react";
 
 import { JobStatusBadge } from "@/components/job-status-badge";
@@ -27,6 +28,7 @@ export default function WorkflowEditorPage({ params }: { params: Promise<{ id: s
   const [chatOpen, setChatOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [publishOpen, setPublishOpen] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(true);
 
   const onToggle = useCallback(
     (nodeId: string, enabled: boolean) => void flow.preview([{ op: "toggle_node", node: nodeId, enabled }], "panel"),
@@ -43,7 +45,8 @@ export default function WorkflowEditorPage({ params }: { params: Promise<{ id: s
   const isOpen = campaign?.status === "open";
 
   return (
-    <>
+    // Fill the viewport (minus the h-16 app header and p-6 bottom padding) so the page never scrolls on desktop.
+    <div className="flex min-w-0 flex-col gap-6 xl:h-[calc(100svh-5.5rem)] xl:min-h-0">
       <PageHeader
         title={job.data.title}
         description={
@@ -55,14 +58,14 @@ export default function WorkflowEditorPage({ params }: { params: Promise<{ id: s
         }
         actions={
           <>
-            <Button variant="outline" size="sm" onClick={() => void flow.undo()} disabled={!wf.data.parent_version || flow.busy}>
-              <Undo2 /> Undo
+            <Button variant="outline" size="sm" aria-label="Undo" onClick={() => void flow.undo()} disabled={!wf.data.parent_version || flow.busy}>
+              <Undo2 /> <span className="hidden sm:inline">Undo</span>
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setHistoryOpen(true)}>
-              <History /> History
+            <Button variant="outline" size="sm" aria-label="History" onClick={() => setHistoryOpen(true)}>
+              <History /> <span className="hidden sm:inline">History</span>
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setChatOpen(true)}>
-              <MessageSquareText /> Edit by chat
+            <Button variant="outline" size="sm" aria-label="Edit by chat" onClick={() => setChatOpen(true)}>
+              <MessageSquareText /> <span className="hidden sm:inline">Edit by chat</span>
             </Button>
             {!isOpen ? (
               <Button size="sm" onClick={() => setPublishOpen(true)}>
@@ -79,37 +82,51 @@ export default function WorkflowEditorPage({ params }: { params: Promise<{ id: s
             <p className="shrink-0 text-sm">
               <span className="font-medium">Live.</span> {campaign.applicants} applicant{campaign.applicants === 1 ? "" : "s"}. Apply link:
             </p>
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <CopyLink url={shareUrl(campaign.share_slug)} />
             </div>
           </CardContent>
         </Card>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
-        <div className="flex flex-col gap-3">
-          <WorkflowCanvas workflow={definition} selectedId={node.id} onSelect={setSelected} onToggle={onToggle} />
-          <p className="text-xs text-muted-foreground">
-            Select a step to edit it. The order is fixed: screening → quiz → interview → final review.
-          </p>
+      <div className="flex flex-col gap-3 xl:min-h-0 xl:flex-1">
+        <div className="flex flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm xl:min-h-0 xl:flex-1 xl:flex-row">
+          <div className="min-w-0 xl:min-h-0 xl:flex-1">
+            <WorkflowCanvas workflow={definition} selectedId={node.id} onSelect={setSelected} onToggle={onToggle} />
+          </div>
+          <Collapsible open={panelOpen} onOpenChange={setPanelOpen} asChild>
+            <section className="flex flex-col border-t xl:min-h-0 xl:shrink-0 xl:border-t-0 xl:border-l data-[state=open]:xl:w-[400px]">
+              <div className="flex items-center border-b px-4 py-2 in-data-[state=closed]:border-b-0">
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="-ml-2 flex-1 justify-start" aria-label={panelOpen ? "Collapse step settings" : "Expand step settings"}>
+                    {panelOpen ? <ChevronRight /> : <PanelRightOpen />}
+                    <span className={panelOpen ? "" : "xl:hidden"}>Step settings</span>
+                  </Button>
+                </CollapsibleTrigger>
+              </div>
+              <CollapsibleContent className="flex min-h-0 flex-1 flex-col">
+                <div className="min-h-0 flex-1 overflow-y-auto px-6 pt-4">
+                  <NodePanel
+                    base={definition}
+                    node={node}
+                    version={wf.data.version}
+                    busy={flow.busy}
+                    onPropose={(patches) => void flow.preview(patches, "panel")}
+                  />
+                </div>
+              </CollapsibleContent>
+            </section>
+          </Collapsible>
         </div>
-        <Card className="xl:sticky xl:top-4 xl:self-start">
-          <CardContent>
-            <NodePanel
-              base={definition}
-              node={node}
-              version={wf.data.version}
-              busy={flow.busy}
-              onPropose={(patches) => void flow.preview(patches, "panel")}
-            />
-          </CardContent>
-        </Card>
+        <p className="text-xs text-muted-foreground">
+          Select a step to edit it. The order is fixed: screening → quiz → interview → final review.
+        </p>
       </div>
 
       {flow.dialogs}
       <ChatDrawer jobId={jobId} open={chatOpen} onOpenChange={setChatOpen} busy={flow.busy} onPropose={(p) => { setChatOpen(false); void flow.preview(p, "chat"); }} />
       <HistorySheet jobId={jobId} open={historyOpen} onOpenChange={setHistoryOpen} current={wf.data.version} />
       <PublishDialog jobId={jobId} version={wf.data.version} open={publishOpen} onOpenChange={setPublishOpen} />
-    </>
+    </div>
   );
 }

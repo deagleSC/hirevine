@@ -67,7 +67,7 @@ export function DashboardLayout({ subtitle, homeHref, nav, footer, actions, chil
           </div>
           {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
         </header>
-        <div className="flex flex-1 flex-col gap-6 p-6 pt-0">{children}</div>
+        <div className="flex min-w-0 flex-1 flex-col gap-6 p-4 pt-0 md:p-6 md:pt-0">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   );
@@ -85,11 +85,11 @@ export function PageHeader({
 }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+      <div className="min-w-0 space-y-1">
+        <h1 className="text-xl font-semibold tracking-tight break-words sm:text-2xl">{title}</h1>
         {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
       </div>
-      {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
+      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
     </div>
   );
 }

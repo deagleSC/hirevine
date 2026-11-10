@@ -11,6 +11,7 @@ import {
   type Workflow,
   type WorkflowNode,
 } from "@hirevine/api-client";
+import { Badge } from "@hirevine/ui/components/badge";
 import { Button } from "@hirevine/ui/components/button";
 import { Checkbox } from "@hirevine/ui/components/checkbox";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@hirevine/ui/components/field";
@@ -20,8 +21,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@hirevine/ui/components/slider";
 import { Switch } from "@hirevine/ui/components/switch";
 import { Textarea } from "@hirevine/ui/components/textarea";
+import { cn } from "@hirevine/ui/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2 } from "lucide-react";
+import { ListChecks, Plus, Trash2, X } from "lucide-react";
 import { Controller, useFieldArray, useForm, type Control, type FieldValues, type UseFormRegister } from "react-hook-form";
 import { z } from "zod";
 
@@ -71,7 +73,7 @@ interface PanelProps {
 function Footer({ busy, readOnly, onReset, dirty }: { busy: boolean; readOnly?: boolean; onReset: () => void; dirty: boolean }) {
   if (readOnly) return null;
   return (
-    <div className="sticky bottom-0 flex justify-end gap-2 border-t bg-background pt-3">
+    <div className="sticky bottom-0 -mx-6 mt-2 flex justify-end gap-2 border-t bg-card px-6 py-4">
       <Button type="button" variant="ghost" onClick={onReset} disabled={!dirty || busy}>
         Reset
       </Button>
@@ -157,60 +159,23 @@ function ScreeningPanel({ base, node, onPropose, busy, readOnly }: PanelProps) {
 }
 
 // ----------------------------------------------------------------------- quiz
+const LETTERS = "ABCDE";
+
 function QuestionEditor({ form, index, onRemove }: { form: ReturnType<typeof useForm<z.infer<typeof quizSchema>>>; index: number; onRemove: () => void }) {
   const options = form.watch(`questions.${index}.options`);
   const errs = form.formState.errors.questions?.[index];
+  const base = `q${index}`;
   return (
-    <div className="flex flex-col gap-3 rounded-lg border p-3">
-      <div className="flex items-start gap-2">
-        <Textarea aria-label={`Question ${index + 1}`} rows={2} {...form.register(`questions.${index}.prompt`)} />
-        <Button type="button" variant="ghost" size="icon" aria-label={`Remove question ${index + 1}`} onClick={onRemove}>
-          <Trash2 />
-        </Button>
-      </div>
-      {errs?.prompt ? <FieldError>{errs.prompt.message}</FieldError> : null}
-      <Controller
-        control={form.control}
-        name={`questions.${index}.answer_index`}
-        render={({ field }) => (
-          <RadioGroup value={String(field.value)} onValueChange={(v) => field.onChange(Number(v))} aria-label="Correct option">
-            {options.map((_, oi) => (
-              <div key={oi} className="flex items-center gap-2">
-                <RadioGroupItem value={String(oi)} aria-label={`Option ${oi + 1} is correct`} />
-                <Input aria-label={`Option ${oi + 1}`} {...form.register(`questions.${index}.options.${oi}`)} />
-                {options.length > 3 ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`Remove option ${oi + 1}`}
-                    onClick={() => {
-                      const next = options.filter((__, j) => j !== oi);
-                      form.setValue(`questions.${index}.options`, next, { shouldDirty: true });
-                      if (field.value >= next.length) field.onChange(0);
-                    }}
-                  >
-                    <Trash2 />
-                  </Button>
-                ) : null}
-              </div>
-            ))}
-          </RadioGroup>
-        )}
-      />
-      {options.length < 5 ? (
-        <Button type="button" variant="ghost" size="sm" className="self-start" onClick={() => form.setValue(`questions.${index}.options`, [...options, ""], { shouldDirty: true })}>
-          <Plus /> Add option
-        </Button>
-      ) : null}
-      <div className="grid gap-2 sm:grid-cols-[1fr_9rem]">
-        <Input aria-label="Explanation" placeholder="Why the answer is correct (optional)" {...form.register(`questions.${index}.explanation`)} />
+    <div className="flex flex-col gap-4 rounded-lg border bg-muted/20 p-3 sm:p-4">
+      <div className="flex items-center gap-2">
+        <span className="flex size-6 items-center justify-center rounded-md bg-primary/10 text-xs font-semibold text-primary">{index + 1}</span>
+        <span className="flex-1 text-sm font-medium">Question {index + 1}</span>
         <Controller
           control={form.control}
           name={`questions.${index}.difficulty`}
           render={({ field }) => (
             <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger aria-label="Difficulty">
+              <SelectTrigger size="sm" aria-label="Difficulty" className="w-24 sm:w-28">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -221,7 +186,94 @@ function QuestionEditor({ form, index, onRemove }: { form: ReturnType<typeof use
             </Select>
           )}
         />
+        <Button type="button" variant="ghost" size="icon" className="size-8 text-muted-foreground hover:text-destructive" aria-label={`Remove question ${index + 1}`} onClick={onRemove}>
+          <Trash2 />
+        </Button>
       </div>
+
+      <Field data-invalid={!!errs?.prompt}>
+        <FieldLabel htmlFor={`${base}-prompt`} className="sr-only">
+          Question {index + 1}
+        </FieldLabel>
+        <Textarea id={`${base}-prompt`} rows={2} placeholder="Write the question…" aria-invalid={!!errs?.prompt} {...form.register(`questions.${index}.prompt`)} />
+        {errs?.prompt ? <FieldError>{errs.prompt.message}</FieldError> : null}
+      </Field>
+
+      <Controller
+        control={form.control}
+        name={`questions.${index}.answer_index`}
+        render={({ field }) => (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-baseline justify-between">
+              <span className="text-xs font-medium text-muted-foreground">Options</span>
+              <span className="text-xs text-muted-foreground">Select the correct answer</span>
+            </div>
+            <RadioGroup value={String(field.value)} onValueChange={(v) => field.onChange(Number(v))} aria-label="Correct option" className="gap-2">
+              {options.map((_, oi) => {
+                const correct = field.value === oi;
+                const err = errs?.options?.[oi];
+                return (
+                  <div key={oi} className="flex flex-col gap-1">
+                    <div
+                      className={cn(
+                        "flex items-center gap-2 rounded-md border bg-background py-1 pr-1 pl-2.5 transition-colors",
+                        correct && "border-primary/60 bg-primary/5",
+                        err && "border-destructive",
+                      )}
+                    >
+                      <RadioGroupItem value={String(oi)} aria-label={`Option ${LETTERS[oi]} is correct`} />
+                      <span className="w-3 text-xs font-medium text-muted-foreground">{LETTERS[oi]}</span>
+                      <Input
+                        aria-label={`Option ${LETTERS[oi]}`}
+                        placeholder={`Option ${LETTERS[oi]}`}
+                        className="h-8 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0 dark:bg-transparent"
+                        {...form.register(`questions.${index}.options.${oi}`)}
+                      />
+                      {correct ? <Badge className="hidden shrink-0 sm:inline-flex">Correct</Badge> : null}
+                      {options.length > 3 ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 shrink-0 text-muted-foreground"
+                          aria-label={`Remove option ${LETTERS[oi]}`}
+                          onClick={() => {
+                            const next = options.filter((__, j) => j !== oi);
+                            form.setValue(`questions.${index}.options`, next, { shouldDirty: true });
+                            if (field.value === oi) field.onChange(0);
+                            else if (field.value > oi) field.onChange(field.value - 1);
+                          }}
+                        >
+                          <X />
+                        </Button>
+                      ) : null}
+                    </div>
+                    {err?.message ? <FieldError>{err.message}</FieldError> : null}
+                  </div>
+                );
+              })}
+            </RadioGroup>
+            {options.length < 5 ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="self-start text-muted-foreground"
+                onClick={() => form.setValue(`questions.${index}.options`, [...options, ""], { shouldDirty: true })}
+              >
+                <Plus /> Add option
+              </Button>
+            ) : null}
+          </div>
+        )}
+      />
+
+      <Field>
+        <FieldLabel htmlFor={`${base}-explanation`} className="text-xs text-muted-foreground">
+          Explanation <span className="font-normal">(optional)</span>
+        </FieldLabel>
+        <Textarea id={`${base}-explanation`} rows={2} placeholder="Why the correct answer is right" {...form.register(`questions.${index}.explanation`)} />
+      </Field>
     </div>
   );
 }
@@ -249,14 +301,20 @@ function QuizPanel({ base, node, onPropose, busy, readOnly }: PanelProps) {
         <FieldSet>
           <FieldLegend variant="label">Questions ({qs.fields.length})</FieldLegend>
           <FieldDescription>Question generation from the job description arrives with the quiz feature.</FieldDescription>
+          {qs.fields.length === 0 ? (
+            <div className="flex flex-col items-center gap-1 rounded-lg border border-dashed px-4 py-6 text-center">
+              <ListChecks className="mb-1 size-5 text-muted-foreground" />
+              <p className="text-sm font-medium">No questions yet</p>
+              <p className="text-xs text-muted-foreground">Add multiple-choice questions candidates answer in this step.</p>
+            </div>
+          ) : null}
           {qs.fields.map((q, i) => (
             <QuestionEditor key={q.id} form={form} index={i} onRemove={() => qs.remove(i)} />
           ))}
           <Button
             type="button"
             variant="outline"
-            size="sm"
-            className="self-start"
+            className="w-full border-dashed"
             disabled={qs.fields.length >= 30}
             onClick={() => qs.append({ prompt: "", options: ["", "", ""], answer_index: 0, explanation: "", difficulty: "medium" })}
           >
