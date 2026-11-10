@@ -1,0 +1,8 @@
+# Secret scanning config. Extends gitleaks' built-in rules.
+# Run locally: `gitleaks git .` (history) or `gitleaks git --staged .` (what you're about to commit).
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Example env files hold placeholders and localhost-only values"
+paths = ['''(^|/)\.env\.example$''']
