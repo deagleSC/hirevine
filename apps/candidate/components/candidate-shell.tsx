@@ -2,11 +2,12 @@
 
 import { DashboardLayout, type DashboardLayoutProps } from "@hirevine/ui/blocks/dashboard-layout";
 import type { NavItem } from "@hirevine/ui/blocks/nav-main";
-import { ScrollText, Search, UserRound } from "lucide-react";
+import { ChartColumn, ScrollText, Search, UserRound } from "lucide-react";
 
 const nav: NavItem[] = [
   { title: "Browse jobs", url: "/jobs", icon: Search },
   { title: "My applications", url: "/applications", icon: ScrollText },
+  { title: "My analytics", url: "/analytics", icon: ChartColumn },
   { title: "Account", url: "/account", icon: UserRound },
 ];
 

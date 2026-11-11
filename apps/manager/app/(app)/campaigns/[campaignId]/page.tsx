@@ -55,6 +55,9 @@ export default function CampaignPage({ params }: { params: Promise<{ campaignId:
             <Button asChild variant="outline">
               <Link href={`/jobs/${c.job_id}/workflow`}>Pipeline</Link>
             </Button>
+            <Button asChild variant="outline">
+              <Link href={`/campaigns/${campaignId}/analytics`}>Analytics</Link>
+            </Button>
             <Button asChild>
               <Link href={`/campaigns/${campaignId}/final`}>{c.status === "completed" ? "Final report" : "Final list & release"}</Link>
             </Button>

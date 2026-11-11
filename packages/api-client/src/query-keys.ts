@@ -13,6 +13,9 @@ export const qk = {
   campaign: (id: string) => ["campaigns", id] as const,
   campaignApplications: (id: string, filters: Record<string, string | undefined>) =>
     ["campaigns", id, "applications", filters] as const,
+  campaignAnalytics: (id: string) => ["campaigns", id, "analytics"] as const,
+  analyticsOverview: () => ["analytics", "overview"] as const,
+  myAnalytics: () => ["my-analytics"] as const,
   finalReport: (id: string) => ["campaigns", id, "final"] as const,
   application: (campaignId: string, appId: string) => ["campaigns", campaignId, "applications", "detail", appId] as const,
   jobs: () => ["jobs"] as const,
