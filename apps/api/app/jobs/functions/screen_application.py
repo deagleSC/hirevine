@@ -58,7 +58,8 @@ async def _on_failure(ctx: inngest.Context) -> None:
 async def screen_application(ctx: inngest.Context) -> str:
     run_id = run_id_of(ctx)
     app_id = str(ctx.event.data["application_id"])
-    await ctx.step.run("mark_running", runs.mark_running, run_id, ctx.run_id)
+    if not await ctx.step.run("mark_running", runs.mark_running, run_id, ctx.run_id):
+        return "duplicate"
 
     if await ctx.step.run("check_paused", screen.is_paused, app_id):
         resumed = await ctx.step.wait_for_event(

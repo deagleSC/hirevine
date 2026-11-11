@@ -49,8 +49,19 @@ async def _update(run_id: str | UUID, sql: str, params: tuple[Any, ...] = ()) ->
         await tx.conn.execute(f"update job_runs set {sql}, updated_at = now() where id = %s", (*params, run_id))
 
 
-async def mark_running(run_id: str, inngest_run_id: str) -> None:
-    await _update(run_id, "status = 'running', attempts = attempts + 1, inngest_run_id = %s", (inngest_run_id,))
+async def mark_running(run_id: str, inngest_run_id: str) -> bool:
+    """Claim a queued run. False when it is already running or finished: the event was a duplicate
+    (re-sends get fresh event ids, so this guard, not Inngest's id dedupe, stops a second start)."""
+    async with transaction(system_claims()) as tx:
+        row = await tx.fetchone(
+            """
+            update job_runs set status = 'running', attempts = attempts + 1, inngest_run_id = %s,
+                                updated_at = now()
+            where id = %s and status = 'queued' returning id
+            """,
+            (inngest_run_id, run_id),
+        )
+    return row is not None
 
 
 async def mark_done(run_id: str) -> None:

@@ -42,5 +42,6 @@ async def _generate(run_id: str) -> str:
 )
 async def generate_quiz(ctx: inngest.Context) -> str:
     run_id = run_id_of(ctx)
-    await ctx.step.run("mark_running", runs.mark_running, run_id, ctx.run_id)
+    if not await ctx.step.run("mark_running", runs.mark_running, run_id, ctx.run_id):
+        return "duplicate"
     return str(await ctx.step.run("generate", _generate, run_id))
