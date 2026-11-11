@@ -55,6 +55,10 @@ class Settings(BaseSettings):
 
     # Abuse limits (§18).
     applications_per_day: int = 10
+    # Per client IP (hashed), across accounts: stops one person applying through many sign-ups.
+    applications_per_ip_per_day: int = 30
+    # Candidate data is deleted this many days after a campaign completes (retention-purge, daily).
+    retention_days: int = 180
     upload_urls_per_hour: int = 20
 
     # LLM (backend plan §11.1). Model lists are ordered: OpenRouter falls back down the list.
@@ -75,7 +79,7 @@ class Settings(BaseSettings):
     llm_rpm_cap: int = 20
     # Share of llm_rpm_cap left for request-path calls once the Inngest throttles are counted
     # (screening 10 + quiz 2 + interview 3 + report 3 = 18 of 20).
-    llm_sync_rpm_cap: int = 2
+    llm_sync_rpm_cap: int = 10
     llm_request_timeout_s: float = 60.0
 
     # Tracing. Off unless both keys are set.

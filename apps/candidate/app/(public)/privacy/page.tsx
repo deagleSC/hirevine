@@ -40,7 +40,10 @@ export default function PrivacyPage() {
         <li>You only see results and feedback after the hiring team releases outcomes for the whole job.</li>
       </ul>
       <h2>How long we keep it</h2>
-      <p>Until you delete your account. A fixed retention period after a job closes is planned before the pilot.</p>
+      <p>
+        Your applications, resumes, answers, transcripts, results and feedback are deleted automatically six months after
+        the hiring team completes the job, or sooner if you delete your account. Your account itself stays until you delete it.
+      </p>
     </PolicyPage>
   );
 }

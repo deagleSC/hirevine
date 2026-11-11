@@ -101,6 +101,7 @@ class CampaignMonitor(BaseModel):
     job_id: UUID
     job_title: str
     is_demo: bool = Field(default=False, description="A pre-run demo with synthetic candidates")
+    purged_at: datetime | None = Field(default=None, description="When candidate data was deleted (retention)")
     status: str
     ai_paused: bool
     total: int
@@ -240,6 +241,9 @@ async def apply(tx: Tx, user: CurrentUser, body: ApplicationCreate, client_ip: s
         raise AppError(422, "invalid_resume_path", "Upload your resume again.")
     await ratelimit.hit(tx, f"apply:{user.user_id}", s.applications_per_day, timedelta(days=1),
                         message="You have reached today's application limit.")
+    if (ip_key := _ip_hash(client_ip)) is not None:  # hashed: no raw IPs are stored
+        await ratelimit.hit(tx, f"apply-ip:{ip_key}", s.applications_per_ip_per_day, timedelta(days=1),
+                            message="Too many applications from this network today. Try again tomorrow.")
     camp = await _open_campaign(tx, body.job_id)
     wf = await _workflow(tx, camp["workflow_id"])
     first = wf.first_node().id
@@ -363,7 +367,8 @@ async def monitor(tx: Tx, campaign_id: UUID) -> CampaignMonitor:
     )
     assert agg is not None
     return CampaignMonitor(
-        id=c["id"], job_id=c["job_id"], job_title=c["job_title"], is_demo=c["is_demo"], status=c["status"],
+        id=c["id"], job_id=c["job_id"], job_title=c["job_title"], is_demo=c["is_demo"], purged_at=c["purged_at"],
+        status=c["status"],
         ai_paused=c["ai_paused"],
         total=agg["total"], processing=agg["processing"], needs_review=agg["needs_review"],
         counts=[StageCount(node_id=r["node_id"], node_type=types.get(r["node_id"], "unknown"), status=r["status"],

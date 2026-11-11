@@ -866,9 +866,9 @@ Materialize only if a query goes over about 300 ms at demo scale.
 | Adults only | `adult_confirmed` required. Stored on the profile |
 | Export | `data_export` job builds a JSON (+ resume file) into a private bucket and returns a signed URL valid for 24 h |
 | Deletion | `data_delete` job removes the resume file, `resume_texts`, embeddings, transcripts, quiz answers and feedback, and anonymizes `events.actor_id`. Then `AuthProvider.delete_user` |
-| Retention | The daily scheduled Inngest function `retention-purge` deletes candidate data older than `RETENTION_DAYS` after campaign completion |
+| Retention | The daily scheduled Inngest function `retention-purge` deletes candidate data older than `RETENTION_DAYS` after campaign completion. **As built:** 180 days; daily at 03:00 UTC; deletes resume files, resume embeddings and the applications (cascading to everything under them) in batches of 100; sets `campaigns.purged_at` (migration 17) and logs `retention.purged`; candidate accounts are kept |
 | Kill switch | `campaigns.ai_paused`. Functions wait for `campaign/resumed`, and the manual-score endpoint is the fallback path |
-| Rate limits | Applications per candidate (for example 10 per day) and per IP. One interview attempt. Upload-URL requests capped. All counted in `rate_limits` |
+| Rate limits | Applications per candidate (for example 10 per day) and per IP. One interview attempt. Upload-URL requests capped. All counted in `rate_limits`. **As built:** 10 applications per candidate per day, 30 per client IP per day (keyed by a salted hash, never the raw IP), 20 upload links per candidate per hour; `housekeeping` drops counters older than two days. Request-path model calls default to 10 per minute |
 | Uploads | pdf/docx only, ≤ 5 MB, MIME sniffed in the `parse_redact` step. The bucket is private, and only signed URLs are used |
 | Model data policy | Synthetic data only until the pilot. `LLM_PILOT_MODE=true` enforces the allowlist + OpenRouter provider `data_collection: "deny"` (**verify the option name**) |
 | Traces | Langfuse receives redacted text only. Unit test: `redact()` output has no email or phone patterns |

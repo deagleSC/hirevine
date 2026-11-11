@@ -159,6 +159,11 @@ with Inngest. Database changes are SQL migrations applied with `npx supabase db 
 
 ## Before a pilot with real applicants
 
-Not done yet: legal review of the privacy notice, terms and AI-evaluation pages; a retention purge
-after campaigns close; per-candidate and per-IP application rate limits; email notifications;
-error monitoring (Sentry); and raising `LLM_SYNC_RPM_CAP` for concurrent interviews.
+In place: candidate data is deleted 180 days after a campaign completes (`retention-purge`, daily;
+`RETENTION_DAYS`); applications are limited per candidate (10/day) and per client IP across
+accounts (30/day, stored hashed); upload links per candidate (20/hour); request-path model calls
+default to 10/minute (`LLM_SYNC_RPM_CAP`).
+
+Not done yet: legal review of the privacy notice, terms and AI-evaluation pages; email
+notifications; error monitoring (Sentry); and checking that `LLM_DAILY_CAP` covers the expected
+volume (a full candidate journey is about 10 model requests).

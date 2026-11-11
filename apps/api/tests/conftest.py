@@ -24,6 +24,9 @@ JWT_SECRET = "test-jwt-secret-at-least-32-bytes-long!!"
 
 # Settings the app reads (set before app modules are imported by test files).
 os.environ.setdefault("APP_ENV", "test")
+# Every test request shares the test client's address, so the per-IP limit would trip across the
+# suite; test_retention.py sets its own low limit with a distinct forwarded IP.
+os.environ.setdefault("APPLICATIONS_PER_IP_PER_DAY", "100000")
 os.environ["DATABASE_URL"] = API_DB_URL
 os.environ["SUPABASE_JWT_SECRET"] = JWT_SECRET
 os.environ["SUPABASE_URL"] = ""

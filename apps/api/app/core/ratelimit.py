@@ -30,3 +30,11 @@ async def hit(tx: Tx, key: str, limit: int, window: timedelta, *, message: str) 
     if row is not None and row["count"] > limit:
         retry = int((start + window - datetime.now(UTC)).total_seconds()) + 1
         raise AppError(429, "rate_limited", message, {"retry_after": retry})
+
+
+async def purge_old(tx: Tx, older_than: timedelta = timedelta(days=2)) -> int:
+    """Drop counters for windows long past (housekeeping); the longest window is one day."""
+    async with tx.as_system():
+        cur = await tx.conn.execute("delete from rate_limits where window_start < %s",
+                                    (datetime.now(UTC) - older_than,))
+    return cur.rowcount or 0

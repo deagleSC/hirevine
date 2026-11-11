@@ -18,6 +18,7 @@ def all_functions() -> list[inngest.Function[Any]]:
         interview_deadline,
         notify_release,
         quiz_deadline,
+        retention_purge,
         score_interview,
         screen_application,
         selftest,
@@ -27,7 +28,7 @@ def all_functions() -> list[inngest.Function[Any]]:
                                         generate_quiz.generate_quiz, quiz_deadline.quiz_deadline,
                                         interview_deadline.interview_deadline, score_interview.score_interview,
                                         draft_report.draft_report, notify_release.notify_release,
-                                        data_delete.data_delete]
+                                        data_delete.data_delete, retention_purge.retention_purge]
     if get_settings().is_dev:
         fns.append(selftest.selftest)  # exit-check function; not served in production
     return fns
