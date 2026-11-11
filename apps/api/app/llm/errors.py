@@ -20,6 +20,11 @@ class RateLimited(LLMError):
         self.retry_after = retry_after
 
 
+class ProviderUnavailable(RateLimited):
+    """The model provider failed (5xx, timeout, dropped connection, or a stream aborted mid-way) on
+    every model tried. Transient: background jobs retry after `retry_after`; request paths say "busy"."""
+
+
 class TimeBudgetExceeded(LLMError):
     """Not enough time left before the step deadline to make another model call."""
 

@@ -55,14 +55,13 @@ class Settings(BaseSettings):
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
     llm_structured_models: list[str] = Field(
         default_factory=lambda: [
-            # Checked against OpenRouter on 2026-11-10 (free + tool calling). Order from the smoke
-            # test (evals/reports/smoke_20261110.json): Nemotron Ultra 8/8 valid; Gemmas rate-limited.
-            "nvidia/nemotron-3-ultra-550b-a55b:free",
-            "google/gemma-4-31b-it:free",
-            "google/gemma-4-26b-a4b-it:free",
+            # Paid variants: the `:free` ones failed in production on 2026-11-11 (429s, 503s, 504s and
+            # aborted streams), which an interview cannot wait out. Quality checks: evals/reports/.
+            "google/gemma-4-31b-it",
+            "nvidia/nemotron-3-ultra-550b-a55b",
         ]
     )
-    llm_bulk_models: list[str] = Field(default_factory=lambda: ["nvidia/nemotron-3.5-lightning:free"])
+    llm_bulk_models: list[str] = Field(default_factory=lambda: ["google/gemma-4-26b-a4b-it"])
     llm_pilot_mode: bool = False
     llm_pilot_allowlist: list[str] = Field(default_factory=list)
     llm_daily_cap: int = 50
