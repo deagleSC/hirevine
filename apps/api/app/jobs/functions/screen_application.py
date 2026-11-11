@@ -50,7 +50,7 @@ async def _on_failure(ctx: inngest.Context) -> None:
 @inngest_client.create_function(
     fn_id="screen-application",
     trigger=inngest.TriggerEvent(event="application/submitted"),
-    retries=3,
+    retries=5,
     throttle=inngest.Throttle(limit=10, period=timedelta(minutes=1)),
     concurrency=[inngest.Concurrency(limit=2)],
     on_failure=_on_failure,

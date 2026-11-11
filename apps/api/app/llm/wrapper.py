@@ -22,7 +22,14 @@ from pydantic import BaseModel, ValidationError
 
 from app.core.config import get_settings
 from app.llm import budget, cache, tracing
-from app.llm.errors import BudgetExhausted, LLMNotConfigured, NeedsReview, RateLimited, TimeBudgetExceeded
+from app.llm.errors import (
+    BudgetExhausted,
+    LLMNotConfigured,
+    NeedsReview,
+    ProviderUnavailable,
+    RateLimited,
+    TimeBudgetExceeded,
+)
 from app.llm.models import ModelRole, models_for, provider_prefs
 from app.llm.prompts import PROMPTS, Prompt
 
@@ -100,6 +107,25 @@ def _is_daily_limit(exc: openai.RateLimitError) -> bool:
     return "free-models-per-day" in text or "openrouter_free_tier_daily" in text
 
 
+PROVIDER_RETRY_AFTER = 60.0  # background jobs wait this long before Inngest retries a provider outage
+
+
+def _is_provider_error(exc: BaseException) -> bool:
+    """A transient failure on the provider's side, worth trying another model or later: a 5xx, a
+    timeout, a dropped connection, or an error event inside a stream (OpenRouter's "Provider timed
+    out", "The operation was aborted"). Other 4xx errors are our fault and are not retried."""
+    if isinstance(exc, openai.RateLimitError):
+        return False
+    if isinstance(exc, openai.APIStatusError):
+        return exc.status_code >= 500
+    return isinstance(exc, (openai.APIError, TimeoutError))
+
+
+def _rotate(models: list[str]) -> list[str]:
+    """The same list with the next model first; OpenRouter tries `models` in order."""
+    return models[1:] + models[:1]
+
+
 def _retry_message(error: ValidationError | json.JSONDecodeError) -> dict[str, str]:
     detail = str(error)[:2000]
     return {
@@ -151,23 +177,36 @@ async def call_structured[T: BaseModel](
             await budget.reserve()
             if sync:
                 await budget.throttle()
-            try:
-                resp = await llm.chat.completions.create(  # type: ignore[call-overload]
-                    model=models[0],
-                    messages=messages,
-                    tools=[tool],
-                    tool_choice={"type": "function", "function": {"name": TOOL_NAME}},
-                    temperature=0,
-                    timeout=min(get_settings().llm_request_timeout_s, remaining(deadline)),
-                    extra_body={"models": models, "provider": provider_prefs()},
-                )
-            except openai.RateLimitError as exc:
-                if _is_daily_limit(exc):
-                    # OpenRouter's account-wide free cap: waiting a minute won't help, so defer like
-                    # our own cap does (jobs resume after 00:00 UTC; chats get "daily_ai_limit").
-                    raise BudgetExhausted("OpenRouter daily free-model limit reached") from exc
-                retry_after = float(exc.response.headers.get("retry-after", 20)) if exc.response else 20.0
-                raise RateLimited("Model provider rate limit", retry_after=retry_after) from exc
+            resp = None
+            for switch in (False, True):  # one switch to the next model on a provider failure
+                try:
+                    resp = await llm.chat.completions.create(  # type: ignore[call-overload]
+                        model=models[0],
+                        messages=messages,
+                        tools=[tool],
+                        tool_choice={"type": "function", "function": {"name": TOOL_NAME}},
+                        temperature=0,
+                        timeout=min(get_settings().llm_request_timeout_s, remaining(deadline)),
+                        extra_body={"models": models, "provider": provider_prefs()},
+                    )
+                    break
+                except openai.RateLimitError as exc:
+                    if _is_daily_limit(exc):
+                        # OpenRouter's account-wide free cap: waiting a minute won't help, so defer like
+                        # our own cap does (jobs resume after 00:00 UTC; chats get "daily_ai_limit").
+                        raise BudgetExhausted("OpenRouter daily free-model limit reached") from exc
+                    retry_after = float(exc.response.headers.get("retry-after", 20)) if exc.response else 20.0
+                    raise RateLimited("Model provider rate limit", retry_after=retry_after) from exc
+                except Exception as exc:
+                    if not _is_provider_error(exc):
+                        raise
+                    if switch or len(models) < 2 or remaining(deadline) < MIN_CALL_SECONDS * 2:
+                        raise ProviderUnavailable(f"Model provider failed: {exc}",
+                                                  retry_after=PROVIDER_RETRY_AFTER) from exc
+                    log.info("%s: provider failed on %s (%s); trying %s", prompt.id, models[0], exc, models[1])
+                    models = _rotate(models)
+                    await budget.reserve()
+            assert resp is not None
 
             served_by = getattr(resp, "model", None) or models[0]
             await budget.record_model(served_by)
@@ -210,41 +249,57 @@ async def stream_text(
     prompt: Prompt[Any, Any] = PROMPTS[prompt_id]
     models = models_for(role)
     llm = client or default_client()
-    ensure_time(deadline)
-    await budget.reserve()
-    await budget.throttle()
     with tracing.generation(
         prompt.id,
         input=input.model_dump(mode="json"),
         metadata={"prompt_id": prompt.id, "prompt_version": prompt.version, "role": role, "models": models},
     ) as span:
         started = time.monotonic()
-        try:
-            stream: Any = await llm.chat.completions.create(  # type: ignore[call-overload]
-                model=models[0],
-                messages=prompt.render(input),  # type: ignore[arg-type]
-                temperature=0.4,
-                stream=True,
-                timeout=min(get_settings().llm_request_timeout_s, remaining(deadline)),
-                extra_body={"models": models, "provider": provider_prefs()},
-            )
-        except openai.RateLimitError as exc:
-            if _is_daily_limit(exc):
-                raise BudgetExhausted("OpenRouter daily free-model limit reached") from exc
-            retry_after = float(exc.response.headers.get("retry-after", 20)) if exc.response else 20.0
-            raise RateLimited("Model provider rate limit", retry_after=retry_after) from exc
-        served_by = models[0]
-        parts: list[str] = []
-        async for chunk in stream:
-            served_by = getattr(chunk, "model", None) or served_by
-            if not getattr(chunk, "choices", None):
+        order = list(models)
+        for switch in (False, True):  # before any text arrives, one failure moves on to the next model
+            ensure_time(deadline)
+            await budget.reserve()
+            await budget.throttle()
+            served_by = order[0]
+            parts: list[str] = []
+            try:
+                stream: Any = await llm.chat.completions.create(  # type: ignore[call-overload]
+                    model=order[0],
+                    messages=prompt.render(input),  # type: ignore[arg-type]
+                    temperature=0.4,
+                    stream=True,
+                    timeout=min(get_settings().llm_request_timeout_s, remaining(deadline)),
+                    extra_body={"models": order, "provider": provider_prefs()},
+                )
+                async for chunk in stream:
+                    served_by = getattr(chunk, "model", None) or served_by
+                    if not getattr(chunk, "choices", None):
+                        continue
+                    text = chunk.choices[0].delta.content or ""
+                    if text:
+                        parts.append(text)
+                        yield text
+            except openai.RateLimitError as exc:
+                if _is_daily_limit(exc):
+                    raise BudgetExhausted("OpenRouter daily free-model limit reached") from exc
+                retry_after = float(exc.response.headers.get("retry-after", 20)) if exc.response else 20.0
+                raise RateLimited("Model provider rate limit", retry_after=retry_after) from exc
+            except Exception as exc:
+                if not _is_provider_error(exc):
+                    raise
+                # Text already shown cannot be taken back: the caller says "busy" and keeps the answer.
+                if parts or switch or len(order) < 2:
+                    raise ProviderUnavailable(f"Model provider failed: {exc}", retry_after=10.0) from exc
+                log.info("%s: provider failed on %s before any text (%s); trying %s", prompt.id, order[0], exc,
+                         order[1])
+                order = _rotate(order)
                 continue
-            text = chunk.choices[0].delta.content or ""
-            if text:
-                parts.append(text)
-                yield text
-        await budget.record_model(served_by)
-        if not "".join(parts).strip():
-            raise RateLimited("Empty response from model provider", retry_after=10.0)
-        span.update(output="".join(parts), model=served_by, cached=False, attempts=1,
-                    fallback_used=served_by != models[0], latency_s=round(time.monotonic() - started, 3))
+            await budget.record_model(served_by)
+            if not "".join(parts).strip():
+                if switch or len(order) < 2:
+                    raise RateLimited("Empty response from model provider", retry_after=10.0)
+                order = _rotate(order)
+                continue
+            span.update(output="".join(parts), model=served_by, cached=False, attempts=2 if switch else 1,
+                        fallback_used=served_by != models[0], latency_s=round(time.monotonic() - started, 3))
+            return

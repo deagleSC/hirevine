@@ -35,7 +35,7 @@ async def _generate(run_id: str) -> str:
 @inngest_client.create_function(
     fn_id="generate-quiz",
     trigger=inngest.TriggerEvent(event="quiz/generate.requested"),
-    retries=3,
+    retries=5,
     throttle=inngest.Throttle(limit=2, period=timedelta(minutes=1)),
     concurrency=[inngest.Concurrency(limit=1)],
     on_failure=mark_failed_on_failure,
