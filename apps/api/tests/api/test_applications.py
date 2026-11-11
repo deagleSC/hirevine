@@ -94,7 +94,8 @@ async def published_job(client, db, title="Backend Engineer"):  # noqa: F811
     return {"manager": mgr, "job_id": job, "campaign_id": camp, "slug": slug}
 
 
-async def apply_with(client, db, storage, job_id, data: bytes | None = None, *, kind="pdf"):  # noqa: F811
+async def apply_with(client, db, storage, job_id, data: bytes | None = None, *, kind="pdf",  # noqa: F811
+                     extra_headers: dict[str, str] | None = None):
     cand = new_uid(db)
     await make_candidate(client, cand)
     ctype = next(k for k, v in svc.CONTENT_TYPES.items() if v == kind)
@@ -105,7 +106,7 @@ async def apply_with(client, db, storage, job_id, data: bytes | None = None, *, 
     assert path.startswith(f"{cand}/") and path.endswith(f".{kind}")
     if data is not None:
         storage.put(path, data)
-    r = await client.post("/v1/candidate/applications", headers=auth(cand), json={
+    r = await client.post("/v1/candidate/applications", headers={**auth(cand), **(extra_headers or {})}, json={
         "job_id": str(job_id), "resume_path": path, "consent": CONSENT, "adult_confirmed": True,
         "screening_answers": {"notice": "30 days"}})
     assert r.status_code == 202, r.text

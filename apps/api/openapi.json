@@ -740,6 +740,19 @@
             "title": "Processing",
             "type": "integer"
           },
+          "purged_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When candidate data was deleted (retention)",
+            "title": "Purged At"
+          },
           "status": {
             "title": "Status",
             "type": "string"
