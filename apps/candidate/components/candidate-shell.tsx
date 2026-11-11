@@ -2,11 +2,12 @@
 
 import { DashboardLayout, type DashboardLayoutProps } from "@hirevine/ui/blocks/dashboard-layout";
 import type { NavItem } from "@hirevine/ui/blocks/nav-main";
-import { ScrollText, Search } from "lucide-react";
+import { ScrollText, Search, UserRound } from "lucide-react";
 
 const nav: NavItem[] = [
   { title: "Browse jobs", url: "/jobs", icon: Search },
   { title: "My applications", url: "/applications", icon: ScrollText },
+  { title: "Account", url: "/account", icon: UserRound },
 ];
 
 /** Candidate app shell. Client-side so the nav icons stay out of RSC props. */

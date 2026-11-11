@@ -11,7 +11,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from app.api.routers import me, public
+from app.api.routers import dev_storage, me, public
+from app.api.routers.candidate import account as candidate_account
 from app.api.routers.candidate import applications as candidate_applications
 from app.api.routers.candidate import interview as candidate_interview
 from app.api.routers.candidate import quiz as candidate_quiz
@@ -58,7 +59,7 @@ def create_app() -> FastAPI:
         allow_origins=settings.cors_origins,
         allow_credentials=False,  # bearer tokens, no cookies
         allow_methods=["*"],
-        allow_headers=["Authorization", "Content-Type"],
+        allow_headers=["Authorization", "Content-Type", "x-upsert"],  # x-upsert: dev storage uploads
     )
     install_error_handlers(app)
 
@@ -75,6 +76,9 @@ def create_app() -> FastAPI:
         return Health(ok=True, db=True)
 
     app.include_router(me.router)
+    app.include_router(candidate_account.router)
+    if settings.is_dev and not settings.supabase_service_key:
+        app.include_router(dev_storage.router)
     app.include_router(manager_org.router)
     app.include_router(manager_jobs.router)
     app.include_router(manager_workflows.router)

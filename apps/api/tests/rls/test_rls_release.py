@@ -67,3 +67,17 @@ def test_candidates_cannot_write_or_release_feedback(migrated_db, scored_applica
         assert r.rowcount == 0
         r = conn.execute("update stage_results set score = 100 where application_id = %s", (a["app"],))
         assert r.rowcount == 0
+
+
+def test_only_system_jobs_can_anonymize_events(migrated_db, scored_application):
+    a = scored_application
+    with admin(migrated_db) as conn:
+        conn.execute("insert into events (actor_id, type, entity) values (%s, 'x', 'profile')", (a["cand"]["id"],))
+    with as_claims(candidate_claims(a["cand"])) as conn, pytest.raises(Exception, match="system jobs only"):
+        conn.execute("select app.anonymize_actor(%s)", (a["cand"]["id"],))
+    with as_claims({"role": "system"}) as conn:
+        assert conn.execute("select app.anonymize_actor(%s) n", (a["cand"]["id"],)).fetchone()["n"] >= 1
+        left = conn.execute("select count(*) n from events where actor_id = %s", (a["cand"]["id"],)).fetchone()
+        assert left["n"] == 0
+        with pytest.raises(Exception, match="permission denied"):
+            conn.execute("update events set type = 'y'")

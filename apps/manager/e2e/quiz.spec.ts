@@ -26,7 +26,7 @@ async function signIn(page: Page, next: string) {
   await page.getByRole("button", { name: "Sign in" }).click();
 }
 
-test("generate questions: the run is polled until it reports back", async ({ page }) => {
+test("generate questions: the run is polled until the questions arrive", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await signIn(page, `/jobs/${jobId}/workflow`);
@@ -35,14 +35,13 @@ test("generate questions: the run is polled until it reports back", async ({ pag
   await expect(page.getByText("Generate from the job and rubric")).toBeVisible();
   await page.getByLabel("Questions", { exact: true }).fill("5");
   await page.getByRole("button", { name: "Generate questions" }).click();
-  await expect(page.getByRole("button", { name: "Generating…" })).toBeDisabled();
 
-  // No Inngest worker in e2e: finish the run as the function would on a model failure.
-  const run = sql(`select id from job_runs where job_id = :'job' and type = 'quiz_generate'
-                   order by created_at desc limit 1`, { job: jobId });
-  expect(sql(`select params->>'count' || ' ' || (params->>'difficulty') from job_runs where id = :'run'`, { run })).toBe("5 mixed");
-  sql(`update job_runs set status = 'failed', last_error = 'The model could not write valid questions.' where id = :'run'`, { run });
-  await expect(page.getByText("The model could not write valid questions.")).toBeVisible({ timeout: 10_000 });
+  // The job runs in the background (inline in e2e, against the fake model) and reports back.
+  await expect(page.getByText(/Added 5 questions \(version \d+\)/)).toBeVisible({ timeout: 30_000 });
+  const run = sql(`select params->>'count' || ' ' || (params->>'difficulty') || ' ' || status from job_runs
+                   where job_id = :'job' and type = 'quiz_generate' order by created_at desc limit 1`, { job: jobId });
+  expect(run).toBe("5 mixed done");
+  await expect(page.getByRole("group", { name: "Questions (5)" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Generate questions" })).toBeEnabled();
   if (process.env.E2E_SHOTS) await page.screenshot({ path: `${process.env.E2E_SHOTS}/quiz-generate.png`, fullPage: true });
   expect(errors).toEqual([]);

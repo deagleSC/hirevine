@@ -101,6 +101,17 @@ async def transition(tx: Tx, application_id: UUID, node_id: str, outcome: StageO
                 (application_id, nxt),
             )
 
+    if nxt is not None and not reached_final:
+        # In-app invite to the next timed stage (quiz or interview). Email is a pilot item (§18).
+        await tx.conn.execute(
+            """
+            insert into notifications (user_id, type, payload)
+            select a.candidate_id, 'stage_invited',
+                   jsonb_build_object('application_id', a.id::text, 'job_title', j.title, 'stage', %s::text)
+            from applications a join campaigns c on c.id = a.campaign_id join jobs j on j.id = c.job_id
+            where a.id = %s
+            """, (workflow.node(nxt).type, application_id))
+
     if reached_final or outcome.status == "failed":
         # Everyone gets an outcome on release: draft feedback for finalists and for candidates who
         # stopped at a failed stage (§16). Imported here: services depend on this module.

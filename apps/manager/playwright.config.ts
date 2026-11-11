@@ -65,6 +65,10 @@ export default defineConfig({
         OPENROUTER_BASE_URL: FAKE_LLM,
         OPENROUTER_API_KEY: "e2e-fake",
         LLM_SYNC_RPM_CAP: "100",
+        LLM_DAILY_CAP: "1000",
+        // Jobs run in-process right after commit (no Inngest in e2e); uploads go to the API's dev store.
+        JOB_DISPATCHER: "inline",
+        PUBLIC_API_URL: API,
       },
     },
     {

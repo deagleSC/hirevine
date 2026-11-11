@@ -5,6 +5,7 @@ export const qk = {
   myApplication: (id: string) => ["my-applications", id] as const,
   myQuiz: (appId: string) => ["my-applications", appId, "quiz"] as const,
   myInterview: (appId: string) => ["my-applications", appId, "interview"] as const,
+  myNotifications: () => ["my-notifications"] as const,
   myFeedback: (appId: string) => ["my-applications", appId, "feedback"] as const,
   quizGeneration: (jobId: string, runId: string) => ["jobs", jobId, "quiz-generation", runId] as const,
   publicJobs: (params: Record<string, string | undefined>) => ["public-jobs", params] as const,
