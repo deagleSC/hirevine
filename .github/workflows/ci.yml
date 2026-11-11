@@ -60,6 +60,12 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Types, lint, tests and builds regenerate the API's OpenAPI document from its code (turbo.json).
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+        working-directory: apps/api
       - name: API client types
         run: pnpm --filter @hirevine/api-client gen:api
       - name: Types
