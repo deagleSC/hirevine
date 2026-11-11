@@ -11,9 +11,11 @@ from app.core.config import get_settings
 
 def all_functions() -> list[inngest.Function[Any]]:
     from app.jobs.functions import (
+        draft_report,
         generate_quiz,
         housekeeping,
         interview_deadline,
+        notify_release,
         quiz_deadline,
         score_interview,
         screen_application,
@@ -22,7 +24,8 @@ def all_functions() -> list[inngest.Function[Any]]:
 
     fns: list[inngest.Function[Any]] = [housekeeping.housekeeping, screen_application.screen_application,
                                         generate_quiz.generate_quiz, quiz_deadline.quiz_deadline,
-                                        interview_deadline.interview_deadline, score_interview.score_interview]
+                                        interview_deadline.interview_deadline, score_interview.score_interview,
+                                        draft_report.draft_report, notify_release.notify_release]
     if get_settings().is_dev:
         fns.append(selftest.selftest)  # exit-check function; not served in production
     return fns

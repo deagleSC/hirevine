@@ -45,6 +45,11 @@ export default function ApplicationPage({ params }: { params: Promise<{ appId: s
               In progress — finish before {new Date(a.action_deadline_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}.
             </p>
           ) : null}
+          {a.status === "outcome_released" ? (
+            <Button asChild className="w-fit">
+              <Link href={`/applications/${a.id}/feedback`}>View outcome and feedback</Link>
+            </Button>
+          ) : null}
           {a.next_action ? (
             <Button asChild className="w-fit">
               <Link href={`/applications/${a.id}/${a.next_action}`}>{a.next_action === "quiz" ? (a.action_deadline_at ? "Continue quiz" : "Take quiz") : a.action_deadline_at ? "Continue interview" : "Start interview"}</Link>

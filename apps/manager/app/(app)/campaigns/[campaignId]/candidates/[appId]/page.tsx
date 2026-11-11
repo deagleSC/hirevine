@@ -5,6 +5,7 @@ import { PageHeader } from "@hirevine/ui/blocks/dashboard-layout";
 import { EvidenceList, FlagBadges, ResumeViewer, type EvidenceItem } from "@hirevine/ui/blocks/evidence";
 import { ProcessingState } from "@hirevine/ui/blocks/processing-state";
 import { InterviewScores, TranscriptView, type InterviewScoreItem } from "@hirevine/ui/blocks/interview";
+import { FeedbackEditor } from "@hirevine/ui/blocks/report";
 import { QuizResults, type QuizResultItem } from "@hirevine/ui/blocks/quiz-runner";
 import { ErrorState, PageSkeleton } from "@hirevine/ui/blocks/states";
 import { StatusBadge } from "@hirevine/ui/blocks/status-badge";
@@ -15,11 +16,12 @@ import { ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { use, useMemo, useState } from "react";
 
-import { candidateLabel, useApplication } from "@/lib/campaigns";
+import { candidateLabel, useApplication, useManualScore, useSaveFeedback } from "@/lib/campaigns";
 
 export default function CandidatePage({ params }: { params: Promise<{ campaignId: string; appId: string }> }) {
   const { campaignId, appId } = use(params);
   const app = useApplication(campaignId, appId);
+  const saveFeedback = useSaveFeedback(campaignId, appId);
   const [activeLine, setActiveLine] = useState<number | null>(null);
   const [activeTurn, setActiveTurn] = useState<number | null>(null);
 
@@ -165,6 +167,30 @@ export default function CandidatePage({ params }: { params: Promise<{ campaignId
               </CardContent>
             </Card>
           ) : null}
+          {a.stages.some((s) => s.status === "needs_review") && !a.feedback?.released ? (
+            <ManualScoreCard campaignId={campaignId} appId={appId} stages={a.stages.filter((s) => s.status === "needs_review")} />
+          ) : null}
+          <Card>
+            <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
+              <CardTitle className="text-base">Feedback</CardTitle>
+              {a.feedback?.released ? <span className="text-xs text-muted-foreground">Released</span> : null}
+            </CardHeader>
+            <CardContent>
+              <FeedbackEditor
+                key={a.feedback?.ai_draft ?? "none"}
+                value={{
+                  ai_draft: a.feedback?.ai_draft ?? null,
+                  ai_recommendation: a.feedback?.ai_recommendation ?? null,
+                  edited_text: a.feedback?.edited_text ?? null,
+                  recommendation: a.feedback?.recommendation ?? null,
+                  manager_note: a.feedback?.manager_note ?? null,
+                  excluded: a.feedback?.excluded ?? false,
+                }}
+                readOnly={a.feedback?.released ?? false}
+                onSave={saveFeedback}
+              />
+            </CardContent>
+          </Card>
           {Object.keys(a.screening_answers).length ? (
             <Card>
               <CardHeader>
@@ -197,5 +223,76 @@ export default function CandidatePage({ params }: { params: Promise<{ campaignId
         </Card>
       </div>
     </>
+  );
+}
+
+function ManualScoreCard({
+  campaignId,
+  appId,
+  stages,
+}: {
+  campaignId: string;
+  appId: string;
+  stages: { node_id: string; node_type: string }[];
+}) {
+  const score = useManualScore(campaignId, appId);
+  const [node, setNode] = useState(stages[0]!.node_id);
+  const [value, setValue] = useState("");
+  const [note, setNote] = useState("");
+  const n = Number(value);
+  const valid = value !== "" && n >= 0 && n <= 100 && note.trim().length > 0;
+  return (
+    <Card className="border-amber-500/40">
+      <CardHeader>
+        <CardTitle className="text-base">Score by hand</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form
+          className="grid gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (valid) score.mutate({ node_id: node, score: n, note: note.trim() });
+          }}
+        >
+          <p className="text-sm text-muted-foreground">
+            The AI could not finish this stage. Review the evidence and give a score from 0 to 100; the usual pass rule then moves the
+            application on.
+          </p>
+          <div className="flex flex-wrap items-end gap-3">
+            {stages.length > 1 ? (
+              <label className="grid gap-1 text-sm">
+                Stage
+                <select className="h-9 rounded-md border bg-background px-2" value={node} onChange={(e) => setNode(e.target.value)}>
+                  {stages.map((s) => (
+                    <option key={s.node_id} value={s.node_id}>
+                      {s.node_type}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+            <label className="grid gap-1 text-sm">
+              Score (0–100)
+              <input
+                type="number"
+                min={0}
+                max={100}
+                className="h-9 w-28 rounded-md border bg-background px-2"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+              />
+            </label>
+          </div>
+          <label className="grid gap-1 text-sm">
+            Reason (kept with the score)
+            <textarea className="min-h-16 rounded-md border bg-background p-2" maxLength={1000} value={note} onChange={(e) => setNote(e.target.value)} />
+          </label>
+          {score.isError ? <p className="text-sm text-destructive">{messageFor(score.error)}</p> : null}
+          <Button type="submit" className="w-fit" disabled={!valid || score.isPending}>
+            Save score
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

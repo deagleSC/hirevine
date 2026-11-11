@@ -9,6 +9,7 @@ from fastapi import APIRouter, Request
 from app.core.auth import PrincipalDep, require_role, user_tx
 from app.core.errors import ERROR_RESPONSES, AppError
 from app.services import applications as svc
+from app.services import report as report_svc
 
 router = APIRouter(prefix="/v1/candidate", tags=["candidate"], responses=ERROR_RESPONSES)
 
@@ -47,3 +48,12 @@ async def get_application(application_id: UUID, principal: PrincipalDep) -> svc.
         if not items:
             raise AppError(404, "application_not_found", "This application does not exist or is not yours.")
         return items[0]
+
+
+@router.get("/applications/{application_id}/feedback", response_model=report_svc.CandidateFeedback)
+async def get_feedback(application_id: UUID, principal: PrincipalDep) -> report_svc.CandidateFeedback:
+    """Released feedback: the outcome, the feedback text and stage results. 404 until the hiring team
+    completes the campaign (enforced by RLS)."""
+    async with user_tx(principal) as (tx, user):
+        require_role(user, "candidate")
+        return await report_svc.candidate_feedback(tx, user, application_id)

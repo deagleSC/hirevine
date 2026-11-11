@@ -86,9 +86,11 @@ async def transition(tx: Tx, application_id: UUID, node_id: str, outcome: StageO
         return TransitionResult(changed=False)
 
     nxt: str | None = None
+    reached_final = False
     if outcome.status == "passed":
         node = workflow.next_enabled(node_id)
         if node is not None:
+            reached_final = node.type == "final"
             nxt = node.id
             await tx.conn.execute(
                 "update applications set current_node = %s, updated_at = now() where id = %s", (nxt, application_id)
@@ -98,7 +100,13 @@ async def transition(tx: Tx, application_id: UUID, node_id: str, outcome: StageO
                 " on conflict (application_id, node_id) do nothing",
                 (application_id, nxt),
             )
-            # Phases 5–8: JobDispatcher.enqueue(the next stage's job) here (§10.4).
+
+    if reached_final or outcome.status == "failed":
+        # Everyone gets an outcome on release: draft feedback for finalists and for candidates who
+        # stopped at a failed stage (§16). Imported here: services depend on this module.
+        from app.services.report import queue_draft
+
+        await queue_draft(tx, application_id)
 
     await tx.conn.execute(
         "insert into events (type, entity, entity_id, payload) values ('stage.transition', 'application', %s, %s)",

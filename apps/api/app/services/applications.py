@@ -26,6 +26,7 @@ from app.services.interview import InterviewReview
 from app.services.interview import review as interview_review
 from app.services.quiz import QuizReview
 from app.services.quiz import review as quiz_review
+from app.services.report import FeedbackView, feedback_of
 from app.services.storage import get_storage
 
 CONTENT_TYPES = {
@@ -157,6 +158,7 @@ class ApplicationDetail(BaseModel):
     job_error: str | None
     quiz: QuizReview | None = None
     interview: InterviewReview | None = None
+    feedback: FeedbackView | None = None
 
 
 class Queued(BaseModel):
@@ -448,6 +450,7 @@ async def detail(tx: Tx, campaign_id: UUID, application_id: UUID) -> Application
         job_status=a["job_status"], job_error=a["last_error"],
         quiz=await quiz_review(tx, application_id),
         interview=await interview_review(tx, application_id),
+        feedback=await feedback_of(tx, application_id),
     )
 
 
