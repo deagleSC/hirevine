@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { CandidateShell } from "./candidate-shell";
+import { NotificationsBell } from "./notifications-bell";
 import { CandidateUserMenu, useSignedIn } from "./user-menu";
 
 /** Shell for pages guests can see: account menu when signed in, sign-in buttons otherwise. */
@@ -25,6 +26,8 @@ export function PublicShell({ children }: { children: ReactNode }) {
               <Link href="/sign-up">Create account</Link>
             </Button>
           </>
+        ) : signedIn ? (
+          <NotificationsBell />
         ) : undefined
       }
     >

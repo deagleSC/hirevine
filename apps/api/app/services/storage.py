@@ -33,6 +33,7 @@ class SignedUpload:
 
 class Storage(Protocol):
     async def signed_upload(self, path: str) -> SignedUpload: ...
+    async def signed_download(self, path: str, expires_in: int = 86400) -> str: ...
     async def download(self, path: str) -> bytes: ...
     async def delete(self, path: str) -> None: ...
 
@@ -55,6 +56,16 @@ class SupabaseStorage:
         token = httpx.URL(rel).params.get("token", "")
         return SignedUpload(path=path, url=f"{self.base}{rel}", token=token)
 
+    async def signed_download(self, path: str, expires_in: int = 86400) -> str:
+        async with httpx.AsyncClient(timeout=15) as http:
+            r = await http.post(f"{self.base}/object/sign/{self._obj(path)}", headers=self.headers,
+                                json={"expiresIn": expires_in})
+        if r.status_code in (400, 404):
+            raise ObjectNotFound(path)
+        if r.status_code >= 400:
+            raise StorageError(f"signed download URL failed: {r.status_code}")
+        return f"{self.base}{r.json()['signedURL']}"
+
     async def download(self, path: str) -> bytes:
         async with httpx.AsyncClient(timeout=30) as http:
             r = await http.get(f"{self.base}/object/{self._obj(path)}", headers=self.headers)
@@ -73,13 +84,23 @@ class SupabaseStorage:
 
 
 class MemoryStorage:
-    """Dev/test stand-in. `put` simulates the browser's upload to the signed URL."""
+    """Dev/test stand-in. Its URLs point at /v1/dev/storage on this API (mounted only in dev/test),
+    so a browser can upload and download for real; tests can also call `put` directly."""
 
-    def __init__(self) -> None:
+    def __init__(self, api_url: str = "http://127.0.0.1:8000") -> None:
         self.objects: dict[str, bytes] = {}
+        self.api_url = api_url.rstrip("/")
+
+    def _url(self, path: str) -> str:
+        return f"{self.api_url}/v1/dev/storage/{quote(path)}"
 
     async def signed_upload(self, path: str) -> SignedUpload:
-        return SignedUpload(path=path, url=f"memory://upload/{path}", token="memory")
+        return SignedUpload(path=path, url=self._url(path) + "?token=memory", token="memory")
+
+    async def signed_download(self, path: str, expires_in: int = 86400) -> str:
+        if path not in self.objects:
+            raise ObjectNotFound(path)
+        return self._url(path)
 
     def put(self, path: str, data: bytes) -> None:
         self.objects[path] = data
@@ -101,4 +122,4 @@ def get_storage() -> Storage:
         return SupabaseStorage(s.supabase_url, s.supabase_service_key, s.resume_bucket)
     if not s.is_dev:
         raise StorageError("SUPABASE_URL and SUPABASE_SERVICE_KEY are required outside dev/test")
-    return MemoryStorage()
+    return MemoryStorage(s.public_api_url)

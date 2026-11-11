@@ -34,6 +34,13 @@ class Settings(BaseSettings):
     # store is used.
     supabase_service_key: str = ""
     resume_bucket: str = "resumes"
+    # This API's own URL as browsers reach it. Dev/test only: the in-memory store hands out upload
+    # and download URLs served by /v1/dev/storage on this API, so the apply flow works end to end.
+    public_api_url: str = "http://127.0.0.1:8000"
+
+    # How background jobs run. "inngest" everywhere real; "inline" (dev/test only) runs each job's
+    # function in this process right after commit, without retries or sleeps, for end-to-end tests.
+    job_dispatcher: Literal["inngest", "inline"] = "inngest"
 
     # Embeddings Edge Function (§20.3). Without a URL (dev/test), a deterministic hashing embedder.
     embed_function_url: str = ""

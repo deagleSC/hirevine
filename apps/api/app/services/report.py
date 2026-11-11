@@ -110,13 +110,43 @@ class CandidateStage(BaseModel):
     score: float | None
 
 
+class ResumeCitation(BaseModel):
+    criterion: str
+    line_no: int
+    quote: str
+
+
+class QuizAnswer(BaseModel):
+    prompt: str
+    options: list[str]
+    chosen: int | None
+    answer_index: int | None
+    correct: bool
+    explanation: str
+
+
+class InterviewMoment(BaseModel):
+    topic: str
+    question: str | None
+    answer: str
+    turn: int
+
+
 class CandidateFeedback(BaseModel):
+    """What a candidate sees after release. Evidence is their own material: quoted resume lines (on
+    their redacted resume), their quiz answers with explanations, and the interview answers that were
+    cited. Per-criterion scores, AI rationales and the manager's note and recommendation are not shown."""
+
     job_title: str
     released_at: datetime
     outcome: report.Outcome
     feedback: str
     stages: list[CandidateStage]
     citations: list[str]
+    resume_lines: list[str] = Field(default_factory=list)
+    resume_citations: list[ResumeCitation] = Field(default_factory=list)
+    quiz_answers: list[QuizAnswer] = Field(default_factory=list)
+    interview_moments: list[InterviewMoment] = Field(default_factory=list)
 
 
 # ------------------------------------------------------------------ draft-report
@@ -441,11 +471,14 @@ async def candidate_feedback(tx: Tx, user: CurrentUser, application_id: UUID) ->
         raise AppError(404, "feedback_not_available", "Feedback is not available yet.")
     stage_rows = await tx.fetchall("select node_id, status, score from stage_results where application_id = %s",
                                    (application_id,))
-    async with tx.as_system():  # workflow and job title, for this (already authorised) application
+    async with tx.as_system():  # workflow, job title and evidence, for this (already authorised) application
         app = await tx.fetchone(
-            "select a.current_node, a.candidate_id, j.title, w.definition from applications a"
-            " join campaigns c on c.id = a.campaign_id join jobs j on j.id = c.job_id"
-            " join workflows w on w.id = a.workflow_id where a.id = %s", (application_id,))
+            "select a.current_node, a.candidate_id, j.title, w.definition, r.redacted_lines, i.transcript"
+            " from applications a join campaigns c on c.id = a.campaign_id join jobs j on j.id = c.job_id"
+            " join workflows w on w.id = a.workflow_id left join resume_texts r on r.application_id = a.id"
+            " left join interview_sessions i on i.application_id = a.id where a.id = %s", (application_id,))
+        evidence_rows = await tx.fetchall("select node_id, evidence from stage_results where application_id = %s",
+                                          (application_id,))
     if app is None or app["candidate_id"] != user.user_id:
         raise AppError(404, "feedback_not_available", "Feedback is not available yet.")
     wf = Workflow.model_validate(app["definition"])
@@ -458,5 +491,33 @@ async def candidate_feedback(tx: Tx, user: CurrentUser, application_id: UUID) ->
     outcome = report.candidate_outcome(reached_final=app["current_node"] == final_id, excluded=fb["excluded"],
                                        recommendation=rec)
     text = fb["edited_text"] or fb["ai_draft"] or report.neutral_feedback(app["title"], outcome)
-    return CandidateFeedback(job_title=app["title"], released_at=fb["released_at"], outcome=outcome, feedback=text,
-                             stages=stages, citations=list(fb["citations"] or []) if not fb["edited_text"] else [])
+    types = {n.id: n.type for n in wf.nodes}
+    resume_cites: list[ResumeCitation] = []
+    quiz_answers: list[QuizAnswer] = []
+    moments: list[InterviewMoment] = []
+    transcript = interview.entries(app["transcript"])
+    for r in evidence_rows:
+        items = r["evidence"] if isinstance(r["evidence"], list) else []
+        kind = types.get(r["node_id"])
+        for e in items:
+            if not isinstance(e, dict):
+                continue
+            if kind == "screening" and e.get("verified") and e.get("line_no"):
+                resume_cites.append(ResumeCitation(criterion=str(e.get("name")), line_no=int(e["line_no"]),
+                                                   quote=str(e.get("quote") or "")))
+            elif kind == "quiz" and "question_id" in e:
+                quiz_answers.append(QuizAnswer(prompt=e["prompt"], options=list(e.get("options") or []),
+                                               chosen=e.get("chosen"), answer_index=e.get("answer_index"),
+                                               correct=bool(e.get("correct")), explanation=e.get("explanation") or ""))
+            elif kind == "interview" and "item_id" in e:
+                for n in e.get("turns") or []:
+                    if 0 < n <= len(transcript) and transcript[n - 1].role == "candidate":
+                        q = transcript[n - 2].content if n >= 2 and transcript[n - 2].role == "interviewer" else None
+                        moments.append(InterviewMoment(topic=str(e.get("name")), question=q,
+                                                       answer=transcript[n - 1].content, turn=n))
+    return CandidateFeedback(
+        job_title=app["title"], released_at=fb["released_at"], outcome=outcome, feedback=text, stages=stages,
+        citations=list(fb["citations"] or []) if not fb["edited_text"] else [],
+        resume_lines=list(app["redacted_lines"] or []) if resume_cites else [], resume_citations=resume_cites,
+        quiz_answers=quiz_answers, interview_moments=moments,
+    )

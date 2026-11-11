@@ -870,6 +870,14 @@ Materialize only if a query goes over about 300 ms at demo scale.
 | Monitoring | Sentry on the API. Inngest failure alerts plus `on_failure` handlers. Alerts on `job_runs` queued for more than 10 min, the daily model budget at 80%, and monthly Inngest executions at 80% of 50,000 |
 | Backups | A scheduled `pg_dump` (GitHub Action) to storage, with a restore tested once. Verify Supabase plan coverage |
 
+**As built (Phase 9):**
+- **Notifications:** `GET /candidate/notifications` (items + unread count), `POST …/{id}/read`, `POST …/read-all`. `transition()` writes a `stage_invited` notification in the same transaction when an application moves into a quiz or interview (in-app only; email waits for the pilot), and `notify-release` writes `outcome_released`.
+- **Feedback with evidence:** after release, `GET /candidate/applications/{id}/feedback` also returns the candidate's redacted resume lines with the quoted lines (`resume_citations`: criterion, line, quote), their quiz answers with the key and explanations, and the cited interview answers with the questions they answered. Per-criterion scores, AI rationales, the manager's note and recommendation stay manager-only.
+- **Export** is synchronous (`POST /candidate/privacy/export` returns the JSON as a download) instead of a job writing to an export bucket: one candidate's data is small. Resume files are 24-hour signed links. Scores, stage results and feedback appear only for released applications. Each export is recorded in `data_requests`.
+- **Deletion:** `POST /candidate/privacy/delete` (body `confirm: "DELETE"`) queues `data-delete` (event `privacy/delete.requested`, the user id in the run's params). It deletes the resume files and resume embeddings, clears the user from `events.actor_id` through `app.anonymize_actor()` (migration 15: a `security definer` function callable only with system claims; the table stays append-only), then deletes the auth user through Supabase's admin API, which cascades to everything else. Every part is idempotent. Not covered: `llm_cache` rows (keyed by input hash, not by person) keep model outputs until they expire.
+- **Retention purge, application rate limits and email** are still to do (pilot checklist, §18).
+- **End-to-end test support** (dev/test only): `JOB_DISPATCHER=inline` runs each job's function in the API process right after commit (no retries; deadline jobs are recorded but not run), and the in-memory resume store is served at `/v1/dev/storage` (mounted only in dev/test without a service key) so the browser upload works. `scripts/fake_openrouter.py` answers every prompt the chain uses by output schema. The exit check, `e2e/journey.spec.ts`, goes from the job chat to the candidate reading released feedback with cited resume lines in about 90 s.
+
 ---
 
 ## 19. Testing and evals (§13)
