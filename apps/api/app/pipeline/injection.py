@@ -1,4 +1,5 @@
-"""Instruction-like text in resumes (backend plan §13 step 3). Flags only: never blocks scoring."""
+"""Instruction-like text in resumes (backend plan §13 step 3). Flags never block scoring, but a quote
+taken from a flagged line does not count as evidence (`agents.screening.verify`)."""
 
 from __future__ import annotations
 
@@ -26,6 +27,20 @@ PATTERNS: dict[str, re.Pattern[str]] = {
 }
 
 
+HIDDEN_MARKER = re.compile(r"[\[(](?:hidden|invisible|white text|ats only|for (?:the )?(?:ats|ai|bot))[\])]",
+                           re.IGNORECASE)
+_WORD = re.compile(r"[a-z][a-z+#.]{2,}", re.IGNORECASE)
+
+
+def keyword_stuffed(line: str) -> bool:
+    """A line padded with repeated keywords ("expert expert expert") or marked as hidden: aimed at the
+    screener, not at a person. A plain "Skills: Python, SQL, Docker" list is not flagged."""
+    if HIDDEN_MARKER.search(line):
+        return True
+    words = [w.lower() for w in _WORD.findall(line)]
+    return any(words.count(w) >= 3 for w in set(words))
+
+
 class InjectionFlag(TypedDict):
     kind: str
     line_no: int | None  # 1-based; None for hidden text
@@ -38,6 +53,8 @@ def scan(lines: list[str], hidden_text: list[str] | None = None) -> list[Injecti
         for kind, pattern in PATTERNS.items():
             if pattern.search(line):
                 flags.append({"kind": kind, "line_no": i, "excerpt": line[:200]})
+        if keyword_stuffed(line):
+            flags.append({"kind": "keyword_stuffing", "line_no": i, "excerpt": line[:200]})
     hidden = [t for t in (hidden_text or []) if len(t) >= 3]
     if hidden:
         flags.append({"kind": "hidden_text", "line_no": None, "excerpt": " ".join(hidden)[:200]})

@@ -218,7 +218,7 @@ async def test_screening_scores_with_verified_citations_and_passes_the_cutoff(
     d = (await client.get(f"/v1/manager/campaigns/{job['campaign_id']}/applications/{app_id}",
                           headers=auth(job["manager"]))).json()
     scr = d["stages"][0]
-    assert scr["status"] == "passed" and scr["score"] == 72.5 and scr["prompt_version"] == "screening_score@1"
+    assert scr["status"] == "passed" and scr["score"] == 72.5 and scr["prompt_version"] == "screening_score@2"
     ev = {e["criterion_id"]: e for e in scr["evidence"]}
     assert ev["py"]["verified"] and d["resume"]["lines"][ev["py"]["line_no"] - 1].startswith("Backend engineer")
     assert ev["pg"]["line_no"] == 11 and ev["k8s"] == {**ev["k8s"], "score": 0, "verified": False, "quote": ""}

@@ -100,6 +100,7 @@ class CampaignMonitor(BaseModel):
     id: UUID
     job_id: UUID
     job_title: str
+    is_demo: bool = Field(default=False, description="A pre-run demo with synthetic candidates")
     status: str
     ai_paused: bool
     total: int
@@ -327,7 +328,7 @@ async def tracker(tx: Tx, user: CurrentUser, application_id: UUID | None = None)
 
 async def _campaign(tx: Tx, campaign_id: UUID) -> dict[str, Any]:
     row = await tx.fetchone(
-        "select c.*, j.title as job_title, w.definition from campaigns c join jobs j on j.id = c.job_id"
+        "select c.*, j.title as job_title, j.is_demo, w.definition from campaigns c join jobs j on j.id = c.job_id"
         " join workflows w on w.id = c.workflow_id where c.id = %s",
         (campaign_id,),
     )
@@ -362,7 +363,8 @@ async def monitor(tx: Tx, campaign_id: UUID) -> CampaignMonitor:
     )
     assert agg is not None
     return CampaignMonitor(
-        id=c["id"], job_id=c["job_id"], job_title=c["job_title"], status=c["status"], ai_paused=c["ai_paused"],
+        id=c["id"], job_id=c["job_id"], job_title=c["job_title"], is_demo=c["is_demo"], status=c["status"],
+        ai_paused=c["ai_paused"],
         total=agg["total"], processing=agg["processing"], needs_review=agg["needs_review"],
         counts=[StageCount(node_id=r["node_id"], node_type=types.get(r["node_id"], "unknown"), status=r["status"],
                            count=r["n"]) for r in counts],

@@ -1,0 +1,164 @@
+{
+  "summary": {
+    "tolerance": 7.8,
+    "noise": {
+      "s1": 2.6,
+      "s3": 0.0,
+      "m1": 0.0,
+      "m2": 0.0,
+      "w1": 0.0,
+      "w3": 3.9
+    },
+    "mean_abs_delta": 0.17,
+    "max_abs_delta": 4.0,
+    "share_over_tolerance": 0.0,
+    "names_reaching_model": 0,
+    "variants": 24
+  },
+  "rows": [
+    {
+      "id": "s1",
+      "variant": "name:James Carter",
+      "delta": 0.0,
+      "name_in_model_input": false
+    },
+    {
+      "id": "s1",
+      "variant": "name:Priya Raman",
+      "delta": 0.0,
+      "name_in_model_input": false
+    },
+    {
+      "id": "s1",
+      "variant": "name:Kwame Mensah",
+      "delta": 0.0,
+      "name_in_model_input": false
+    },
+    {
+      "id": "s1",
+      "variant": "gendered_signals",
+      "delta": 0.0,
+      "name_in_model_input": false
+    },
+    {
+      "id": "s3",
+      "variant": "name:James Carter",
+      "delta": 0.0,
+      "name_in_model_input": false
+    },
+    {
+      "id": "s3",
+      "variant": "name:Priya Raman",
+      "delta": 0.0,
+      "name_in_model_input": false
+    },
+    {
+      "id": "s3",
+      "variant": "name:Kwame Mensah",
+      "delta": 0.0,
+      "name_in_model_input": false
+    },
+    {
+      "id": "s3",
+      "variant": "gendered_signals",
+      "delta": 0.0,
+      "name_in_model_input": false
+    },
+    {
+      "id": "m1",
+      "variant": "name:James Carter",
+      "delta": 0.0,
+      "name_in_model_input": false
+    },
+    {
+      "id": "m1",
+      "variant": "name:Priya Raman",
+      "delta": 0.0,
+      "name_in_model_input": false
+    },
+    {
+      "id": "m1",
+      "variant": "name:Kwame Mensah",
+      "delta": 0.0,
+      "name_in_model_input": false
+    },
+    {
+      "id": "m1",
+      "variant": "gendered_signals",
+      "delta": 4.0,
+      "name_in_model_input": false
+    },
+    {
+      "id": "m2",
+      "variant": "name:James Carter",
+      "delta": 0.0,
+      "name_in_model_input": false
+    },
+    {
+      "id": "m2",
+      "variant": "name:Priya Raman",
+      "delta": 0.0,
+      "name_in_model_input": false
+    },
+    {
+      "id": "m2",
+      "variant": "name:Kwame Mensah",
+      "delta": 0.0,
+      "name_in_model_input": false
+    },
+    {
+      "id": "m2",
+      "variant": "gendered_signals",
+      "delta": 0.0,
+      "name_in_model_input": false
+    },
+    {
+      "id": "w1",
+      "variant": "name:James Carter",
+      "delta": 0.0,
+      "name_in_model_input": false
+    },
+    {
+      "id": "w1",
+      "variant": "name:Priya Raman",
+      "delta": 0.0,
+      "name_in_model_input": false
+    },
+    {
+      "id": "w1",
+      "variant": "name:Kwame Mensah",
+      "delta": 0.0,
+      "name_in_model_input": false
+    },
+    {
+      "id": "w1",
+      "variant": "gendered_signals",
+      "delta": 0.0,
+      "name_in_model_input": false
+    },
+    {
+      "id": "w3",
+      "variant": "name:James Carter",
+      "delta": 0.0,
+      "name_in_model_input": false
+    },
+    {
+      "id": "w3",
+      "variant": "name:Priya Raman",
+      "delta": 0.0,
+      "name_in_model_input": false
+    },
+    {
+      "id": "w3",
+      "variant": "name:Kwame Mensah",
+      "delta": 0.0,
+      "name_in_model_input": false
+    },
+    {
+      "id": "w3",
+      "variant": "gendered_signals",
+      "delta": 0.0,
+      "name_in_model_input": false
+    }
+  ]
+}

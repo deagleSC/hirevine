@@ -16,6 +16,7 @@ import { ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { use, useMemo, useState } from "react";
 
+import { DemoBanner } from "@/components/demo-banner";
 import { candidateLabel, useApplication, useManualScore, useSaveFeedback } from "@/lib/campaigns";
 
 export default function CandidatePage({ params }: { params: Promise<{ campaignId: string; appId: string }> }) {
@@ -51,6 +52,7 @@ export default function CandidatePage({ params }: { params: Promise<{ campaignId
           </Button>
         }
       />
+      <DemoBanner campaignId={campaignId} />
       {flags.length ? <FlagBadges flags={flags} /> : null}
       {injections.length ? (
         <Alert>

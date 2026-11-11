@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any, Literal
 from uuid import UUID
 
+import psycopg
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel
 
@@ -176,12 +177,19 @@ async def _commit_version(
 ) -> Applied:
     org_id = await _job_org(tx, job_id)
     new_version = base.version + 1
-    row = await tx.fetchone(
-        "insert into workflows (job_id, version, parent_version, definition, schema_version, created_by)"
-        " values (%s, %s, %s, %s, %s, %s) returning id",
-        (job_id, new_version, base.version, Jsonb(result.workflow.model_dump(mode="json")),
-         result.workflow.schema_version, actor),
-    )
+    try:
+        row = await tx.fetchone(
+            "insert into workflows (job_id, version, parent_version, definition, schema_version, created_by)"
+            " values (%s, %s, %s, %s, %s, %s) returning id",
+            (job_id, new_version, base.version, Jsonb(result.workflow.model_dump(mode="json")),
+             result.workflow.schema_version, actor),
+        )
+    except psycopg.errors.UniqueViolation as exc:
+        # Two saves from the same base at once: both locked the same latest row, and the one that
+        # waited still read it as latest. The unique (job_id, version) key decides; the loser gets
+        # the same 409 as any stale edit (the request transaction rolls back).
+        raise AppError(409, "stale_base_version", "The workflow changed since you opened it.",
+                       {"latest_version": new_version}) from exc
     assert row is not None
     new_id = row["id"]
     for i, p in enumerate(patches):

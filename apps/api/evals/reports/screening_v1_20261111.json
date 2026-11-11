@@ -1,0 +1,116 @@
+{
+  "summary": {
+    "spearman": 0.965,
+    "precision_at_4": 1.0,
+    "citation_validity_first_try": 1.0,
+    "min_strong": 92.1,
+    "max_mid": 71.1,
+    "max_weak": 0.0
+  },
+  "rows": [
+    {
+      "id": "s1",
+      "label": 3,
+      "match": 97.4,
+      "flags": [],
+      "claimed": 6,
+      "first_try_valid": 6
+    },
+    {
+      "id": "s2",
+      "label": 3,
+      "match": 97.4,
+      "flags": [],
+      "claimed": 6,
+      "first_try_valid": 6
+    },
+    {
+      "id": "s3",
+      "label": 3,
+      "match": 92.1,
+      "flags": [],
+      "claimed": 6,
+      "first_try_valid": 6
+    },
+    {
+      "id": "s4",
+      "label": 3,
+      "match": 100.0,
+      "flags": [],
+      "claimed": 6,
+      "first_try_valid": 6
+    },
+    {
+      "id": "m1",
+      "label": 2,
+      "match": 42.1,
+      "flags": [],
+      "claimed": 4,
+      "first_try_valid": 4
+    },
+    {
+      "id": "m2",
+      "label": 2,
+      "match": 48.7,
+      "flags": [],
+      "claimed": 4,
+      "first_try_valid": 4
+    },
+    {
+      "id": "m3",
+      "label": 2,
+      "match": 57.9,
+      "flags": [],
+      "claimed": 5,
+      "first_try_valid": 5
+    },
+    {
+      "id": "m4",
+      "label": 2,
+      "match": 71.1,
+      "flags": [],
+      "claimed": 4,
+      "first_try_valid": 4
+    },
+    {
+      "id": "w1",
+      "label": 1,
+      "match": 0.0,
+      "flags": [
+        "missing_must_have"
+      ],
+      "claimed": 0,
+      "first_try_valid": 0
+    },
+    {
+      "id": "w2",
+      "label": 1,
+      "match": 0.0,
+      "flags": [
+        "missing_must_have"
+      ],
+      "claimed": 0,
+      "first_try_valid": 0
+    },
+    {
+      "id": "w3",
+      "label": 1,
+      "match": 0.0,
+      "flags": [
+        "missing_must_have"
+      ],
+      "claimed": 0,
+      "first_try_valid": 0
+    },
+    {
+      "id": "w4",
+      "label": 1,
+      "match": 0.0,
+      "flags": [
+        "missing_must_have"
+      ],
+      "claimed": 0,
+      "first_try_valid": 0
+    }
+  ]
+}

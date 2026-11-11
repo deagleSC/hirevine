@@ -16,6 +16,7 @@ import Link from "next/link";
 import { Fragment, use, useState } from "react";
 import { toast } from "sonner";
 
+import { DemoBanner } from "@/components/demo-banner";
 import { candidateLabel, useCompleteCampaign, useFinalReport, type FinalRow } from "@/lib/campaigns";
 
 const STANDING: Record<FinalRow["standing"], string> = {
@@ -69,6 +70,7 @@ export default function FinalPage({ params }: { params: Promise<{ campaignId: st
           </div>
         }
       />
+      <DemoBanner campaignId={campaignId} />
 
       {done ? (
         <Alert>

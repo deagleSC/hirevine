@@ -47,6 +47,8 @@ HEADER_WORDS = re.compile(
     r"administrator|officer|executive|director|associate|technician)\b",
     re.IGNORECASE,
 )
+# A name followed by a title on the same line: "Jordan Example - Backend Engineer", "Jane Doe | Designer".
+NAME_THEN_TITLE = re.compile(r"^\s*(?P<name>[^|–—,-]{3,60}?)\s*(?:[|–—,]|\s-\s)\s*(?P<rest>.+)$")
 NAME_LIKE = re.compile(r"^(?:[A-Z][a-zA-Z'.-]+|[A-Z]{2,})(?:\s+(?:[A-Z][a-zA-Z'.-]+|[A-Z]{2,}|[A-Z]\.)){1,3}$")
 
 
@@ -67,8 +69,21 @@ def _sub(pattern: re.Pattern[str], repl: str, line: str, counts: dict[str, int],
     return new
 
 
+SHORT_INTL_PHONE = re.compile(r"(?<![\w/])\+\d[\d\s().-]{5,}\d(?![\w/])")
+
+
 def _phones(line: str, counts: dict[str, int]) -> str:
-    """A phone needs 10-15 digits; year ranges and figures with separators have fewer."""
+    """A phone needs 10-15 digits, or 7-15 after a leading "+" country code ("+1 555 0100"); year
+    ranges and figures with separators have fewer digits and no "+"."""
+    def short(m: re.Match[str]) -> str:
+        digits = sum(ch.isdigit() for ch in m.group())
+        if 7 <= digits <= 15:
+            counts["phone"] = counts.get("phone", 0) + 1
+            return "[PHONE]"
+        return m.group()
+
+    line = SHORT_INTL_PHONE.sub(short, line)
+
     def repl(m: re.Match[str]) -> str:
         digits = sum(ch.isdigit() for ch in m.group())
         if 10 <= digits <= 15:
@@ -106,9 +121,21 @@ def _ner(lines: list[str], counts: dict[str, int]) -> list[str]:
     return out
 
 
-def redact(lines: list[str], *, keep_education: bool = True, use_ner: bool = True) -> Redacted:
+def _known_name_pattern(known_names: list[str]) -> re.Pattern[str] | None:
+    """Whole-word, case-insensitive match for parts of the applicant's own name (from their profile
+    and email), so the name is removed wherever it appears, whatever the resume's layout."""
+    parts = {p for n in known_names for p in re.split(r"[\s._+-]+", n or "") if len(p) >= 3 and p.isalpha()}
+    if not parts:
+        return None
+    return re.compile(r"\b(?:" + "|".join(sorted(map(re.escape, parts), key=len, reverse=True)) + r")\b", re.IGNORECASE)
+
+
+def redact(lines: list[str], *, keep_education: bool = True, use_ner: bool = True,
+           known_names: list[str] | None = None) -> Redacted:
+    """`known_names`: the applicant's profile name, removed wherever it appears."""
     counts: dict[str, int] = {}
     out: list[str] = []
+    known = _known_name_pattern(known_names or [])
     for i, line in enumerate(lines):
         if DOB_LINE.search(line):
             out.append("[DOB REMOVED]")
@@ -130,9 +157,18 @@ def redact(lines: list[str], *, keep_education: bool = True, use_ner: bool = Tru
         line = _sub(URL, "[URL]", line, counts, "url")
         line = _phones(line, counts)
         line = _sub(SENSITIVE_WORDS, "[REMOVED]", line, counts, "personal")
-        # The first lines of a resume usually carry the candidate's name on its own.
-        if i < 3 and NAME_LIKE.match(line) and not HEADER_WORDS.search(line):
+        if known is not None:
+            line = known.sub("[NAME]", line)
+            line = re.sub(r"\[NAME\](?:\s+\[NAME\])+", "[NAME]", line)
+            if "[NAME]" in line:
+                counts["name"] = counts.get("name", 0) + 1
+        # The first lines of a resume usually carry the candidate's name, alone or before a title.
+        if i < 3 and NAME_LIKE.match(line.strip()) and not HEADER_WORDS.search(line):
             line = "[NAME]"
+            counts["name"] = counts.get("name", 0) + 1
+        elif i < 3 and (m := NAME_THEN_TITLE.match(line)) and NAME_LIKE.match(m["name"].strip()) \
+                and not HEADER_WORDS.search(m["name"]):
+            line = f"[NAME] - {m['rest']}"
             counts["name"] = counts.get("name", 0) + 1
         out.append(line)
     if use_ner:

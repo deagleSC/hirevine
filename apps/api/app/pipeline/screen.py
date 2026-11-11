@@ -130,7 +130,11 @@ async def parse_redact(application_id: str) -> StepStatus:
             await _needs_review(tx, ctx, flag or "unreadable")
             return "stop"
         keep_education = any(EDUCATION.search(c.name) for c in ctx.criteria)
-        red = redact.redact(parsed.lines, keep_education=keep_education)
+        # The applicant's profile name (emails are removed by pattern; auth.users is not readable here).
+        who = await tx.fetchone("select p.display_name from applications a join profiles p on p.id = a.candidate_id"
+                                " where a.id = %s", (ctx.application_id,))
+        known = [str(who["display_name"] or "")] if who else []
+        red = redact.redact(parsed.lines, keep_education=keep_education, known_names=known)
         flags = injection.scan(red.lines, parsed.hidden_text)
         await tx.conn.execute(
             """
@@ -251,7 +255,11 @@ async def verify_citations(application_id: str, deadline: float) -> StepStatus:
     ev = (stage or {}).get("evidence")
     if not isinstance(ev, dict) or "draft" not in ev:
         return "ok"  # already verified on an earlier attempt
-    result = await agent.verify(ctx.criteria, lines, ev["draft"], deadline=deadline)
+    async with transaction(system_claims()) as tx:
+        row = await tx.fetchone("select injection_flags from resume_texts where application_id = %s",
+                                (ctx.application_id,))
+    flagged = {int(f["line_no"]) for f in (row or {}).get("injection_flags") or [] if f.get("line_no")}
+    result = await agent.verify(ctx.criteria, lines, ev["draft"], deadline=deadline, flagged_lines=flagged)
     async with transaction(system_claims()) as tx:
         await _update_open_stage(tx, ctx, evidence=[e.model_dump() for e in result.evidence],
                                  score=Decimal(str(result.match)), model_id=result.model_id,
