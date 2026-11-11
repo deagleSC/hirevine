@@ -31,6 +31,8 @@ export const APP = "http://localhost:3100";
 export const CANDIDATE_APP = "http://localhost:3200";
 const withCandidate = !!process.env.E2E_CANDIDATE_EMAIL && !!process.env.E2E_CANDIDATE_PASSWORD;
 export const E2E_DB = "hirevine_e2e";
+/** Stand-in for OpenRouter (apps/api/scripts/fake_openrouter.py): no real model calls in e2e. */
+export const FAKE_LLM = "http://127.0.0.1:8199";
 
 export default defineConfig({
   testDir: "./e2e",
@@ -43,6 +45,13 @@ export default defineConfig({
   use: { baseURL: APP, trace: "retain-on-failure" },
   webServer: [
     {
+      command: "uv run python scripts/fake_openrouter.py 8199",
+      cwd: "../api",
+      url: `${FAKE_LLM}/healthz`,
+      reuseExistingServer: false,
+      timeout: 60_000,
+    },
+    {
       command: "uv run uvicorn app.main:app --port 8100",
       cwd: "../api",
       url: `${API}/healthz`,
@@ -53,6 +62,9 @@ export default defineConfig({
         DATABASE_URL: `postgresql://hirevine_api:dev@localhost:5432/${E2E_DB}`,
         SUPABASE_URL: local.NEXT_PUBLIC_SUPABASE_URL ?? "",
         CORS_ORIGINS: JSON.stringify([APP, CANDIDATE_APP]),
+        OPENROUTER_BASE_URL: FAKE_LLM,
+        OPENROUTER_API_KEY: "e2e-fake",
+        LLM_SYNC_RPM_CAP: "100",
       },
     },
     {

@@ -13,6 +13,7 @@ from pydantic import BaseModel
 
 from app.api.routers import me, public
 from app.api.routers.candidate import applications as candidate_applications
+from app.api.routers.candidate import interview as candidate_interview
 from app.api.routers.candidate import quiz as candidate_quiz
 from app.api.routers.manager import campaigns as manager_campaigns
 from app.api.routers.manager import jobs as manager_jobs
@@ -80,6 +81,7 @@ def create_app() -> FastAPI:
     app.include_router(manager_campaigns.router)
     app.include_router(candidate_applications.router)
     app.include_router(candidate_quiz.router)
+    app.include_router(candidate_interview.router)
     app.include_router(public.router)
 
     # Inngest calls this endpoint to run function steps; it verifies request signatures in production.

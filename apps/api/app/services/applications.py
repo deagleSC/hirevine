@@ -22,6 +22,8 @@ from app.core.errors import AppError
 from app.domain.workflow import Workflow
 from app.jobs.dispatcher import WAITING_TYPES, dispatcher
 from app.jobs.runs import JobRefs
+from app.services.interview import InterviewReview
+from app.services.interview import review as interview_review
 from app.services.quiz import QuizReview
 from app.services.quiz import review as quiz_review
 from app.services.storage import get_storage
@@ -154,6 +156,7 @@ class ApplicationDetail(BaseModel):
     job_status: str | None
     job_error: str | None
     quiz: QuizReview | None = None
+    interview: InterviewReview | None = None
 
 
 class Queued(BaseModel):
@@ -191,10 +194,14 @@ def _ip_hash(ip: str | None) -> str | None:
 
 
 def candidate_status(campaign_status: str, released: bool, node_type: str | None,
-                     stage_status: str | None, has_resume_text: bool) -> tuple[CandidateStatus, str | None]:
-    """§7.4. Never reveals a score, a failed cutoff or a rank before release."""
+                     stage_status: str | None, has_resume_text: bool, *,
+                     interview_finished: bool = False) -> tuple[CandidateStatus, str | None]:
+    """§7.4. Never reveals a score, a failed cutoff or a rank before release. A finished interview
+    is in review while it is scored."""
     if campaign_status == "completed" and released:
         return "outcome_released", None
+    if node_type == "interview" and interview_finished:
+        return "in_review", None
     if node_type in ("quiz", "interview") and stage_status in ("pending", "in_progress"):
         return "action_required", node_type
     if node_type == "screening" and not has_resume_text and stage_status in (None, "pending"):
@@ -279,7 +286,11 @@ select a.id, a.campaign_id, a.created_at, a.current_node, c.status as campaign_s
        exists (select 1 from resume_texts r where r.application_id = a.id) as has_text,
        coalesce(f.released, false) as released,
        (select q.deadline_at from quiz_attempts q where q.application_id = a.id and q.submitted_at is null)
-         as quiz_deadline
+         as quiz_deadline,
+       (select i.deadline_at from interview_sessions i where i.application_id = a.id and i.finished_at is null
+          and i.paused_at is null) as interview_deadline,
+       exists (select 1 from interview_sessions i where i.application_id = a.id and i.finished_at is not null)
+         as interview_finished
 from applications a
 join campaigns c on c.id = a.campaign_id
 join jobs j on j.id = c.job_id
@@ -301,10 +312,11 @@ async def tracker(tx: Tx, user: CurrentUser, application_id: UUID | None = None)
         wf = Workflow.model_validate(r["definition"])
         node_type = wf.node(r["current_node"]).type if r["current_node"] else None
         status, action = candidate_status(r["campaign_status"], r["released"], node_type, r["stage_status"],
-                                          r["has_text"])
+                                          r["has_text"], interview_finished=r["interview_finished"])
+        deadline = {"quiz": r["quiz_deadline"], "interview": r["interview_deadline"]}.get(action or "")
         out.append(TrackerItem(id=r["id"], job_id=r["job_id"], job_title=r["job_title"],
                                campaign_id=r["campaign_id"], status=status, next_action=action,  # type: ignore[arg-type]
-                               action_deadline_at=r["quiz_deadline"] if action == "quiz" else None,
+                               action_deadline_at=deadline,
                                created_at=r["created_at"]))
     return out
 
@@ -358,7 +370,8 @@ async def monitor(tx: Tx, campaign_id: UUID) -> CampaignMonitor:
 
 _LATEST_RUN = """
 left join lateral (select status, last_error from job_runs jr where jr.application_id = a.id
-                   and jr.type not in ('quiz_deadline') order by created_at desc limit 1) jr on true
+                   and jr.type not in ('quiz_deadline', 'interview_deadline')
+                   order by created_at desc limit 1) jr on true
 """
 
 
@@ -434,6 +447,7 @@ async def detail(tx: Tx, campaign_id: UUID, application_id: UUID) -> Application
         screening_answers={r["question_id"]: r["answer"] for r in answers},
         job_status=a["job_status"], job_error=a["last_error"],
         quiz=await quiz_review(tx, application_id),
+        interview=await interview_review(tx, application_id),
     )
 
 

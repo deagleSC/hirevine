@@ -11,6 +11,7 @@ import json
 import logging
 import re
 import time
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any
@@ -193,3 +194,57 @@ async def call_structured[T: BaseModel](
 
         span.update(level="WARNING", status_message=f"needs_review: {last_error}", attempts=2)
         raise NeedsReview(prompt.id, last_error)
+
+
+async def stream_text(
+    role: ModelRole,
+    prompt_id: str,
+    input: BaseModel,
+    *,
+    deadline: float,
+    client: AsyncOpenAI | None = None,
+) -> AsyncIterator[str]:
+    """Plain-text completion streamed chunk by chunk, for request-path replies (interview turns).
+    Same accounting as `call_structured` (daily budget, then the request-path RPM bucket) but no
+    cache: every question depends on the live transcript. An empty stream raises RateLimited."""
+    prompt: Prompt[Any, Any] = PROMPTS[prompt_id]
+    models = models_for(role)
+    llm = client or default_client()
+    ensure_time(deadline)
+    await budget.reserve()
+    await budget.throttle()
+    with tracing.generation(
+        prompt.id,
+        input=input.model_dump(mode="json"),
+        metadata={"prompt_id": prompt.id, "prompt_version": prompt.version, "role": role, "models": models},
+    ) as span:
+        started = time.monotonic()
+        try:
+            stream: Any = await llm.chat.completions.create(  # type: ignore[call-overload]
+                model=models[0],
+                messages=prompt.render(input),  # type: ignore[arg-type]
+                temperature=0.4,
+                stream=True,
+                timeout=min(get_settings().llm_request_timeout_s, remaining(deadline)),
+                extra_body={"models": models, "provider": provider_prefs()},
+            )
+        except openai.RateLimitError as exc:
+            if _is_daily_limit(exc):
+                raise BudgetExhausted("OpenRouter daily free-model limit reached") from exc
+            retry_after = float(exc.response.headers.get("retry-after", 20)) if exc.response else 20.0
+            raise RateLimited("Model provider rate limit", retry_after=retry_after) from exc
+        served_by = models[0]
+        parts: list[str] = []
+        async for chunk in stream:
+            served_by = getattr(chunk, "model", None) or served_by
+            if not getattr(chunk, "choices", None):
+                continue
+            text = chunk.choices[0].delta.content or ""
+            if text:
+                parts.append(text)
+                yield text
+        await budget.record_model(served_by)
+        if not "".join(parts).strip():
+            raise RateLimited("Empty response from model provider", retry_after=10.0)
+        span.update(output="".join(parts), model=served_by, cached=False, attempts=1,
+                    fallback_used=served_by != models[0], latency_s=round(time.monotonic() - started, 3))

@@ -196,6 +196,16 @@
             "title": "Id",
             "type": "string"
           },
+          "interview": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InterviewReview"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "job_error": {
             "anyOf": [
               {
@@ -945,6 +955,40 @@
         "title": "EditInterviewPrompt",
         "type": "object"
       },
+      "Entry": {
+        "properties": {
+          "at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "At"
+          },
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "interviewer",
+              "candidate"
+            ],
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "content"
+        ],
+        "title": "Entry",
+        "type": "object"
+      },
       "ErrorBody": {
         "properties": {
           "code": {
@@ -1256,6 +1300,185 @@
           "config"
         ],
         "title": "InterviewNode",
+        "type": "object"
+      },
+      "InterviewReview": {
+        "properties": {
+          "answers_given": {
+            "title": "Answers Given",
+            "type": "integer"
+          },
+          "deadline_at": {
+            "format": "date-time",
+            "title": "Deadline At",
+            "type": "string"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "paused": {
+            "title": "Paused",
+            "type": "boolean"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "transcript": {
+            "items": {
+              "$ref": "#/components/schemas/NumberedEntry"
+            },
+            "title": "Transcript",
+            "type": "array"
+          },
+          "turn_cap": {
+            "title": "Turn Cap",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "started_at",
+          "deadline_at",
+          "finished_at",
+          "paused",
+          "turn_cap",
+          "answers_given",
+          "transcript"
+        ],
+        "title": "InterviewReview",
+        "type": "object"
+      },
+      "InterviewState": {
+        "description": "What the candidate sees: the disclosure, the transcript and the clock. Never a score.",
+        "properties": {
+          "answers_given": {
+            "default": 0,
+            "title": "Answers Given",
+            "type": "integer"
+          },
+          "awaiting": {
+            "anyOf": [
+              {
+                "enum": [
+                  "question",
+                  "answer"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Awaiting"
+          },
+          "deadline_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deadline At"
+          },
+          "disclosure": {
+            "title": "Disclosure",
+            "type": "string"
+          },
+          "evaluates": {
+            "description": "What the answers are scored on (rubric item names)",
+            "items": {
+              "type": "string"
+            },
+            "title": "Evaluates",
+            "type": "array"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "paused": {
+            "default": false,
+            "title": "Paused",
+            "type": "boolean"
+          },
+          "questions_asked": {
+            "default": 0,
+            "title": "Questions Asked",
+            "type": "integer"
+          },
+          "server_now": {
+            "format": "date-time",
+            "title": "Server Now",
+            "type": "string"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "enum": [
+              "not_started",
+              "in_progress",
+              "finished",
+              "closed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "time_limit_min": {
+            "title": "Time Limit Min",
+            "type": "integer"
+          },
+          "transcript": {
+            "items": {
+              "$ref": "#/components/schemas/Entry"
+            },
+            "title": "Transcript",
+            "type": "array"
+          },
+          "turn_cap": {
+            "title": "Turn Cap",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "status",
+          "disclosure",
+          "turn_cap",
+          "time_limit_min",
+          "evaluates",
+          "server_now"
+        ],
+        "title": "InterviewState",
         "type": "object"
       },
       "JdChatState": {
@@ -1706,6 +1929,46 @@
           "enabled"
         ],
         "title": "MonitorNode",
+        "type": "object"
+      },
+      "NumberedEntry": {
+        "properties": {
+          "at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "At"
+          },
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "n": {
+            "description": "1-based position in the transcript; the scorer cites candidate answers by it",
+            "title": "N",
+            "type": "integer"
+          },
+          "role": {
+            "enum": [
+              "interviewer",
+              "candidate"
+            ],
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "content",
+          "n"
+        ],
+        "title": "NumberedEntry",
         "type": "object"
       },
       "Organization": {
@@ -3205,6 +3468,34 @@
         "title": "TrackerItem",
         "type": "object"
       },
+      "TurnIn": {
+        "properties": {
+          "message": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The answer to the current question; omit to (re)request a question",
+            "title": "Message"
+          },
+          "turn": {
+            "description": "Answers the client has seen saved (InterviewState.answers_given)",
+            "minimum": 0.0,
+            "title": "Turn",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "turn"
+        ],
+        "title": "TurnIn",
+        "type": "object"
+      },
       "UpdateCriterion": {
         "additionalProperties": false,
         "properties": {
@@ -3956,6 +4247,372 @@
           }
         ],
         "summary": "Get Application",
+        "tags": [
+          "candidate"
+        ]
+      }
+    },
+    "/v1/candidate/applications/{application_id}/interview": {
+      "get": {
+        "description": "The interview's state. While in progress: the transcript so far, answers left and the deadline.",
+        "operationId": "get_interview_v1_candidate_applications__application_id__interview_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterviewState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Interview",
+        "tags": [
+          "candidate"
+        ]
+      }
+    },
+    "/v1/candidate/applications/{application_id}/interview/finish": {
+      "post": {
+        "description": "End the interview now. Answers so far are scored; the result is shared when outcomes are released.",
+        "operationId": "finish_v1_candidate_applications__application_id__interview_finish_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterviewState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Finish",
+        "tags": [
+          "candidate"
+        ]
+      }
+    },
+    "/v1/candidate/applications/{application_id}/interview/start": {
+      "post": {
+        "description": "Start the clock. Calling it again returns the same session. Then request the first question\nwith `POST \u2026/turn` and no message.",
+        "operationId": "start_v1_candidate_applications__application_id__interview_start_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterviewState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Start",
+        "tags": [
+          "candidate"
+        ]
+      }
+    },
+    "/v1/candidate/applications/{application_id}/interview/turn": {
+      "post": {
+        "description": "Send an answer (or no message, to request the current question) and stream the next question.\nThe answer is saved before streaming starts; the question is saved when it is complete.",
+        "operationId": "turn_v1_candidate_applications__application_id__interview_turn_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TurnIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Server-sent events. Each `data:` line is JSON: `{type: 'token', text}` chunks of the next question, at most one `{type: 'error', code, message, retry_after?}`, then `{type: 'done', state: InterviewState}`."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Turn",
         "tags": [
           "candidate"
         ]

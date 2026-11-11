@@ -17,6 +17,7 @@ from app.llm.errors import BudgetExhausted, LLMNotConfigured, NeedsReview, RateL
 
 # Indirection so tests can swap the model call without touching the graphs.
 call_structured: Callable[..., Any] = wrapper.call_structured
+stream_text: Callable[..., Any] = wrapper.stream_text
 
 
 @asynccontextmanager

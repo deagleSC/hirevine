@@ -19,7 +19,7 @@ export interface EvidenceItem {
 }
 
 const FLAG_COPY: Record<string, { label: string; hint: string; icon: typeof TriangleAlert }> = {
-  no_evidence: { label: "No evidence", hint: "A claimed skill had no quote in the resume; it was scored 0.", icon: Quote },
+  no_evidence: { label: "No evidence", hint: "A score had no supporting quote (resume line or interview answer); it was set to 0.", icon: Quote },
   missing_must_have: { label: "Must-have missing", hint: "A must-have criterion scored 0. Not an automatic reject.", icon: TriangleAlert },
   possible_injection: { label: "Possible injection", hint: "The resume contains instruction-like or hidden text.", icon: ShieldAlert },
   unreadable: { label: "Unreadable", hint: "Too little text could be read from the file (no OCR yet).", icon: FileWarning },
@@ -27,6 +27,8 @@ const FLAG_COPY: Record<string, { label: string; hint: string; icon: typeof Tria
   model_failed: { label: "AI failed", hint: "The AI could not produce a valid result. Retry or score by hand.", icon: TriangleAlert },
   not_scored: { label: "Not scored", hint: "Screening finished without a score.", icon: TriangleAlert },
   auto_submitted: { label: "Auto-submitted", hint: "The quiz time ran out; the saved answers were graded.", icon: TriangleAlert },
+  auto_finished: { label: "Timed out", hint: "The interview time ran out; the answers given were scored.", icon: TriangleAlert },
+  no_answers: { label: "No answers", hint: "The interview ended before the candidate answered anything.", icon: TriangleAlert },
 };
 
 export function flagLabel(flag: string): string {
