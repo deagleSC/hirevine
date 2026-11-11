@@ -47,7 +47,7 @@ export default function ApplicationPage({ params }: { params: Promise<{ appId: s
           ) : null}
           {a.next_action ? (
             <Button asChild className="w-fit">
-              <Link href={`/applications/${a.id}/${a.next_action}`}>{a.next_action === "quiz" ? (a.action_deadline_at ? "Continue quiz" : "Take quiz") : "Start interview"}</Link>
+              <Link href={`/applications/${a.id}/${a.next_action}`}>{a.next_action === "quiz" ? (a.action_deadline_at ? "Continue quiz" : "Take quiz") : a.action_deadline_at ? "Continue interview" : "Start interview"}</Link>
             </Button>
           ) : null}
         </CardContent>

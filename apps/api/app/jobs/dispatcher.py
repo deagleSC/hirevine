@@ -24,15 +24,17 @@ from app.jobs.runs import JobRefs
 
 log = logging.getLogger("hirevine.jobs")
 
-# job type → Inngest event name. Later phases add interview and report.
+# job type → Inngest event name. Phase 8 adds the report.
 EVENTS: dict[str, str] = {
     "selftest": "selftest/requested",
     "screening": "application/submitted",
     "quiz_generate": "quiz/generate.requested",
     "quiz_deadline": "quiz/started",
+    "interview_deadline": "interview/started",
+    "interview_score": "interview/finished",
 }
 # Runs that wait rather than work (they sleep until a deadline). Monitors do not count them as processing.
-WAITING_TYPES = ("quiz_deadline",)
+WAITING_TYPES = ("quiz_deadline", "interview_deadline")
 
 
 def event_id(run_id: UUID, resend: bool = False) -> str:

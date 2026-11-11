@@ -15,6 +15,7 @@ from app.domain.workflow import (
     QuizConfig,
     QuizNode,
     QuizQuestion,
+    RubricItem,
     ScreeningConfig,
     ScreeningNode,
     Workflow,
@@ -30,7 +31,8 @@ def wf() -> Workflow:
             Criterion(id="c1", name="React", weight=3, must_have=True), Criterion(id="c2", name="SQL", weight=2)])),
         QuizNode(type="quiz", id="n2", config=QuizConfig(pass_mark=60, questions=[
             QuizQuestion(id="q1", prompt="What is JSX?", options=["A", "B", "C"], answer_index=0)])),
-        InterviewNode(type="interview", id="n3", config=InterviewConfig()),
+        InterviewNode(type="interview", id="n3", config=InterviewConfig(rubric=[
+            RubricItem(id="r1", name="Communication", weight=2)])),
         FinalNode(type="final", id="n4", config=FinalConfig()),
     ])
 

@@ -4,6 +4,7 @@ import { messageFor } from "@hirevine/api-client";
 import { PageHeader } from "@hirevine/ui/blocks/dashboard-layout";
 import { EvidenceList, FlagBadges, ResumeViewer, type EvidenceItem } from "@hirevine/ui/blocks/evidence";
 import { ProcessingState } from "@hirevine/ui/blocks/processing-state";
+import { InterviewScores, TranscriptView, type InterviewScoreItem } from "@hirevine/ui/blocks/interview";
 import { QuizResults, type QuizResultItem } from "@hirevine/ui/blocks/quiz-runner";
 import { ErrorState, PageSkeleton } from "@hirevine/ui/blocks/states";
 import { StatusBadge } from "@hirevine/ui/blocks/status-badge";
@@ -20,9 +21,13 @@ export default function CandidatePage({ params }: { params: Promise<{ campaignId
   const { campaignId, appId } = use(params);
   const app = useApplication(campaignId, appId);
   const [activeLine, setActiveLine] = useState<number | null>(null);
+  const [activeTurn, setActiveTurn] = useState<number | null>(null);
 
   const screening = app.data?.stages.find((s) => s.node_type === "screening");
   const quizStage = app.data?.stages.find((s) => s.node_type === "quiz");
+  const interviewStage = app.data?.stages.find((s) => s.node_type === "interview");
+  const interviewScores = useMemo(() => (interviewStage?.evidence ?? []) as unknown as InterviewScoreItem[], [interviewStage]);
+  const citedTurns = useMemo(() => new Set(interviewScores.flatMap((i) => i.turns)), [interviewScores]);
   const evidence = useMemo(() => (screening?.evidence ?? []) as unknown as EvidenceItem[], [screening]);
   const cited = useMemo(() => new Set(evidence.flatMap((e) => (e.verified && e.line_no ? [e.line_no] : []))), [evidence]);
 
@@ -116,6 +121,47 @@ export default function CandidatePage({ params }: { params: Promise<{ campaignId
                   <p className="text-sm text-muted-foreground">Invited; not started yet.</p>
                 )}
                 {a.quiz?.submitted_at ? <QuizResults items={(quizStage?.evidence ?? []) as unknown as QuizResultItem[]} /> : null}
+              </CardContent>
+            </Card>
+          ) : null}
+          {interviewStage || a.interview ? (
+            <Card>
+              <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
+                <CardTitle className="text-base">AI interview</CardTitle>
+                <div className="flex items-center gap-2">
+                  {interviewStage?.score != null ? (
+                    <span className="text-lg font-semibold tabular-nums">{interviewStage.score}%</span>
+                  ) : null}
+                  {interviewStage ? <StatusBadge status={interviewStage.status} stage="interview" /> : null}
+                </div>
+              </CardHeader>
+              <CardContent className="grid gap-4">
+                {a.interview ? (
+                  <p className="text-sm text-muted-foreground">
+                    {a.interview.finished_at
+                      ? `Finished ${new Date(a.interview.finished_at).toLocaleString()} · ${a.interview.answers_given} of ${a.interview.turn_cap} answered`
+                      : a.interview.paused
+                        ? `Paused (daily AI limit) · ${a.interview.answers_given} of ${a.interview.turn_cap} answered`
+                        : `In progress · ${a.interview.answers_given} of ${a.interview.turn_cap} answered · due ${new Date(a.interview.deadline_at).toLocaleTimeString()}`}
+                    {interviewStage?.flags.includes("auto_finished") ? " · ended at the time limit" : ""}
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Invited; not started yet.</p>
+                )}
+                {a.interview?.finished_at && !interviewScores.length && interviewStage?.status === "in_progress" ? (
+                  <ProcessingState status="processing" title="Scoring the interview" />
+                ) : null}
+                {interviewScores.length ? (
+                  <InterviewScores items={interviewScores} activeTurn={activeTurn} onSelectTurn={setActiveTurn} />
+                ) : null}
+                {a.interview?.transcript.length ? (
+                  <div className="grid gap-2">
+                    <h3 className="text-sm font-medium">Transcript</h3>
+                    <div className="max-h-[28rem] overflow-y-auto rounded-md border p-2">
+                      <TranscriptView turns={a.interview.transcript} cited={citedTurns} activeTurn={activeTurn} onSelect={setActiveTurn} />
+                    </div>
+                  </div>
+                ) : null}
               </CardContent>
             </Card>
           ) : null}

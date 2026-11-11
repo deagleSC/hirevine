@@ -104,8 +104,13 @@ async def create_initial(tx: Tx, job_id: UUID, workflow: Workflow, actor: UUID |
 
 
 def require_runnable(wf: Workflow) -> None:
-    """A live workflow must be one candidates can finish: an enabled quiz needs questions."""
+    """A live workflow must be one candidates can finish: an enabled quiz needs questions and an
+    enabled interview needs a rubric to be scored against."""
     for n in wf.nodes:
+        if n.type == "interview" and n.enabled and not n.config.rubric:  # type: ignore[union-attr]
+            raise AppError(422, "interview_has_no_rubric",
+                           "The interview has no rubric. Add rubric items, or turn the interview off.",
+                           {"node": n.id})
         if n.type == "quiz" and n.enabled and not n.config.questions:  # type: ignore[union-attr]
             raise AppError(422, "quiz_has_no_questions",
                            "The quiz has no questions. Add or generate questions, or turn the quiz off.",
