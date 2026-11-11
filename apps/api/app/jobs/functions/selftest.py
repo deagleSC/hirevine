@@ -59,7 +59,8 @@ async def last(run_id: str, a: str, b: str) -> str:
 )
 async def selftest(ctx: inngest.Context) -> str:
     run_id = run_id_of(ctx)
-    await ctx.step.run("mark_running", runs.mark_running, run_id, ctx.run_id)
+    if not await ctx.step.run("mark_running", runs.mark_running, run_id, ctx.run_id):
+        return "duplicate"
     a = await ctx.step.run("first", first, run_id)
     b = await ctx.step.run("flaky", flaky, run_id)
     out = await ctx.step.run("last", last, run_id, a, b)

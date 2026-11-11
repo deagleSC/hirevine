@@ -112,11 +112,14 @@ async def test_housekeeping_resends_stuck_runs_and_resumes_deferred(manager, mig
 
     assert await housekeeping.resend_stuck_runs() == 1
     assert await housekeeping.resume_budget_deferred() == 1
-    sent = {e.id for e in fake.sent}
-    # The stuck run never started: same id, so a duplicate send is dropped. The deferred run did
-    # start, so its resume needs a new id or Inngest would drop it as a repeat within 24 h.
-    assert sent == {str(stuck), f"{deferred}:1"}
-    assert str(fresh) not in sent and str(deferred_today) not in sent
+    # Every re-send gets a fresh id: Inngest drops a repeated id for 24 h even if no function took the
+    # first event (an unsynced app), which would strand the run. mark_running guards double starts.
+    sent = [e.id for e in fake.sent]
+    assert sorted(i.split(":")[0] for i in sent) == sorted([str(stuck), str(deferred)])
+    assert all(":" in i for i in sent)
+    assert await housekeeping.resend_stuck_runs() == 1
+    assert fake.sent[-1].id not in sent  # a second re-send of the same run is not deduped either
+    assert not any(str(fresh) in i or str(deferred_today) in i for i in sent)
     assert (await runs.get(deferred))["status"] == "queued"
     assert (await runs.get(deferred_today))["status"] == "deferred_budget"
     for e in fake.sent:
@@ -126,9 +129,13 @@ async def test_housekeeping_resends_stuck_runs_and_resumes_deferred(manager, mig
 async def test_run_status_transitions(manager):
     async with transaction(manager_claims(manager)) as tx:
         run_id = await runs.create(tx, "selftest", JobRefs(org_id=manager["org_id"]))
-    await runs.mark_running(str(run_id), "inngest-run-1")
+    assert await runs.mark_running(str(run_id), "inngest-run-1") is True
     row = await runs.get(run_id)
     assert (row["status"], row["attempts"], row["inngest_run_id"]) == ("running", 1, "inngest-run-1")
+    # A duplicate event cannot start the run again.
+    assert await runs.mark_running(str(run_id), "inngest-run-2") is False
+    row = await runs.get(run_id)
+    assert (row["attempts"], row["inngest_run_id"]) == (1, "inngest-run-1")
     await runs.mark_deferred_budget(str(run_id))
     assert (await runs.get(run_id))["status"] == "deferred_budget"
     await runs.mark_failed(str(run_id), "boom")

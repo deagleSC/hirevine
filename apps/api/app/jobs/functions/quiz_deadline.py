@@ -23,7 +23,8 @@ from app.services import quiz
 async def quiz_deadline(ctx: inngest.Context) -> str:
     run_id = run_id_of(ctx)
     app_id = str(ctx.event.data["application_id"])
-    await ctx.step.run("mark_running", runs.mark_running, run_id, ctx.run_id)
+    if not await ctx.step.run("mark_running", runs.mark_running, run_id, ctx.run_id):
+        return "duplicate"
     due = await ctx.step.run("deadline", quiz.deadline_of, app_id)
     if due:
         await ctx.step.sleep_until("wait_for_deadline", datetime.fromisoformat(str(due)))

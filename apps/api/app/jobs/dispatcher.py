@@ -2,16 +2,18 @@
 (backend plan §10.4).
 
 - The job_runs row is inserted in the caller's transaction, so a rollback leaves no run.
-- The Inngest event is sent only after commit. Its `id` is the job_run_id, so Inngest
-  drops duplicate sends (e.g. housekeeping re-sending a run whose first send did arrive).
-- A lost send leaves the run `queued`; housekeeping re-sends it after 5 minutes.
+- The Inngest event is sent only after commit, with the job_run_id as its `id`.
+- A run still `queued` after 5 minutes is re-sent by housekeeping with a fresh event id. Inngest
+  drops a repeated id for 24 h even when no function consumed the first event (e.g. the app was
+  not yet synced), so reusing the id would strand the run. `runs.mark_running` only claims a
+  queued run, so a duplicate start exits without doing anything.
 """
 
 from __future__ import annotations
 
 import logging
 from typing import Any, Protocol
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import inngest
 
@@ -33,15 +35,13 @@ EVENTS: dict[str, str] = {
 WAITING_TYPES = ("quiz_deadline",)
 
 
-def event_id(run_id: UUID, attempts: int = 0) -> str:
-    """Inngest drops a repeated event id for 24 h. A run that has not started yet keeps its id, so
-    re-sending a lost event cannot start it twice; a run resumed after it started (e.g. deferred on
-    the daily budget) gets a new id per attempt, or the resume could be dropped until the next day."""
-    return str(run_id) if attempts == 0 else f"{run_id}:{attempts}"
+def event_id(run_id: UUID, resend: bool = False) -> str:
+    """The first send uses the run id; every re-send gets a unique id so Inngest never drops it."""
+    return f"{run_id}:{uuid4().hex[:12]}" if resend else str(run_id)
 
 
-def event_for(type: str, run_id: UUID, refs: JobRefs, attempts: int = 0) -> inngest.Event:
-    return inngest.Event(name=EVENTS[type], id=event_id(run_id, attempts), data=refs.event_data(run_id))
+def event_for(type: str, run_id: UUID, refs: JobRefs, resend: bool = False) -> inngest.Event:
+    return inngest.Event(name=EVENTS[type], id=event_id(run_id, resend), data=refs.event_data(run_id))
 
 
 class JobDispatcher(Protocol):
@@ -71,8 +71,7 @@ class InngestDispatcher:
 
     async def resend(self, run: dict[str, object]) -> None:
         run_id = UUID(str(run["id"]))
-        attempts = int(str(run.get("attempts") or 0))
-        await self.client.send(event_for(str(run["type"]), run_id, runs.refs_of(run), attempts))
+        await self.client.send(event_for(str(run["type"]), run_id, runs.refs_of(run), resend=True))
 
 
 dispatcher: JobDispatcher = InngestDispatcher()
