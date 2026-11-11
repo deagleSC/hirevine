@@ -81,7 +81,7 @@ test("monitor lists the screened application; citations highlight resume lines",
   await expect(row).toContainText("71.4%");
   await expect(row).toContainText("Passed");
   await expect(row).toContainText("Possible injection");
-  await page.getByRole("tab", { name: "Possible injection" }).click();
+  await page.getByRole("button", { name: "Possible injection" }).click();
   await expect(page.getByRole("row", { name: /Casey Candidate/ })).toBeVisible();
   if (process.env.E2E_SHOTS) await page.screenshot({ path: `${process.env.E2E_SHOTS}/monitor.png` });
 

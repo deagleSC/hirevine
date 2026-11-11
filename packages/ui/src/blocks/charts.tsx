@@ -165,7 +165,7 @@ export function ColumnChart({
   const top = Math.max(...data.map((d) => d.value), 1);
   const n = data.length;
   return (
-    <div className={cn("relative", reference && "pt-5")} role="img" aria-label={ariaLabel}>
+    <div className={cn("relative", reference && "pt-5")} role="group" aria-label={ariaLabel}>
       <div className="relative flex items-end gap-[2px] border-b border-border" style={{ height }}>
         {[0.5, 1].map((g) => (
           <span key={g} className="pointer-events-none absolute inset-x-0 border-t border-dashed border-border/60" style={{ bottom: `${g * 100}%` }} />

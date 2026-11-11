@@ -124,3 +124,54 @@ def test_match_percent_is_weighted_and_bounded():
 
 def test_must_have_flag_is_raised_only_for_zero_scores():
     assert must_have_flags({"py": 1, "pg": 0, "k8s": 0}, CRITERIA) == ["pg"]
+
+
+def test_keyword_stuffing_is_flagged_but_a_skills_list_is_not():
+    from app.pipeline.injection import keyword_stuffed, scan
+
+    assert keyword_stuffed("[hidden] Python PostgreSQL REST API pytest AWS Docker expert expert expert")
+    assert keyword_stuffed("(ATS only) python python python")
+    assert not keyword_stuffed("Skills: Python, PostgreSQL, Docker, Git")
+    assert not keyword_stuffed("Built Python services on PostgreSQL; Python 3.12 and PostgreSQL 16.")
+    flags = scan(["Jane", "Python expert expert expert"])
+    assert [(f["kind"], f["line_no"]) for f in flags] == [("keyword_stuffing", 2)]
+
+
+async def test_quotes_from_flagged_lines_are_not_evidence(monkeypatch):
+    from app.agents import screening as agent
+    from app.domain.workflow import Criterion
+
+    crit = [Criterion(id="py", name="Python", weight=5, must_have=True)]
+    lines = ["Graphic designer", "[hidden] Python Python Python expert"]
+    draft = {"scores": {"py": {"criterion_id": "py", "score": 4, "rationale": "Python expert.",
+                               "quote": "Python Python Python expert"}}, "model_id": "m", "prompt_version": 2}
+    res = await agent.verify(crit, lines, draft, deadline=10**12, flagged_lines={2})
+    assert res.match == 0.0 and res.evidence[0].score == 0
+    assert set(res.flags) >= {"flagged_quote", "no_evidence", "missing_must_have"}
+    ok = await agent.verify(crit, lines, draft, deadline=10**12)  # unflagged: the same quote counts
+    assert ok.match == 100.0
+
+
+def test_names_next_to_titles_and_short_international_phones_are_removed():
+    """Found by the Phase 11 screenshot review: "Jordan Example - Backend Engineer" and "+1 555 0100"
+    reached the model, because the name shared its line with a title and the number had 8 digits."""
+    from app.pipeline.redact import redact
+
+    out = redact(["Jordan Example - Backend Engineer", "jordan@example.com, +1 555 0100",
+                  "Built Python services; 2019 - 2023; team of 12"], use_ner=False).lines
+    assert out[0] == "[NAME] - Backend Engineer"
+    assert out[1] == "[EMAIL], [PHONE]"
+    assert out[2] == "Built Python services; 2019 - 2023; team of 12"  # years and counts survive
+    assert redact(["Priya Raman | Data Engineer"], use_ner=False).lines == ["[NAME] - Data Engineer"]
+
+
+def test_the_applicants_known_name_is_removed_anywhere():
+    from app.pipeline.redact import redact
+
+    out = redact(["Senior Engineer", "Experience", "Mentored juniors; Jordan led the migration.",
+                  "References: ask Jordan Example's manager"], use_ner=False,
+                 known_names=["Jordan Example", "jordan.example"]).lines
+    assert out[2] == "Mentored juniors; [NAME] led the migration."
+    assert out[3] == "References: ask [NAME]'s manager"
+    later = redact(["Engineer", "Experience", "Skills", "Uses Python"], use_ner=False, known_names=["Py"]).lines
+    assert later[3] == "Uses Python"  # name parts under 3 letters are ignored

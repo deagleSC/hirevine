@@ -91,3 +91,22 @@ async def test_candidate_analytics_only_shows_released_scores(client, migrated_d
     a = (await client.get("/v1/candidate/analytics", headers=auth(cand))).json()
     assert a["scores"] == [] and a["median_days_to_outcome"] is None
     assert a["progress"][0]["status"] != "outcome_released"
+
+
+async def test_demo_seed_is_marked_and_complete(client, migrated_db):  # noqa: F811
+    import seed_demo
+
+    mgr = create_auth_user(migrated_db, "demo-mgr@an.test")
+    me = await make_manager(client, mgr, org="Demo Org")
+    with psycopg.connect(migrated_db, row_factory=dict_row) as conn:
+        ids = seed_demo.seed(conn, me["org_id"])
+        conn.commit()
+    m = (await client.get(f"/v1/manager/campaigns/{ids['campaign_id']}", headers=auth(mgr))).json()
+    assert m["is_demo"] is True and m["job_title"].startswith("Demo:") and m["total"] == 10
+    d = (await client.get(f"/v1/manager/campaigns/{ids['campaign_id']}/applications/{ids['applications'][0]}",
+                          headers=auth(mgr))).json()
+    assert d["candidate_name"] == "Demo candidate 1" and d["resume"]["lines"][0].startswith("[NAME]")
+    assert d["stages"][0]["evidence"][0]["verified"] is True and d["feedback"]["ai_draft"]
+    # The numbers are the hand-checked analytics seed's.
+    a = (await client.get(f"/v1/manager/analytics/campaigns/{ids['campaign_id']}", headers=auth(mgr))).json()
+    assert [f["reached"] for f in a["funnel"]] == [10, 5, 2]

@@ -1,0 +1,74 @@
+# Tests on every push and pull request (backend plan §19.1): the API against a real Postgres with
+# pgvector, and the web apps (types, lint, unit tests, builds with the bundle budget). The Playwright
+# suite needs the Supabase test accounts and runs locally (`pnpm --filter @hirevine/manager e2e`).
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      ADMIN_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+      - name: Lint
+        run: uv run ruff check .
+      - name: Types
+        run: uv run mypy app evals
+      - name: Tests
+        run: uv run pytest -q
+      - name: OpenAPI contract is up to date
+        run: |
+          uv run python -m app.export_openapi /tmp/openapi.json
+          diff -u openapi.json /tmp/openapi.json
+
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: API client types
+        run: pnpm --filter @hirevine/api-client gen:api
+      - name: Types
+        run: pnpm typecheck
+      - name: Lint
+        run: pnpm lint
+      - name: Unit and component tests
+        run: pnpm test
+      - name: Build manager (budget 550 kB per route, 110 kB shared)
+        run: pnpm --filter @hirevine/manager build | node scripts/check-bundle.mjs --route 550 --shared 110
+      - name: Build candidate (budget 300 kB per route, 110 kB shared)
+        run: pnpm --filter @hirevine/candidate build | node scripts/check-bundle.mjs --route 300 --shared 110

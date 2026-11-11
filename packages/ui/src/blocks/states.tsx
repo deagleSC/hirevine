@@ -41,7 +41,7 @@ export function ErrorState({ title = "Something went wrong", message }: { title?
 
 export function PageSkeleton() {
   return (
-    <div className="grid gap-6" aria-label="Loading" aria-busy>
+    <div className="grid gap-6" role="status" aria-label="Loading" aria-busy>
       <div className="space-y-2">
         <Skeleton className="h-7 w-56" />
         <Skeleton className="h-4 w-80" />

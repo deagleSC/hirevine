@@ -110,7 +110,11 @@ test("from job creation to released feedback", async ({ page, browser }) => {
   await expect(cand.getByText(/Your Python and PostgreSQL experience came through clearly/)).toBeVisible();
   await expect(cand.getByText("From your resume")).toBeVisible();
   await expect(cand.getByText(/Built Python services on PostgreSQL/).first()).toBeVisible();
-  await expect(cand.getByText("jordan@example.com")).toHaveCount(0); // redacted before anyone saw it
+  // Redacted before any model saw it: the email, the phone, and the name on a line shared with a title.
+  await expect(cand.getByText("jordan@example.com")).toHaveCount(0);
+  await expect(cand.getByText(/\+1 555 0100/)).toHaveCount(0);
+  await expect(cand.getByText(/Jordan Example/)).toHaveCount(0);
+  await expect(cand.getByText("[NAME] - Backend Engineer")).toBeVisible();
   if (process.env.E2E_SHOTS) await cand.screenshot({ path: `${process.env.E2E_SHOTS}/journey-feedback.png`, fullPage: true });
   expect(errors).toEqual([]);
 });

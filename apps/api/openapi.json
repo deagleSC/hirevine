@@ -710,6 +710,12 @@
             "title": "Id",
             "type": "string"
           },
+          "is_demo": {
+            "default": false,
+            "description": "A pre-run demo with synthetic candidates",
+            "title": "Is Demo",
+            "type": "boolean"
+          },
           "job_id": {
             "format": "uuid",
             "title": "Job Id",

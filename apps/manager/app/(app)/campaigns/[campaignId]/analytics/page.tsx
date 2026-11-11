@@ -8,6 +8,7 @@ import { Button } from "@hirevine/ui/components/button";
 import Link from "next/link";
 import { use } from "react";
 
+import { DemoBanner } from "@/components/demo-banner";
 import { BIN_LABELS, STAGE_NAME, hours, pct, useCampaignAnalytics } from "@/lib/analytics";
 
 /** Campaign analytics (frontend plan §7.7, Phase 10): funnel and score distribution first. */
@@ -30,6 +31,7 @@ export default function CampaignAnalyticsPage({ params }: { params: Promise<{ ca
           </Button>
         }
       />
+      <DemoBanner campaignId={campaignId} />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-testid="kpis">
         <StatTile label="Applications" value={a.applications} />
         <StatTile label="Passed screening" value={screening ? `${screening.passed} of ${screening.reached}` : "—"} />

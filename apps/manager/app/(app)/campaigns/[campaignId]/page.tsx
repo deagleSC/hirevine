@@ -9,12 +9,12 @@ import { Badge } from "@hirevine/ui/components/badge";
 import { Button } from "@hirevine/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@hirevine/ui/components/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@hirevine/ui/components/table";
-import { Tabs, TabsList, TabsTrigger } from "@hirevine/ui/components/tabs";
 import { Inbox, RotateCw } from "lucide-react";
 import Link from "next/link";
 import { use, useState } from "react";
 import { toast } from "sonner";
 
+import { DemoBanner } from "@/components/demo-banner";
 import { candidateLabel, useCampaign, useCampaignApplications, useRetry, type Filters } from "@/lib/campaigns";
 
 const TABS: Record<string, { label: string; filters: Filters }> = {
@@ -64,6 +64,7 @@ export default function CampaignPage({ params }: { params: Promise<{ campaignId:
           </div>
         }
       />
+      <DemoBanner campaignId={campaignId} />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {c.nodes.filter((n) => n.enabled).map((n) => {
@@ -92,16 +93,24 @@ export default function CampaignPage({ params }: { params: Promise<{ campaignId:
         })}
       </div>
 
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="flex-wrap">
-          {Object.entries(TABS).map(([key, t]) => (
-            <TabsTrigger key={key} value={key}>
-              {t.label}
-              {key === "attention" && c.needs_review ? <Badge variant="destructive" className="ml-1">{c.needs_review}</Badge> : null}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+      {/* A filter for the table below, not tabs with panels: toggle buttons (aria-pressed). */}
+      <div role="group" aria-label="Show applications" className="inline-flex w-fit flex-wrap gap-1 rounded-lg bg-muted p-[3px]">
+        {Object.entries(TABS).map(([key, t]) => (
+          <button
+            key={key}
+            type="button"
+            aria-pressed={tab === key}
+            onClick={() => setTab(key)}
+            className={
+              "inline-flex h-8 items-center gap-1 rounded-md px-3 text-sm text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring " +
+              (tab === key ? "bg-background font-medium shadow-sm" : "font-normal hover:bg-background/60")
+            }
+          >
+            {t.label}
+            {key === "attention" && c.needs_review ? <Badge variant="destructive" className="ml-1">{c.needs_review}</Badge> : null}
+          </button>
+        ))}
+      </div>
 
       {rows.isError ? (
         <ErrorState message={messageFor(rows.error)} />

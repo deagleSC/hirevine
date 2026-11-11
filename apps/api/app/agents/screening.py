@@ -68,9 +68,11 @@ async def score(criteria: list[Criterion], lines: list[str], *, deadline: float)
 
 
 async def verify(criteria: list[Criterion], lines: list[str], draft: dict[str, Any], *,
-                 deadline: float) -> ScreeningResult:
+                 deadline: float, flagged_lines: set[int] | frozenset[int] = frozenset()) -> ScreeningResult:
     """Step `verify_citations`: check every quote, retry the failures once, then score unsupported
-    criteria 0 with the flag `no_evidence`. Criteria the model skipped also score 0."""
+    criteria 0 with the flag `no_evidence`. Criteria the model skipped also score 0. A quote from a
+    line the injection scan flagged (`flagged_lines`, 1-based) is not evidence: the criterion scores 0
+    and the result gets `flagged_quote` (the stuffed-keywords eval case, Phase 11)."""
     scores = {k: CriterionScore.model_validate(v) for k, v in draft["scores"].items()}
     failed = _failed(scores, lines)
     if failed:
@@ -86,6 +88,9 @@ async def verify(criteria: list[Criterion], lines: list[str], draft: dict[str, A
     for c in criteria:
         s = scores.get(c.id)
         line_no = locate(s.quote, lines) if s and s.quote else None
+        if line_no is not None and line_no in flagged_lines and s and s.score > 0:
+            flags.add("flagged_quote")
+            line_no = None
         verified = line_no is not None
         value = s.score if s and (verified or s.score == 0) else 0
         if s and s.score > 0 and not verified:

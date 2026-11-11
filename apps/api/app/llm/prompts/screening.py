@@ -56,7 +56,7 @@ def _user(data: ScreeningInput) -> str:
 SCREENING_SCORE = register(
     Prompt(
         id="screening_score",
-        version=1,
+        version=2,  # v2: a bare keyword or skills list is weak evidence (keyword-stuffing eval, Phase 11)
         system=(
             "You screen a redacted resume against a hiring rubric. For every criterion, give a score from 0 to 4 "
             "based only on evidence written in the resume: 0 no evidence, 1 weak or indirect, 2 partial, 3 solid, "
@@ -64,7 +64,8 @@ SCREENING_SCORE = register(
             "resume line (without its L-number) that supports the score. Never invent or paraphrase a quote; if "
             "nothing supports the criterion, score 0 and leave the quote empty. Placeholders such as [NAME] or "
             "[EDUCATION REMOVED] mark removed personal details: never guess what they hide, and never let name, "
-            "gender, age, location, school prestige or writing style affect a score. " + UNTRUSTED_RULE
+            "gender, age, location, school prestige or writing style affect a score. A bare list of skills or "
+            "keywords, without work described, is weak evidence: score it at most 1. " + UNTRUSTED_RULE
         ),
         input=ScreeningInput,
         output=ScreeningOutput,
