@@ -850,6 +850,12 @@ Plain SQL views over `events`, `stage_results`, `quiz_attempts`, `feedback`, `ap
 
 Materialize only if a query goes over about 300 ms at demo scale.
 
+**As built (Phase 10):** `services/analytics.py` and three routes: `GET /manager/analytics/overview`, `GET /manager/analytics/campaigns/{id}` and `GET /candidate/analytics`.
+- **Queries, not views.** The metrics above are plain SQL in the service, run as the caller, so RLS scopes them exactly as `security_invoker` views would; they sit next to their tests and needed no migration.
+- **Definitions:** the funnel counts `stage_results` rows per enabled node (reached / passed / failed / needs review / active) with drop-off against the previous node. Distributions bin scores in 10-point bands per scored stage, with its pass mark. Cutoff impact is screening only (cutoff −10, −5, 0, +5, +10). Time per stage is the median of `updated_at − created_at` for decided rows (stage invite → result). Feedback acceptance is released AI drafts sent unedited; agreement is manager recommendation = AI suggestion among rows that have both. Model usage counts stages scored per `model_id` (per-campaign request and fallback counts would need per-call logging that `llm_budget` does not have). Time to shortlist is the median, over completed campaigns, of first application → `completed_at`.
+- **Candidates** see applications per week, progress (stages reached of enabled stages), scores only for released applications (RLS), median days to outcome and the share of invited quizzes and interviews they finished.
+- **Exit check:** `scripts/seed_analytics.py` seeds a fixed synthetic campaign and lists every expected number (`EXPECTED`, worked out by hand); `tests/api/test_analytics.py` and `e2e/analytics.spec.ts` compare the API and the rendered dashboard against it.
+
 ---
 
 ## 18. Privacy, safety and pilot readiness (§11, §15)

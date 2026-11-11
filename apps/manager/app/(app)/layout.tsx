@@ -4,7 +4,7 @@ import { DashboardLayout } from "@hirevine/ui/blocks/dashboard-layout";
 import type { NavItem } from "@hirevine/ui/blocks/nav-main";
 import { NavUser } from "@hirevine/ui/blocks/nav-user";
 import { useQueryClient } from "@tanstack/react-query";
-import { FolderKanban, MessageSquarePlus } from "lucide-react";
+import { FolderKanban, MessageSquarePlus, ChartColumn } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 
@@ -14,6 +14,7 @@ import { supabase } from "@/lib/supabase";
 const nav: NavItem[] = [
   { title: "Jobs", url: "/", icon: FolderKanban },
   { title: "New job", url: "/jobs/new", icon: MessageSquarePlus },
+  { title: "Analytics", url: "/analytics", icon: ChartColumn },
 ];
 
 export default function AppLayout({ children }: { children: ReactNode }) {

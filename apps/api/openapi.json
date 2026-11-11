@@ -594,6 +594,104 @@
         "title": "ApplyRequest",
         "type": "object"
       },
+      "Bucket": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "start": {
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start",
+          "count"
+        ],
+        "title": "Bucket",
+        "type": "object"
+      },
+      "CampaignAnalytics": {
+        "properties": {
+          "applications": {
+            "title": "Applications",
+            "type": "integer"
+          },
+          "campaign_id": {
+            "format": "uuid",
+            "title": "Campaign Id",
+            "type": "string"
+          },
+          "cutoff_impact": {
+            "items": {
+              "$ref": "#/components/schemas/CutoffRow"
+            },
+            "title": "Cutoff Impact",
+            "type": "array"
+          },
+          "distributions": {
+            "items": {
+              "$ref": "#/components/schemas/Distribution"
+            },
+            "title": "Distributions",
+            "type": "array"
+          },
+          "feedback_acceptance": {
+            "$ref": "#/components/schemas/Ratio",
+            "description": "Released AI drafts sent without edits"
+          },
+          "funnel": {
+            "items": {
+              "$ref": "#/components/schemas/FunnelStep"
+            },
+            "title": "Funnel",
+            "type": "array"
+          },
+          "job_title": {
+            "title": "Job Title",
+            "type": "string"
+          },
+          "model_usage": {
+            "items": {
+              "$ref": "#/components/schemas/ModelUse"
+            },
+            "title": "Model Usage",
+            "type": "array"
+          },
+          "recommendation_agreement": {
+            "$ref": "#/components/schemas/Ratio",
+            "description": "Manager recommendation equal to the AI suggestion"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "time_per_stage": {
+            "items": {
+              "$ref": "#/components/schemas/StageTime"
+            },
+            "title": "Time Per Stage",
+            "type": "array"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "job_title",
+          "status",
+          "applications",
+          "funnel",
+          "distributions",
+          "cutoff_impact",
+          "time_per_stage",
+          "feedback_acceptance",
+          "recommendation_agreement",
+          "model_usage"
+        ],
+        "title": "CampaignAnalytics",
+        "type": "object"
+      },
       "CampaignMonitor": {
         "properties": {
           "ai_paused": {
@@ -698,6 +796,61 @@
           "applicants"
         ],
         "title": "CampaignSummary",
+        "type": "object"
+      },
+      "CandidateAnalytics": {
+        "properties": {
+          "applications": {
+            "title": "Applications",
+            "type": "integer"
+          },
+          "applications_per_week": {
+            "items": {
+              "$ref": "#/components/schemas/Bucket"
+            },
+            "title": "Applications Per Week",
+            "type": "array"
+          },
+          "median_days_to_outcome": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Days To Outcome"
+          },
+          "progress": {
+            "items": {
+              "$ref": "#/components/schemas/Progress"
+            },
+            "title": "Progress",
+            "type": "array"
+          },
+          "scores": {
+            "description": "Released applications only, oldest first",
+            "items": {
+              "$ref": "#/components/schemas/ReleasedScore"
+            },
+            "title": "Scores",
+            "type": "array"
+          },
+          "stage_completion": {
+            "$ref": "#/components/schemas/Ratio",
+            "description": "Quizzes and interviews finished out of those invited to"
+          }
+        },
+        "required": [
+          "applications",
+          "applications_per_week",
+          "progress",
+          "scores",
+          "median_days_to_outcome",
+          "stage_completion"
+        ],
+        "title": "CandidateAnalytics",
         "type": "object"
       },
       "CandidateFeedback": {
@@ -1065,6 +1218,29 @@
         "title": "CriterionWarning",
         "type": "object"
       },
+      "CutoffRow": {
+        "properties": {
+          "cutoff": {
+            "title": "Cutoff",
+            "type": "integer"
+          },
+          "delta": {
+            "title": "Delta",
+            "type": "integer"
+          },
+          "passing": {
+            "title": "Passing",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "delta",
+          "cutoff",
+          "passing"
+        ],
+        "title": "CutoffRow",
+        "type": "object"
+      },
       "DeleteIn": {
         "properties": {
           "confirm": {
@@ -1131,6 +1307,49 @@
           "node_id"
         ],
         "title": "DiffEntry",
+        "type": "object"
+      },
+      "Distribution": {
+        "properties": {
+          "bins": {
+            "description": "10 counts: 0\u20139, 10\u201319, \u2026, 90\u2013100",
+            "items": {
+              "type": "integer"
+            },
+            "title": "Bins",
+            "type": "array"
+          },
+          "cutoff": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cutoff"
+          },
+          "node_id": {
+            "title": "Node Id",
+            "type": "string"
+          },
+          "node_type": {
+            "title": "Node Type",
+            "type": "string"
+          },
+          "scored": {
+            "title": "Scored",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "node_id",
+          "node_type",
+          "bins",
+          "scored"
+        ],
+        "title": "Distribution",
         "type": "object"
       },
       "EditInterviewPrompt": {
@@ -1671,6 +1890,63 @@
           "excluded"
         ],
         "title": "FinalRow",
+        "type": "object"
+      },
+      "FunnelStep": {
+        "properties": {
+          "active": {
+            "description": "Pending or in progress",
+            "title": "Active",
+            "type": "integer"
+          },
+          "drop_off_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Share of the previous step's reached who did not reach this one",
+            "title": "Drop Off Pct"
+          },
+          "failed": {
+            "title": "Failed",
+            "type": "integer"
+          },
+          "needs_review": {
+            "title": "Needs Review",
+            "type": "integer"
+          },
+          "node_id": {
+            "title": "Node Id",
+            "type": "string"
+          },
+          "node_type": {
+            "title": "Node Type",
+            "type": "string"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "integer"
+          },
+          "reached": {
+            "title": "Reached",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "node_id",
+          "node_type",
+          "reached",
+          "passed",
+          "failed",
+          "needs_review",
+          "active",
+          "drop_off_pct"
+        ],
+        "title": "FunnelStep",
         "type": "object"
       },
       "GenerateRequest": {
@@ -2561,6 +2837,24 @@
         "title": "Me",
         "type": "object"
       },
+      "ModelUse": {
+        "properties": {
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "stages_scored": {
+            "title": "Stages Scored",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "model_id",
+          "stages_scored"
+        ],
+        "title": "ModelUse",
+        "type": "object"
+      },
       "MonitorNode": {
         "properties": {
           "enabled": {
@@ -2875,6 +3169,66 @@
         "title": "OverrideResult",
         "type": "object"
       },
+      "Overview": {
+        "properties": {
+          "applications": {
+            "title": "Applications",
+            "type": "integer"
+          },
+          "applications_per_week": {
+            "items": {
+              "$ref": "#/components/schemas/Bucket"
+            },
+            "title": "Applications Per Week",
+            "type": "array"
+          },
+          "campaigns_completed": {
+            "title": "Campaigns Completed",
+            "type": "integer"
+          },
+          "completed_per_month": {
+            "items": {
+              "$ref": "#/components/schemas/Bucket"
+            },
+            "title": "Completed Per Month",
+            "type": "array"
+          },
+          "feedback_acceptance": {
+            "$ref": "#/components/schemas/Ratio"
+          },
+          "open_jobs": {
+            "title": "Open Jobs",
+            "type": "integer"
+          },
+          "recommendation_agreement": {
+            "$ref": "#/components/schemas/Ratio"
+          },
+          "time_to_shortlist_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Median, first application \u2192 campaign completed",
+            "title": "Time To Shortlist Hours"
+          }
+        },
+        "required": [
+          "open_jobs",
+          "applications",
+          "campaigns_completed",
+          "applications_per_week",
+          "completed_per_month",
+          "time_to_shortlist_hours",
+          "feedback_acceptance",
+          "recommendation_agreement"
+        ],
+        "title": "Overview",
+        "type": "object"
+      },
       "PatchRequest": {
         "properties": {
           "base_version": {
@@ -3061,6 +3415,40 @@
           "display_name"
         ],
         "title": "ProfileCreate",
+        "type": "object"
+      },
+      "Progress": {
+        "properties": {
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "job_title": {
+            "title": "Job Title",
+            "type": "string"
+          },
+          "reached": {
+            "title": "Reached",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "application_id",
+          "job_title",
+          "status",
+          "reached",
+          "total"
+        ],
+        "title": "Progress",
         "type": "object"
       },
       "PublicJob": {
@@ -3635,6 +4023,93 @@
           "server_now"
         ],
         "title": "QuizState",
+        "type": "object"
+      },
+      "Ratio": {
+        "properties": {
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "share": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "0\u20131, or null when there is nothing to measure",
+            "title": "Share"
+          }
+        },
+        "required": [
+          "share",
+          "n"
+        ],
+        "title": "Ratio",
+        "type": "object"
+      },
+      "ReleasedScore": {
+        "properties": {
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "interview": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interview"
+          },
+          "job_title": {
+            "title": "Job Title",
+            "type": "string"
+          },
+          "quiz": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quiz"
+          },
+          "released_at": {
+            "format": "date",
+            "title": "Released At",
+            "type": "string"
+          },
+          "screening": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Screening"
+          }
+        },
+        "required": [
+          "application_id",
+          "job_title",
+          "released_at",
+          "screening",
+          "quiz",
+          "interview"
+        ],
+        "title": "ReleasedScore",
         "type": "object"
       },
       "RemoveCriterion": {
@@ -4223,6 +4698,41 @@
         "title": "StageScore",
         "type": "object"
       },
+      "StageTime": {
+        "properties": {
+          "completed": {
+            "title": "Completed",
+            "type": "integer"
+          },
+          "median_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Hours"
+          },
+          "node_id": {
+            "title": "Node Id",
+            "type": "string"
+          },
+          "node_type": {
+            "title": "Node Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "node_id",
+          "node_type",
+          "median_hours",
+          "completed"
+        ],
+        "title": "StageTime",
+        "type": "object"
+      },
       "ToggleNode": {
         "additionalProperties": false,
         "properties": {
@@ -4767,6 +5277,83 @@
         "summary": "Healthz",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/v1/candidate/analytics": {
+      "get": {
+        "description": "Your applications over time and progress; scores only for released outcomes.",
+        "operationId": "candidate_v1_candidate_analytics_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateAnalytics"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Candidate",
+        "tags": [
+          "analytics"
         ]
       }
     },
@@ -6333,6 +6920,172 @@
         "summary": "Export",
         "tags": [
           "candidate"
+        ]
+      }
+    },
+    "/v1/manager/analytics/campaigns/{campaign_id}": {
+      "get": {
+        "description": "One campaign: funnel, score distributions, cutoff impact, time per stage and AI agreement.",
+        "operationId": "campaign_v1_manager_analytics_campaigns__campaign_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Campaign Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignAnalytics"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Campaign",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/v1/manager/analytics/overview": {
+      "get": {
+        "description": "Your organisation: open jobs, applications per week, campaigns completed per month, time to\nshortlist, and how often AI drafts and suggestions were kept.",
+        "operationId": "overview_v1_manager_analytics_overview_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Overview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Overview",
+        "tags": [
+          "analytics"
         ]
       }
     },

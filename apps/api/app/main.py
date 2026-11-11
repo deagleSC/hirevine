@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from app.api.routers import dev_storage, me, public
+from app.api.routers import analytics, dev_storage, me, public
 from app.api.routers.candidate import account as candidate_account
 from app.api.routers.candidate import applications as candidate_applications
 from app.api.routers.candidate import interview as candidate_interview
@@ -77,6 +77,7 @@ def create_app() -> FastAPI:
 
     app.include_router(me.router)
     app.include_router(candidate_account.router)
+    app.include_router(analytics.router)
     if settings.is_dev and not settings.supabase_service_key:
         app.include_router(dev_storage.router)
     app.include_router(manager_org.router)
