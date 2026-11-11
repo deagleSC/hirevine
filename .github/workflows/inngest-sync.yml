@@ -1,0 +1,32 @@
+# After Vercel finishes a production deploy of the API, re-register its functions with Inngest.
+# Inngest only runs functions it knows about; without a sync, new functions never trigger
+# (the Phase 5 screening outage). The sync is a PUT to the app's own serve endpoint, which
+# authenticates to Inngest with the signing key already set on Vercel, so CI needs no secrets.
+name: inngest-sync
+
+on:
+  status:
+
+permissions: {}
+
+jobs:
+  sync:
+    # Vercel reports deploys as commit statuses; only act on a successful hirevine-api deploy of main.
+    if: >-
+      github.event.context == 'Vercel – hirevine-api' &&
+      github.event.state == 'success' &&
+      contains(github.event.branches.*.name, 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Sync Inngest app
+        run: |
+          # The production alias can lag the deploy status briefly; retry until the sync succeeds.
+          for i in 1 2 3 4 5 6; do
+            body=$(curl -sS -X PUT --max-time 30 https://hirevine-api.vercel.app/api/inngest || true)
+            echo "attempt $i: $body"
+            if echo "$body" | grep -q '"ok": *true'; then exit 0; fi
+            sleep 10
+          done
+          echo "::error::Inngest sync failed"
+          exit 1
