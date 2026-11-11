@@ -11,6 +11,7 @@ import inngest
 from app.jobs import runs
 from app.jobs.client import inngest_client
 from app.jobs.functions.common import mark_failed_on_failure, run_id_of
+from app.llm import tracing
 from app.llm.errors import BudgetExhausted, LLMNotConfigured, NeedsReview, RateLimited, TimeBudgetExceeded
 from app.llm.wrapper import deadline_in
 from app.services import report
@@ -18,9 +19,15 @@ from app.services import report
 STEP_SECONDS = 240
 
 
-async def _draft(run_id: str) -> str:
+async def _draft(run_id: str, application_id: str = "") -> str:
     try:
-        return await report.draft_and_save(run_id, deadline_in(STEP_SECONDS))
+        session = f"application-{application_id}" if application_id else None
+        with tracing.trace("draft-candidate-feedback", input={"application_id": application_id}, session_id=session,
+                           tags=["report"],
+                           metadata={"application_id": application_id, "job_run_id": run_id}) as t:
+            out = await report.draft_and_save(run_id, deadline_in(STEP_SECONDS))
+            t.update(output=out)
+            return out
     except BudgetExhausted:
         await runs.mark_deferred_budget(run_id)
         return "deferred"
@@ -45,4 +52,4 @@ async def draft_report(ctx: inngest.Context) -> str:
     run_id = run_id_of(ctx)
     if not await ctx.step.run("mark_running", runs.mark_running, run_id, ctx.run_id):
         return "duplicate"
-    return str(await ctx.step.run("draft", _draft, run_id))
+    return str(await ctx.step.run("draft", _draft, run_id, str(ctx.event.data.get("application_id") or "")))

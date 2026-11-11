@@ -30,6 +30,7 @@ from app.domain.workflow import (
     Workflow,
     chain,
 )
+from app.llm import tracing
 from app.llm.prompts.jd import (
     ChatMessage,
     JdRubricOutput,
@@ -180,11 +181,16 @@ def to_view(thread_id: UUID, state: dict[str, Any]) -> JdChatState:
     )
 
 
-async def run_turn(saver: Any, thread_id: UUID, message: str) -> JdChatState:
+async def run_turn(saver: Any, thread_id: UUID, message: str, *, user_id: UUID | None = None) -> JdChatState:
     graph = GRAPH.compile(checkpointer=saver)
     config: Any = {"configurable": {"thread_id": str(thread_id)}}
-    state = await graph.ainvoke({"messages": [{"role": "user", "content": message}]}, config)
-    return to_view(thread_id, state)
+    # One trace per chat turn, grouped by thread so the whole conversation reads as one session.
+    with tracing.trace("job-chat-turn", input=message, user_id=str(user_id) if user_id else None,
+                       session_id=f"job-chat-{thread_id}", tags=["job-creation"]) as t:
+        state = await graph.ainvoke({"messages": [{"role": "user", "content": message}]}, config)
+        view = to_view(thread_id, state)
+        t.update(output=view.messages[-1].content if view.messages else None, complete=view.complete)
+    return view
 
 
 async def load(saver: Any, thread_id: UUID) -> JdChatState:

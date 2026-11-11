@@ -5,7 +5,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -85,7 +85,19 @@ class Settings(BaseSettings):
     # Tracing. Off unless both keys are set.
     langfuse_public_key: str = ""
     langfuse_secret_key: str = ""
-    langfuse_host: str = "https://cloud.langfuse.com"
+    langfuse_host: str = Field(default="https://cloud.langfuse.com",
+                               validation_alias=AliasChoices("LANGFUSE_BASE_URL", "LANGFUSE_HOST"))
+    # The deployed commit (Vercel sets it): tags traces and errors with the release.
+    release: str = Field(default="", validation_alias=AliasChoices("VERCEL_GIT_COMMIT_SHA", "RELEASE"))
+    # Email (Resend). Off unless the key is set. EMAIL_FROM must be on a domain verified in Resend
+    # (Resend's onboarding@resend.dev can only send to the Resend account's own address).
+    resend_api_key: str = ""
+    email_from: str = "Hirevine <onboarding@resend.dev>"
+    candidate_app_url: str = "http://localhost:3001"
+
+    # Error monitoring: off unless set.
+    sentry_dsn: str = ""
+    sentry_traces_sample_rate: float = 0.1
 
     # Inngest. In dev/test the SDK talks to the local dev server (INNGEST_DEV=1) and needs no keys.
     inngest_event_key: str = ""

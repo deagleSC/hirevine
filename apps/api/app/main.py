@@ -20,6 +20,7 @@ from app.api.routers.manager import campaigns as manager_campaigns
 from app.api.routers.manager import jobs as manager_jobs
 from app.api.routers.manager import org as manager_org
 from app.api.routers.manager import workflows as manager_workflows
+from app.core import monitoring
 from app.core.config import get_settings
 from app.core.db import close_pool, transaction
 from app.core.errors import install_error_handlers
@@ -53,6 +54,7 @@ class ServiceInfo(BaseModel):
 def create_app() -> FastAPI:
     settings = get_settings()
     check_model_config(settings)  # pilot mode with no allowed model must not start
+    monitoring.init(settings)
     app = FastAPI(title="Hirevine API", version="0.1.0", lifespan=lifespan)
     app.add_middleware(
         CORSMiddleware,

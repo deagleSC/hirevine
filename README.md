@@ -164,6 +164,13 @@ In place: candidate data is deleted 180 days after a campaign completes (`retent
 accounts (30/day, stored hashed); upload links per candidate (20/hour); request-path model calls
 default to 10/minute (`LLM_SYNC_RPM_CAP`).
 
-Not done yet: legal review of the privacy notice, terms and AI-evaluation pages; email
-notifications; error monitoring (Sentry); and checking that `LLM_DAILY_CAP` covers the expected
-volume (a full candidate journey is about 10 model requests).
+Observability and email (each off until its keys are set):
+- **Langfuse tracing:** one trace per job step or chat/interview turn, grouped into sessions per
+  application or chat thread; every model call is a generation with model, tokens and OpenRouter's
+  actual cost; emails and phone numbers are masked before export.
+- **Sentry:** API errors (unhandled 500s and background jobs that give up), and browser errors in
+  both apps (loaded after the page is idle). No request bodies, user identity or query strings.
+- **Email (Resend):** invitations to the quiz/interview and released outcomes, once each, with a
+  link back to the app and no scores.
+
+Not done yet: legal review of the privacy notice, terms and AI-evaluation pages.

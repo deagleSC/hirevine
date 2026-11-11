@@ -22,13 +22,15 @@ def all_functions() -> list[inngest.Function[Any]]:
         score_interview,
         screen_application,
         selftest,
+        send_emails,
     )
 
     fns: list[inngest.Function[Any]] = [housekeeping.housekeeping, screen_application.screen_application,
                                         generate_quiz.generate_quiz, quiz_deadline.quiz_deadline,
                                         interview_deadline.interview_deadline, score_interview.score_interview,
                                         draft_report.draft_report, notify_release.notify_release,
-                                        data_delete.data_delete, retention_purge.retention_purge]
+                                        data_delete.data_delete, retention_purge.retention_purge,
+                                        send_emails.send_emails]
     if get_settings().is_dev:
         fns.append(selftest.selftest)  # exit-check function; not served in production
     return fns

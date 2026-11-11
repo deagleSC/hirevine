@@ -12,6 +12,7 @@ import inngest
 from app.jobs import runs
 from app.jobs.client import inngest_client
 from app.jobs.functions.common import mark_failed_on_failure, run_id_of
+from app.llm import tracing
 from app.llm.errors import BudgetExhausted, LLMNotConfigured, NeedsReview, RateLimited, TimeBudgetExceeded
 from app.llm.wrapper import deadline_in
 from app.pipeline import screen
@@ -26,7 +27,14 @@ async def _model_step(run_id: str, application_id: str, fn: str) -> str:
     invalid output twice / no models → stage needs_review."""
     step = screen.score if fn == "score" else screen.verify_citations
     try:
-        return await step(application_id, deadline_in(STEP_SECONDS))
+        # One trace per model step; all of an application's traces share its session.
+        with tracing.trace("screen-resume" if fn == "score" else "verify-resume-quotes",
+                           input={"application_id": application_id, "step": fn},
+                           session_id=f"application-{application_id}", tags=["screening"],
+                           metadata={"application_id": application_id, "job_run_id": run_id}) as t:
+            out = await step(application_id, deadline_in(STEP_SECONDS))
+            t.update(output=out)
+            return out
     except BudgetExhausted:
         await runs.mark_deferred_budget(run_id)
         return "deferred"

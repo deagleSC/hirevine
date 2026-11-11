@@ -16,6 +16,7 @@ dependencies = [
     "pyjwt[crypto]>=2.15.1",
     "pymupdf>=1.26,<2",
     "python-docx>=1.2.0",
+    "sentry-sdk[fastapi]>=2.40",
     "uvicorn[standard]>=0.54.0",
 ]
 

@@ -33,6 +33,7 @@ from app.domain.state_machine import StageOutcome, passes, transition
 from app.domain.workflow import InterviewNode, Workflow
 from app.jobs.dispatcher import dispatcher
 from app.jobs.runs import JobRefs
+from app.llm import tracing
 from app.llm.errors import BudgetExhausted, LLMNotConfigured, NeedsReview, RateLimited, TimeBudgetExceeded
 from app.llm.wrapper import deadline_in
 
@@ -293,6 +294,10 @@ async def stream_turn(plan: TurnPlan) -> AsyncIterator[dict[str, Any]]:
     elif plan.action == "question":
         assert plan.node is not None
         parts: list[str] = []
+        last = plan.transcript[-1].content if plan.transcript and plan.transcript[-1].role == "candidate" else None
+        trace = tracing.trace("interview-turn", input=last, session_id=f"application-{plan.application_id}",
+                              tags=["interview"], metadata={"application_id": plan.application_id})
+        span = trace.__enter__()
         try:
             async for chunk in agent.next_question(
                 title=plan.title, seniority=plan.seniority, description=plan.description,
@@ -319,6 +324,9 @@ async def stream_turn(plan: TurnPlan) -> AsyncIterator[dict[str, Any]]:
             log.exception("interview question failed for %s", plan.application_id)
             yield {"type": "error", "code": "agent_failed",
                    "message": "The interviewer could not write the next question. Your answer is saved; try again."}
+        finally:
+            span.update(output="".join(parts) or None)
+            trace.__exit__(None, None, None)
     yield {"type": "done", "state": (await _system_state(plan.application_id)).model_dump(mode="json")}
 
 

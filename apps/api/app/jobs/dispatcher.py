@@ -39,6 +39,7 @@ EVENTS: dict[str, str] = {
     "report_draft": "report/draft.requested",
     "notify_release": "campaign/completed",
     "data_delete": "privacy/delete.requested",
+    "send_emails": "notifications/created",
 }
 # Runs that wait rather than work (they sleep until a deadline). Monitors do not count them as processing.
 WAITING_TYPES = ("quiz_deadline", "interview_deadline")

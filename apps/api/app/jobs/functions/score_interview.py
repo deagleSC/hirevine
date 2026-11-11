@@ -11,6 +11,7 @@ import inngest
 from app.jobs import runs
 from app.jobs.client import inngest_client
 from app.jobs.functions.common import mark_failed_on_failure, run_id_of
+from app.llm import tracing
 from app.llm.errors import BudgetExhausted, LLMNotConfigured, NeedsReview, RateLimited, TimeBudgetExceeded
 from app.llm.wrapper import deadline_in
 from app.services import interview
@@ -20,7 +21,12 @@ STEP_SECONDS = 240
 
 async def _score(run_id: str, application_id: str) -> str:
     try:
-        return await interview.score_and_transition(run_id, deadline_in(STEP_SECONDS))
+        with tracing.trace("score-interview-transcript", input={"application_id": application_id},
+                           session_id=f"application-{application_id}",
+                           tags=["interview"], metadata={"application_id": application_id, "job_run_id": run_id}) as t:
+            out = await interview.score_and_transition(run_id, deadline_in(STEP_SECONDS))
+            t.update(output=out)
+            return out
     except BudgetExhausted:
         await runs.mark_deferred_budget(run_id)
         return "deferred"

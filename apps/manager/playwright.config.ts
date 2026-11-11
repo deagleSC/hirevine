@@ -68,6 +68,10 @@ export default defineConfig({
         LLM_DAILY_CAP: "1000",
         // Jobs run in-process right after commit (no Inngest in e2e); uploads go to the API's dev store.
         JOB_DISPATCHER: "inline",
+        // No test traffic to Langfuse or Sentry.
+        LANGFUSE_PUBLIC_KEY: "",
+        LANGFUSE_SECRET_KEY: "",
+        SENTRY_DSN: "",
         PUBLIC_API_URL: API,
       },
     },

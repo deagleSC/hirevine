@@ -24,6 +24,10 @@ JWT_SECRET = "test-jwt-secret-at-least-32-bytes-long!!"
 
 # Settings the app reads (set before app modules are imported by test files).
 os.environ.setdefault("APP_ENV", "test")
+# Never send test traffic to Langfuse or Sentry, even when apps/api/.env holds real keys.
+os.environ["LANGFUSE_PUBLIC_KEY"] = ""
+os.environ["LANGFUSE_SECRET_KEY"] = ""
+os.environ["SENTRY_DSN"] = ""
 # Every test request shares the test client's address, so the per-IP limit would trip across the
 # suite; test_retention.py sets its own low limit with a distinct forwarded IP.
 os.environ.setdefault("APPLICATIONS_PER_IP_PER_DAY", "100000")
