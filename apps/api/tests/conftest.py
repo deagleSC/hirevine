@@ -81,3 +81,16 @@ def manager_claims(profile: dict) -> dict:
 
 def candidate_claims(profile: dict) -> dict:
     return {"sub": str(profile["id"]), "role": "candidate"}
+
+
+@pytest.fixture(autouse=True)
+def report_events(monkeypatch):
+    """Stage transitions queue `draft-report` runs; record their events instead of sending them to an
+    Inngest dev server that tests do not run. Tests read `report_events.sent`."""
+    from app.jobs.dispatcher import InngestDispatcher
+    from app.services import report
+    from tests.jobs.test_dispatcher import FakeInngest
+
+    fake = FakeInngest()
+    monkeypatch.setattr(report, "dispatcher", InngestDispatcher(fake))  # type: ignore[arg-type]
+    return fake

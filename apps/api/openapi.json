@@ -191,6 +191,16 @@
             ],
             "title": "Current Node"
           },
+          "feedback": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FeedbackView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "id": {
             "format": "uuid",
             "title": "Id",
@@ -690,6 +700,85 @@
         "title": "CampaignSummary",
         "type": "object"
       },
+      "CandidateFeedback": {
+        "properties": {
+          "citations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Citations",
+            "type": "array"
+          },
+          "feedback": {
+            "title": "Feedback",
+            "type": "string"
+          },
+          "job_title": {
+            "title": "Job Title",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "shortlisted",
+              "not_selected"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "released_at": {
+            "format": "date-time",
+            "title": "Released At",
+            "type": "string"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateStage"
+            },
+            "title": "Stages",
+            "type": "array"
+          }
+        },
+        "required": [
+          "job_title",
+          "released_at",
+          "outcome",
+          "feedback",
+          "stages",
+          "citations"
+        ],
+        "title": "CandidateFeedback",
+        "type": "object"
+      },
+      "CandidateStage": {
+        "properties": {
+          "node_type": {
+            "title": "Node Type",
+            "type": "string"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "node_type",
+          "status",
+          "score"
+        ],
+        "title": "CandidateStage",
+        "type": "object"
+      },
       "ChatMessage": {
         "properties": {
           "content": {
@@ -738,6 +827,62 @@
           "message"
         ],
         "title": "ChatRequest",
+        "type": "object"
+      },
+      "CompleteIn": {
+        "properties": {
+          "confirm_title": {
+            "description": "The job title, typed by the manager to confirm",
+            "title": "Confirm Title",
+            "type": "string"
+          },
+          "notify": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Override the campaign's notify setting",
+            "title": "Notify"
+          }
+        },
+        "required": [
+          "confirm_title"
+        ],
+        "title": "CompleteIn",
+        "type": "object"
+      },
+      "CompleteResult": {
+        "properties": {
+          "completed_at": {
+            "format": "date-time",
+            "title": "Completed At",
+            "type": "string"
+          },
+          "notified": {
+            "title": "Notified",
+            "type": "boolean"
+          },
+          "released": {
+            "title": "Released",
+            "type": "integer"
+          },
+          "status": {
+            "const": "completed",
+            "default": "completed",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "completed_at",
+          "released",
+          "notified"
+        ],
+        "title": "CompleteResult",
         "type": "object"
       },
       "ConsentIn": {
@@ -1031,6 +1176,188 @@
         "title": "ErrorEnvelope",
         "type": "object"
       },
+      "FeedbackPatch": {
+        "properties": {
+          "edited_text": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edited Text"
+          },
+          "excluded": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excluded"
+          },
+          "manager_note": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manager Note"
+          },
+          "recommendation": {
+            "anyOf": [
+              {
+                "enum": [
+                  "strong_yes",
+                  "yes",
+                  "maybe",
+                  "no"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommendation"
+          }
+        },
+        "title": "FeedbackPatch",
+        "type": "object"
+      },
+      "FeedbackView": {
+        "properties": {
+          "ai_draft": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Draft"
+          },
+          "ai_recommendation": {
+            "anyOf": [
+              {
+                "enum": [
+                  "strong_yes",
+                  "yes",
+                  "maybe",
+                  "no"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Recommendation"
+          },
+          "citations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Citations",
+            "type": "array"
+          },
+          "edited_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edited Text"
+          },
+          "excluded": {
+            "title": "Excluded",
+            "type": "boolean"
+          },
+          "manager_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manager Note"
+          },
+          "recommendation": {
+            "anyOf": [
+              {
+                "enum": [
+                  "strong_yes",
+                  "yes",
+                  "maybe",
+                  "no"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommendation"
+          },
+          "released": {
+            "title": "Released",
+            "type": "boolean"
+          },
+          "released_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Released At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "ai_draft",
+          "ai_recommendation",
+          "edited_text",
+          "recommendation",
+          "manager_note",
+          "excluded",
+          "released",
+          "released_at",
+          "citations",
+          "updated_at"
+        ],
+        "title": "FeedbackView",
+        "type": "object"
+      },
       "FinalConfig": {
         "additionalProperties": false,
         "properties": {
@@ -1074,6 +1401,214 @@
           "config"
         ],
         "title": "FinalNode",
+        "type": "object"
+      },
+      "FinalReport": {
+        "properties": {
+          "campaign_id": {
+            "format": "uuid",
+            "title": "Campaign Id",
+            "type": "string"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "finalists": {
+            "title": "Finalists",
+            "type": "integer"
+          },
+          "in_progress": {
+            "title": "In Progress",
+            "type": "integer"
+          },
+          "job_title": {
+            "title": "Job Title",
+            "type": "string"
+          },
+          "notify_on_complete": {
+            "title": "Notify On Complete",
+            "type": "boolean"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/FinalRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "unedited": {
+            "description": "Applications whose feedback is still an unedited AI draft or missing",
+            "title": "Unedited",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "job_title",
+          "status",
+          "completed_at",
+          "notify_on_complete",
+          "total",
+          "finalists",
+          "in_progress",
+          "unedited",
+          "rows"
+        ],
+        "title": "FinalReport",
+        "type": "object"
+      },
+      "FinalRow": {
+        "properties": {
+          "application_id": {
+            "format": "uuid",
+            "title": "Application Id",
+            "type": "string"
+          },
+          "candidate_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Name"
+          },
+          "excluded": {
+            "title": "Excluded",
+            "type": "boolean"
+          },
+          "feedback_preview": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feedback Preview"
+          },
+          "feedback_status": {
+            "enum": [
+              "none",
+              "drafting",
+              "draft",
+              "edited"
+            ],
+            "title": "Feedback Status",
+            "type": "string"
+          },
+          "flags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Flags",
+            "type": "array"
+          },
+          "overall": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overall"
+          },
+          "rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "1-based among finalists who are not excluded; null otherwise",
+            "title": "Rank"
+          },
+          "recommendation": {
+            "anyOf": [
+              {
+                "enum": [
+                  "strong_yes",
+                  "yes",
+                  "maybe",
+                  "no"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The manager's choice, if made",
+            "title": "Recommendation"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/StageScore"
+            },
+            "title": "Stages",
+            "type": "array"
+          },
+          "standing": {
+            "enum": [
+              "final",
+              "failed",
+              "needs_review",
+              "in_progress"
+            ],
+            "title": "Standing",
+            "type": "string"
+          },
+          "suggested": {
+            "description": "AI draft's suggestion, else the score rule",
+            "enum": [
+              "strong_yes",
+              "yes",
+              "maybe",
+              "no"
+            ],
+            "title": "Suggested",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rank",
+          "application_id",
+          "candidate_name",
+          "standing",
+          "overall",
+          "stages",
+          "flags",
+          "suggested",
+          "recommendation",
+          "feedback_status",
+          "feedback_preview",
+          "excluded"
+        ],
+        "title": "FinalRow",
         "type": "object"
       },
       "GenerateRequest": {
@@ -1837,6 +2372,33 @@
           }
         },
         "title": "JobUpdate",
+        "type": "object"
+      },
+      "ManualScoreIn": {
+        "properties": {
+          "node_id": {
+            "title": "Node Id",
+            "type": "string"
+          },
+          "note": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Note",
+            "type": "string"
+          },
+          "score": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "type": "number"
+          }
+        },
+        "required": [
+          "node_id",
+          "score",
+          "note"
+        ],
+        "title": "ManualScoreIn",
         "type": "object"
       },
       "Me": {
@@ -3364,6 +3926,41 @@
         "title": "StageDetail",
         "type": "object"
       },
+      "StageScore": {
+        "properties": {
+          "node_id": {
+            "title": "Node Id",
+            "type": "string"
+          },
+          "node_type": {
+            "title": "Node Type",
+            "type": "string"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "node_id",
+          "node_type",
+          "status",
+          "score"
+        ],
+        "title": "StageScore",
+        "type": "object"
+      },
       "ToggleNode": {
         "additionalProperties": false,
         "properties": {
@@ -4247,6 +4844,95 @@
           }
         ],
         "summary": "Get Application",
+        "tags": [
+          "candidate"
+        ]
+      }
+    },
+    "/v1/candidate/applications/{application_id}/feedback": {
+      "get": {
+        "description": "Released feedback: the outcome, the feedback text and stage results. 404 until the hiring team\ncompletes the campaign (enforced by RLS).",
+        "operationId": "get_feedback_v1_candidate_applications__application_id__feedback_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateFeedback"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Feedback",
         "tags": [
           "candidate"
         ]
@@ -5344,6 +6030,226 @@
         ]
       }
     },
+    "/v1/manager/campaigns/{campaign_id}/applications/{application_id}/feedback": {
+      "patch": {
+        "description": "Edit the feedback a candidate will receive, the recommendation, the exclude flag or a private note.",
+        "operationId": "update_feedback_v1_manager_campaigns__campaign_id__applications__application_id__feedback_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Campaign Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Feedback",
+        "tags": [
+          "manager",
+          "campaigns"
+        ]
+      }
+    },
+    "/v1/manager/campaigns/{campaign_id}/applications/{application_id}/manual-score": {
+      "post": {
+        "description": "Score a stage that needs review by hand; the usual pass rule then moves the application on.",
+        "operationId": "manual_score_v1_manager_campaigns__campaign_id__applications__application_id__manual_score_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Campaign Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualScoreIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StageScore"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Manual Score",
+        "tags": [
+          "manager",
+          "campaigns"
+        ]
+      }
+    },
     "/v1/manager/campaigns/{campaign_id}/applications/{application_id}/retry": {
       "post": {
         "operationId": "retry_v1_manager_campaigns__campaign_id__applications__application_id__retry_post",
@@ -5437,6 +6343,196 @@
           }
         ],
         "summary": "Retry",
+        "tags": [
+          "manager",
+          "campaigns"
+        ]
+      }
+    },
+    "/v1/manager/campaigns/{campaign_id}/complete": {
+      "post": {
+        "description": "Irreversible: closes the campaign and the job, and releases outcomes and feedback to every candidate.",
+        "operationId": "complete_v1_manager_campaigns__campaign_id__complete_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Campaign Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompleteResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Complete",
+        "tags": [
+          "manager",
+          "campaigns"
+        ]
+      }
+    },
+    "/v1/manager/campaigns/{campaign_id}/final": {
+      "get": {
+        "description": "The ranked final list: finalists first by overall score, then everyone else, with feedback status.",
+        "operationId": "final_report_v1_manager_campaigns__campaign_id__final_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Campaign Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinalReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Final Report",
         "tags": [
           "manager",
           "campaigns"

@@ -344,6 +344,8 @@ async def finish_if_open(application_id: str) -> str:
             return "no_session"
         if ctx["finished_at"] is not None:
             return "already_finished"
+        if ctx["campaign_status"] != "open":
+            return "campaign_completed"  # outcomes are released: nothing may change now
         now = ctx["server_now"]
         if ctx["paused_at"] is not None:
             if now < ctx["paused_at"] + PAUSE_LIMIT:
@@ -372,7 +374,8 @@ async def score_and_transition(run_id: str, deadline: float) -> str:
             return "skipped"
         ctx = await _context(tx, run["application_id"])
     node: InterviewNode | None = ctx["node"]
-    if node is None or ctx["finished_at"] is None or ctx["stage_status"] in ("passed", "failed"):
+    if (node is None or ctx["finished_at"] is None or ctx["stage_status"] in ("passed", "failed")
+            or ctx["campaign_status"] != "open"):
         await _mark_done(run_id)
         return "skipped"
     transcript: list[interview.Entry] = ctx["entries"]

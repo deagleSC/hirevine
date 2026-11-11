@@ -371,6 +371,8 @@ async def auto_submit_if_open(application_id: str) -> str:
             return "no_attempt"
         if ctx["submitted_at"] is not None:
             return "already_submitted"
+        if ctx["campaign_status"] != "open":
+            return "campaign_completed"  # outcomes are released: nothing may change now
         if ctx["server_now"] < ctx["deadline_at"] + GRACE:
             return "not_due"
         return await _finish(tx, ctx, "deadline")
