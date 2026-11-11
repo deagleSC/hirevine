@@ -111,6 +111,9 @@ async def transition(tx: Tx, application_id: UUID, node_id: str, outcome: StageO
             from applications a join campaigns c on c.id = a.campaign_id join jobs j on j.id = c.job_id
             where a.id = %s
             """, (workflow.node(nxt).type, application_id))
+        from app.services.email import queue as queue_email
+
+        await queue_email(tx)
 
     if reached_final or outcome.status == "failed":
         # Everyone gets an outcome on release: draft feedback for finalists and for candidates who

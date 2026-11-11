@@ -873,6 +873,7 @@ Materialize only if a query goes over about 300 ms at demo scale.
 | Model data policy | Synthetic data only until the pilot. `LLM_PILOT_MODE=true` enforces the allowlist + OpenRouter provider `data_collection: "deny"` (**verify the option name**) |
 | Traces | Langfuse receives redacted text only. Unit test: `redact()` output has no email or phone patterns |
 | Job service as a processor | Inngest's cloud receives events and step outputs. They carry IDs only (enforced by a test). Resume text stays in Supabase. The Python SDK's encryption middleware is on as a second layer (**verify which features it covers in Python**). The privacy notice names Inngest as a processor |
+| Email | **As built:** Resend. Each notification (stage invite, outcome released) is emailed once by `send-emails` (event `notifications/created`, queued with the notification; `housekeeping` sweeps anything missed); `notifications.emailed_at` (migration 18) and Resend's idempotency key prevent duplicates; only the last two days are sent, so enabling email never mails a backlog. Addresses come from Supabase Auth's admin API; placeholder `.invalid` addresses are skipped. No scores or feedback text in emails |
 | Monitoring | Sentry on the API. Inngest failure alerts plus `on_failure` handlers. Alerts on `job_runs` queued for more than 10 min, the daily model budget at 80%, and monthly Inngest executions at 80% of 50,000 |
 | Backups | A scheduled `pg_dump` (GitHub Action) to storage, with a restore tested once. Verify Supabase plan coverage |
 

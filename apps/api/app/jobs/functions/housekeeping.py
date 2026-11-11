@@ -10,6 +10,7 @@ from app.core.db import system_claims, transaction
 from app.jobs import runs
 from app.jobs.client import inngest_client
 from app.jobs.dispatcher import dispatcher
+from app.services import email
 
 
 async def ping_db() -> bool:
@@ -47,4 +48,5 @@ async def housekeeping(ctx: inngest.Context) -> dict[str, int]:
     resent = await ctx.step.run("resend_stuck_runs", resend_stuck_runs)
     resumed = await ctx.step.run("resume_budget_deferred", resume_budget_deferred)
     purged = await ctx.step.run("purge_rate_limits", purge_rate_limits)
-    return {"resent": resent, "resumed": resumed, "rate_limit_rows_purged": purged}
+    emailed = await ctx.step.run("send_pending_emails", email.send_pending)
+    return {"resent": resent, "resumed": resumed, "rate_limit_rows_purged": purged, "emailed": emailed}

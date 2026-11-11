@@ -157,9 +157,10 @@ async def call_structured[T: BaseModel](
 
     with tracing.generation(
         prompt.id,
-        input=input.model_dump(mode="json"),
+        input=list(prompt.render(input)),  # the role-labelled messages the model sees (inputs are redacted)
         metadata={"prompt_id": prompt.id, "prompt_version": prompt.version, "role": role, "models": models},
     ) as span:
+        usage_total: dict[str, float] = {"input": 0, "output": 0, "cost": 0.0}
         if cache_enabled and (hit := await cache.get(key)) is not None:
             span.update(output=hit["response"], model=hit["model_id"], cached=True, attempts=0)
             return StructuredResult(
@@ -187,7 +188,7 @@ async def call_structured[T: BaseModel](
                         tool_choice={"type": "function", "function": {"name": TOOL_NAME}},
                         temperature=0,
                         timeout=min(get_settings().llm_request_timeout_s, remaining(deadline)),
-                        extra_body={"models": models, "provider": provider_prefs()},
+                        extra_body={"models": models, "provider": provider_prefs(), "usage": {"include": True}},
                     )
                     break
                 except openai.RateLimitError as exc:
@@ -210,6 +211,8 @@ async def call_structured[T: BaseModel](
 
             served_by = getattr(resp, "model", None) or models[0]
             await budget.record_model(served_by)
+            for k, v in tracing.usage_of(resp).items():  # every request is billed, retries included
+                usage_total[k] += v or 0
             args = _arguments(resp)
             if args is None:
                 # OpenRouter's free pool answers overload with an empty completion.
@@ -226,12 +229,12 @@ async def call_structured[T: BaseModel](
             dumped = value.model_dump(mode="json")
             await cache.put(key, dumped, model_id=served_by, prompt_id=prompt.id, prompt_version=prompt.version)
             span.update(
-                output=dumped, model=served_by, cached=False, attempts=attempt,
+                output=dumped, model=served_by, cached=False, attempts=attempt, usage=usage_total,
                 fallback_used=served_by != models[0], latency_s=round(time.monotonic() - started, 3),
             )
             return StructuredResult(value, served_by, prompt.version, False, attempt)
 
-        span.update(level="WARNING", status_message=f"needs_review: {last_error}", attempts=2)
+        span.update(level="WARNING", status_message=f"needs_review: {last_error}", attempts=2, usage=usage_total)
         raise NeedsReview(prompt.id, last_error)
 
 
@@ -251,11 +254,12 @@ async def stream_text(
     llm = client or default_client()
     with tracing.generation(
         prompt.id,
-        input=input.model_dump(mode="json"),
+        input=list(prompt.render(input)),
         metadata={"prompt_id": prompt.id, "prompt_version": prompt.version, "role": role, "models": models},
     ) as span:
         started = time.monotonic()
         order = list(models)
+        usage: dict[str, int | None] = {}
         for switch in (False, True):  # before any text arrives, one failure moves on to the next model
             ensure_time(deadline)
             await budget.reserve()
@@ -268,11 +272,14 @@ async def stream_text(
                     messages=prompt.render(input),  # type: ignore[arg-type]
                     temperature=0.4,
                     stream=True,
+                    stream_options={"include_usage": True},  # a final chunk carries token usage
                     timeout=min(get_settings().llm_request_timeout_s, remaining(deadline)),
-                    extra_body={"models": order, "provider": provider_prefs()},
+                    extra_body={"models": order, "provider": provider_prefs(), "usage": {"include": True}},
                 )
                 async for chunk in stream:
                     served_by = getattr(chunk, "model", None) or served_by
+                    if getattr(chunk, "usage", None):
+                        usage = tracing.usage_of(chunk)
                     if not getattr(chunk, "choices", None):
                         continue
                     text = chunk.choices[0].delta.content or ""
@@ -300,6 +307,6 @@ async def stream_text(
                     raise RateLimited("Empty response from model provider", retry_after=10.0)
                 order = _rotate(order)
                 continue
-            span.update(output="".join(parts), model=served_by, cached=False, attempts=2 if switch else 1,
+            span.update(output="".join(parts), model=served_by, cached=False, attempts=2 if switch else 1, usage=usage,
                         fallback_used=served_by != models[0], latency_s=round(time.monotonic() - started, 3))
             return

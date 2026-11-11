@@ -6,6 +6,7 @@ from typing import Any
 
 import inngest
 
+from app.core import monitoring
 from app.jobs import runs
 
 
@@ -22,3 +23,6 @@ async def mark_failed_on_failure(ctx: inngest.Context) -> None:
     run_id = original.get("job_run_id")
     if run_id:
         await runs.mark_failed(str(run_id), str(error))
+    # Inngest gave up after its retries: worth an alert (ids only, never content).
+    monitoring.capture(RuntimeError(f"job failed after retries: {error}"[:500]),
+                       function=str(data.get("function_id") or ""), job_run_id=str(run_id or ""))

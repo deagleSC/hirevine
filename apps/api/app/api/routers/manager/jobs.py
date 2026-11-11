@@ -48,7 +48,7 @@ async def chat(body: ChatRequest, principal: PrincipalDep) -> jd_agent.JdChatSta
             thread_id = body.thread_id
             await tx.conn.execute("update agent_threads set updated_at = now() where thread_id = %s", (thread_id,))
         async with common.llm_errors(), common.checkpointer(tx) as saver:
-            return await jd_agent.run_turn(saver, thread_id, body.message)
+            return await jd_agent.run_turn(saver, thread_id, body.message, user_id=user.user_id)
 
 
 @router.get("/chat/{thread_id}", response_model=jd_agent.JdChatState)

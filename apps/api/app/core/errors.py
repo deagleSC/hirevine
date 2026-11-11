@@ -73,6 +73,9 @@ def install_error_handlers(app: FastAPI) -> None:
         return envelope(422, "validation_error", "The request is not valid.", {"errors": errors})
 
     @app.exception_handler(Exception)
-    async def _unhandled(_: Request, exc: Exception) -> JSONResponse:
+    async def _unhandled(request: Request, exc: Exception) -> JSONResponse:
         log.exception("unhandled error", exc_info=exc)
+        from app.core import monitoring
+
+        monitoring.capture(exc, path=request.url.path)
         return envelope(500, "internal_error", "Something went wrong.")

@@ -458,6 +458,10 @@ async def notify_batch(campaign_id: str, application_ids: list[str]) -> int:
             on conflict (user_id, (payload ->> 'application_id')) where type = 'outcome_released' do nothing
             returning id
             """, (application_ids, campaign_id))
+        if rows:
+            from app.services.email import queue as queue_email
+
+            await queue_email(tx)
     return len(rows)
 
 

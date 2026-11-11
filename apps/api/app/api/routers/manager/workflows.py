@@ -86,4 +86,4 @@ async def chat(job_id: UUID, body: OverrideRequest, principal: PrincipalDep) -> 
             await common.own_thread(tx, user, body.thread_id, "override", job_id)
             thread_id = body.thread_id
         async with common.llm_errors(), common.checkpointer(tx) as saver:
-            return await override_agent.run(saver, thread_id, current.definition, body.message)
+            return await override_agent.run(saver, thread_id, current.definition, body.message, user_id=user.user_id)

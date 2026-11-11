@@ -13,6 +13,7 @@ from pydantic import BaseModel, TypeAdapter
 from app.agents import common
 from app.domain.patches import Patch, PatchError, apply_patches, describe
 from app.domain.workflow import Workflow
+from app.llm import tracing
 from app.llm.prompts.override import OverrideInput, OverrideOutput, OverrideTurn
 from app.llm.wrapper import deadline_in
 
@@ -84,14 +85,18 @@ class OverrideResult(BaseModel):
     error: str | None = None
 
 
-async def run(saver: Any, thread_id: UUID, workflow: Workflow, instruction: str) -> OverrideResult:
+async def run(saver: Any, thread_id: UUID, workflow: Workflow, instruction: str, *,
+              user_id: UUID | None = None) -> OverrideResult:
     graph = GRAPH.compile(checkpointer=saver)
     config: Any = {"configurable": {"thread_id": str(thread_id)}}
-    state = await graph.ainvoke(
-        {"workflow": workflow.model_dump(mode="json"), "instruction": instruction, "patches": [], "error": None,
-         "attempts": 0},
-        config,
-    )
+    with tracing.trace("workflow-chat-turn", input=instruction, user_id=str(user_id) if user_id else None,
+                       session_id=f"workflow-chat-{thread_id}", tags=["workflow-editing"]) as t:
+        state = await graph.ainvoke(
+            {"workflow": workflow.model_dump(mode="json"), "instruction": instruction, "patches": [], "error": None,
+             "attempts": 0},
+            config,
+        )
+        t.update(output=state.get("explanation") or state.get("error"), patches=len(state.get("patches") or []))
     error = state.get("error")
     patches = [] if error else _patches.validate_python(state.get("patches", []))
     return OverrideResult(
