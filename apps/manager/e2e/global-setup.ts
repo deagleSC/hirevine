@@ -27,7 +27,7 @@ function env(name: string): string {
   return v;
 }
 
-async function signIn(): Promise<{ token: string; userId: string }> {
+async function signIn(email: string, password: string): Promise<{ token: string; userId: string }> {
   const local = Object.fromEntries(
     readFileSync(path.resolve(__dirname, "../.env.local"), "utf8").split("\n").filter((l) => l.includes("="))
       .map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1).trim()]),
@@ -35,7 +35,7 @@ async function signIn(): Promise<{ token: string; userId: string }> {
   const res = await fetch(`${local.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/token?grant_type=password`, {
     method: "POST",
     headers: { apikey: local.NEXT_PUBLIC_SUPABASE_ANON_KEY!, "Content-Type": "application/json" },
-    body: JSON.stringify({ email: env("E2E_MANAGER_EMAIL"), password: env("E2E_MANAGER_PASSWORD") }),
+    body: JSON.stringify({ email, password }),
   });
   if (!res.ok) throw new Error(`Supabase sign-in failed: ${res.status} ${await res.text()}`);
   const body = (await res.json()) as { access_token: string; user: { id: string } };
@@ -45,7 +45,7 @@ async function signIn(): Promise<{ token: string; userId: string }> {
 
 export default async function globalSetup() {
   execFileSync("uv", ["run", "python", "scripts/db_local.py", "reset", DB], { cwd: API_DIR, stdio: "inherit" });
-  const { token, userId } = await signIn();
+  const { token, userId } = await signIn(env("E2E_MANAGER_EMAIL"), env("E2E_MANAGER_PASSWORD"));
   // The local database has a stand-in auth.users table; mirror the real Supabase user into it.
   execFileSync("psql", ["-X", "-q", "-v", "ON_ERROR_STOP=1", "-h", "localhost", "-d", DB, "-v", `uid=${userId}`,
     "-v", `email=${env("E2E_MANAGER_EMAIL")}`], { input: "insert into auth.users (id, email) values (:'uid', :'email');" });
@@ -67,6 +67,20 @@ w as (insert into workflows (job_id, version, definition) select id, 1, :'wf'::j
 select job_id from w;`,
     },
   ).trim();
-  writeFileSync(STATE, JSON.stringify({ jobId, userId, token }));
+  // Optional candidate account (E2E_CANDIDATE_EMAIL / E2E_CANDIDATE_PASSWORD) for candidate-app specs.
+  let candidateId: string | null = null;
+  if (process.env.E2E_CANDIDATE_EMAIL && process.env.E2E_CANDIDATE_PASSWORD) {
+    const cand = await signIn(process.env.E2E_CANDIDATE_EMAIL, process.env.E2E_CANDIDATE_PASSWORD);
+    execFileSync("psql", ["-X", "-q", "-v", "ON_ERROR_STOP=1", "-h", "localhost", "-d", DB, "-v", `uid=${cand.userId}`,
+      "-v", `email=${process.env.E2E_CANDIDATE_EMAIL}`], { input: "insert into auth.users (id, email) values (:'uid', :'email');" });
+    const p = await fetch(`${API}/v1/me/profile`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${cand.token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ role: "candidate", display_name: "Test Candidate", adult_confirmed: true }),
+    });
+    if (!p.ok) throw new Error(`candidate profile: ${p.status} ${await p.text()}`);
+    candidateId = cand.userId;
+  }
+  writeFileSync(STATE, JSON.stringify({ jobId, userId, token, orgId: org_id, candidateId }));
 }
 

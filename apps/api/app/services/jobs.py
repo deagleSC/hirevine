@@ -138,6 +138,7 @@ async def publish(tx: Tx, job_id: UUID, user: CurrentUser) -> Published:
                        {"campaign_id": str(open_c["id"])})
     latest = await wf_svc.latest(tx, job_id)
     wf = latest.definition
+    wf_svc.require_runnable(wf)
     final = next(n for n in wf.nodes if n.type == "final")
     camp = await tx.fetchone(
         "insert into campaigns (job_id, workflow_id, status, notify_on_complete) values (%s, %s, 'open', %s)"

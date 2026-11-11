@@ -2,6 +2,7 @@
 
 import {
   CriterionSchema,
+  messageFor,
 
   RubricItemSchema,
   diffFormToPatches,
@@ -23,9 +24,12 @@ import { Switch } from "@hirevine/ui/components/switch";
 import { Textarea } from "@hirevine/ui/components/textarea";
 import { cn } from "@hirevine/ui/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ListChecks, Plus, Trash2, X } from "lucide-react";
+import { ListChecks, Loader2, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { useState } from "react";
 import { Controller, useFieldArray, useForm, type Control, type FieldValues, type UseFormRegister } from "react-hook-form";
 import { z } from "zod";
+
+import { useGenerateQuiz, useQuizGeneration, type GenerateRequest } from "@/lib/jobs";
 
 import { STAGE_LABEL } from "./canvas";
 
@@ -63,6 +67,7 @@ const finalSchema = z.object({ notify_on_complete: z.boolean() });
 
 
 interface PanelProps {
+  jobId?: string;
   base: Workflow;
   node: WorkflowNode;
   onPropose: (patches: Patch[]) => void;
@@ -278,7 +283,65 @@ function QuestionEditor({ form, index, onRemove }: { form: ReturnType<typeof use
   );
 }
 
-function QuizPanel({ base, node, onPropose, busy, readOnly }: PanelProps) {
+function GenerateQuestions({ jobId, existing, disabled, dirty }: { jobId: string; existing: number; disabled: boolean; dirty: boolean }) {
+  const [count, setCount] = useState(Math.min(10, Math.max(1, 30 - existing)) || 10);
+  const [difficulty, setDifficulty] = useState<GenerateRequest["difficulty"]>("mixed");
+  const [replace, setReplace] = useState(false);
+  const [runId, setRunId] = useState<string | null>(null);
+  const generate = useGenerateQuiz(jobId);
+  const status = useQuizGeneration(jobId, runId);
+  const running = generate.isPending || (!!runId && (!status.data || !["done", "failed"].includes(status.data.status)));
+  const room = replace ? 30 : 30 - existing;
+
+  return (
+    <div className="grid gap-3 rounded-lg border bg-muted/30 p-3">
+      <div className="flex items-center gap-2 text-sm font-medium">
+        <Sparkles className="size-4" aria-hidden /> Generate from the job and rubric
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <Field>
+          <FieldLabel htmlFor="gen-count">Questions</FieldLabel>
+          <Input id="gen-count" type="number" min={1} max={Math.max(1, room)} value={count}
+            onChange={(e) => setCount(Math.max(1, Math.min(30, Number(e.target.value) || 1)))} disabled={disabled || running} />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="gen-difficulty">Difficulty</FieldLabel>
+          <Select value={difficulty} onValueChange={(v) => setDifficulty(v as GenerateRequest["difficulty"])} disabled={disabled || running}>
+            <SelectTrigger id="gen-difficulty"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="mixed">Mixed</SelectItem>
+              <SelectItem value="easy">Easy</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="hard">Hard</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+      </div>
+      {existing > 0 ? (
+        <Field orientation="horizontal">
+          <Checkbox id="gen-replace" checked={replace} onCheckedChange={(v) => setReplace(v === true)} disabled={disabled || running} />
+          <FieldLabel htmlFor="gen-replace" className="font-normal">Replace the current {existing} question{existing === 1 ? "" : "s"}</FieldLabel>
+        </Field>
+      ) : null}
+      <Button
+        type="button"
+        variant="secondary"
+        disabled={disabled || running || count > room}
+        onClick={() => generate.mutate({ count, difficulty, replace }, { onSuccess: (r) => setRunId(r.job_run_id) })}
+      >
+        {running ? <Loader2 className="animate-spin" /> : <Sparkles />}
+        {running ? (status.data?.status === "deferred_budget" ? "Queued until the AI budget resets" : "Generating…") : "Generate questions"}
+      </Button>
+      {dirty ? <FieldDescription>Save or reset your edits first; generated questions are added as a new version.</FieldDescription> : null}
+      {count > room ? <FieldDescription>A quiz holds at most 30 questions.</FieldDescription> : null}
+      {generate.isError ? <p className="text-sm text-destructive">{messageFor(generate.error)}</p> : null}
+      {status.data?.status === "failed" ? <p className="text-sm text-destructive">{status.data.error ?? "Generation failed."}</p> : null}
+      <FieldDescription>Review every generated question before publishing; you can edit or remove any of them.</FieldDescription>
+    </div>
+  );
+}
+
+function QuizPanel({ jobId, base, node, onPropose, busy, readOnly }: PanelProps) {
   const initial = formFromNode(node) as z.infer<typeof quizSchema>;
   const form = useForm({ resolver: zodResolver(quizSchema), defaultValues: initial });
   const qs = useFieldArray({ control: form.control, name: "questions" });
@@ -300,7 +363,10 @@ function QuizPanel({ base, node, onPropose, busy, readOnly }: PanelProps) {
         <NumberInput register={form.register} name="time_limit_min" label="Time limit (minutes)" min={5} max={120} />
         <FieldSet>
           <FieldLegend variant="label">Questions ({qs.fields.length})</FieldLegend>
-          <FieldDescription>Question generation from the job description arrives with the quiz feature.</FieldDescription>
+          {jobId ? (
+            <GenerateQuestions jobId={jobId} existing={qs.fields.length} dirty={form.formState.isDirty}
+              disabled={!!readOnly || busy || form.formState.isDirty} />
+          ) : null}
           {qs.fields.length === 0 ? (
             <div className="flex flex-col items-center gap-1 rounded-lg border border-dashed px-4 py-6 text-center">
               <ListChecks className="mb-1 size-5 text-muted-foreground" />

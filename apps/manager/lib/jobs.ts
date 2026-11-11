@@ -3,6 +3,8 @@
 import { qk, unwrap, type Patch, type components } from "@hirevine/api-client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { toast } from "sonner";
+
 import { api } from "./api";
 
 export type Job = components["schemas"]["Job"];
@@ -13,6 +15,8 @@ export type Preview = components["schemas"]["Preview"];
 export type Applied = components["schemas"]["Applied"];
 export type OverrideResult = components["schemas"]["OverrideResult"];
 export type Published = components["schemas"]["Published"];
+export type GenerateRequest = components["schemas"]["GenerateRequest"];
+export type GenerationStatus = components["schemas"]["GenerationStatus"];
 
 const forJob = (jobId: string) => ({ params: { path: { job_id: jobId } } });
 
@@ -104,3 +108,35 @@ export function candidateAppUrl(): string {
   return process.env.NEXT_PUBLIC_OTHER_APP_URL ?? "http://localhost:3001";
 }
 
+
+const GENERATION_DONE = new Set(["done", "failed"]);
+
+/** Quiz generation (§14): start a run, poll it, and refresh the workflow when questions land. */
+export function useQuizGeneration(jobId: string, runId: string | null) {
+  const qc = useQueryClient();
+  return useQuery({
+    queryKey: qk.quizGeneration(jobId, runId ?? ""),
+    queryFn: async () => {
+      const s = (await unwrap(
+        api.GET("/v1/manager/jobs/{job_id}/quiz/generate/{run_id}", { params: { path: { job_id: jobId, run_id: runId! } } }),
+      )) as GenerationStatus;
+      if (s.status === "done") {
+        toast.success(`Added ${s.added ?? 0} question${s.added === 1 ? "" : "s"} (version ${s.version}).`);
+        await Promise.all([
+          qc.invalidateQueries({ queryKey: qk.workflow(jobId) }),
+          qc.invalidateQueries({ queryKey: qk.workflowVersions(jobId) }),
+        ]);
+      }
+      return s;
+    },
+    enabled: !!runId,
+    refetchInterval: (q) => (q.state.data && GENERATION_DONE.has(q.state.data.status) ? false : q.state.data?.status === "deferred_budget" ? 60_000 : 3_000),
+  });
+}
+
+export function useGenerateQuiz(jobId: string) {
+  return useMutation({
+    mutationFn: (body: GenerateRequest) =>
+      unwrap(api.POST("/v1/manager/jobs/{job_id}/quiz/generate", { ...forJob(jobId), body })),
+  });
+}

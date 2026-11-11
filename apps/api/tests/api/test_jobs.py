@@ -115,8 +115,21 @@ async def test_publish_list_and_edit(client, mgr, llm, migrated_db):  # noqa: F8
     upd = (await client.patch(f"/v1/manager/jobs/{job_id}", json={"location": "Pune"}, headers=auth(mgr))).json()
     assert upd["location"] == "Pune" and upd["title"] == "Backend Engineer"
 
+    # The chat leaves the quiz empty; a live quiz needs questions.
+    r = await client.post(f"/v1/manager/jobs/{job_id}/publish", headers=auth(mgr))
+    assert r.status_code == 422 and r.json()["error"]["code"] == "quiz_has_no_questions"
+    q = {"id": "q1", "prompt": "What is an index?", "options": ["a", "b", "c"], "answer_index": 0}
+    r = await client.post(f"/v1/manager/jobs/{job_id}/workflow/apply", headers=auth(mgr), json={
+        "base_version": 1, "patches": [{"op": "add_quiz_question", "node": "quiz", "question": q}]})
+    assert r.status_code == 200, r.text
+
     pub = (await client.post(f"/v1/manager/jobs/{job_id}/publish", headers=auth(mgr))).json()
-    assert pub["workflow_version"] == 1 and pub["share_slug"].startswith("backend-engineer-")
+    assert pub["workflow_version"] == 2 and pub["share_slug"].startswith("backend-engineer-")
+
+    # While the campaign is open, the quiz cannot be emptied (it can be turned off instead).
+    r = await client.post(f"/v1/manager/jobs/{job_id}/workflow/apply", headers=auth(mgr), json={
+        "base_version": 2, "patches": [{"op": "remove_quiz_question", "node": "quiz", "question_id": "q1"}]})
+    assert r.status_code == 422 and r.json()["error"]["code"] == "quiz_has_no_questions"
     r = await client.post(f"/v1/manager/jobs/{job_id}/publish", headers=auth(mgr))
     assert r.status_code == 409 and r.json()["error"]["code"] == "already_published"
 
@@ -127,7 +140,7 @@ async def test_publish_list_and_edit(client, mgr, llm, migrated_db):  # noqa: F8
     with admin(migrated_db) as conn:
         c = conn.execute("select w.version from campaigns c join workflows w on w.id = c.workflow_id where c.id = %s",
                          (pub["campaign_id"],)).fetchone()
-    assert c["version"] == 1
+    assert c["version"] == 2
 
 
 async def test_model_errors_become_clear_api_errors(client, mgr, llm):  # noqa: F811

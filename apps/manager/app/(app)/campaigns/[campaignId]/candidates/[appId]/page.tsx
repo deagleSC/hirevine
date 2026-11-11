@@ -4,6 +4,7 @@ import { messageFor } from "@hirevine/api-client";
 import { PageHeader } from "@hirevine/ui/blocks/dashboard-layout";
 import { EvidenceList, FlagBadges, ResumeViewer, type EvidenceItem } from "@hirevine/ui/blocks/evidence";
 import { ProcessingState } from "@hirevine/ui/blocks/processing-state";
+import { QuizResults, type QuizResultItem } from "@hirevine/ui/blocks/quiz-runner";
 import { ErrorState, PageSkeleton } from "@hirevine/ui/blocks/states";
 import { StatusBadge } from "@hirevine/ui/blocks/status-badge";
 import { Alert, AlertDescription, AlertTitle } from "@hirevine/ui/components/alert";
@@ -21,6 +22,7 @@ export default function CandidatePage({ params }: { params: Promise<{ campaignId
   const [activeLine, setActiveLine] = useState<number | null>(null);
 
   const screening = app.data?.stages.find((s) => s.node_type === "screening");
+  const quizStage = app.data?.stages.find((s) => s.node_type === "quiz");
   const evidence = useMemo(() => (screening?.evidence ?? []) as unknown as EvidenceItem[], [screening]);
   const cited = useMemo(() => new Set(evidence.flatMap((e) => (e.verified && e.line_no ? [e.line_no] : []))), [evidence]);
 
@@ -76,7 +78,7 @@ export default function CandidatePage({ params }: { params: Promise<{ campaignId
               <CardTitle className="text-base">Screening</CardTitle>
               <div className="flex items-center gap-2">
                 {screening?.score != null ? <span className="text-lg font-semibold tabular-nums">{screening.score}%</span> : null}
-                {screening ? <StatusBadge status={screening.status} /> : null}
+                {screening ? <StatusBadge status={screening.status} stage="screening" /> : null}
               </div>
             </CardHeader>
             <CardContent className="grid gap-3">
@@ -93,6 +95,30 @@ export default function CandidatePage({ params }: { params: Promise<{ campaignId
               {a.job_error ? <p className="text-xs text-destructive">Last error: {a.job_error}</p> : null}
             </CardContent>
           </Card>
+          {quizStage || a.quiz ? (
+            <Card>
+              <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
+                <CardTitle className="text-base">Quiz</CardTitle>
+                <div className="flex items-center gap-2">
+                  {quizStage?.score != null ? <span className="text-lg font-semibold tabular-nums">{quizStage.score}%</span> : null}
+                  {quizStage ? <StatusBadge status={quizStage.status} stage="quiz" /> : null}
+                </div>
+              </CardHeader>
+              <CardContent className="grid gap-3">
+                {a.quiz ? (
+                  <p className="text-xs text-muted-foreground">
+                    {a.quiz.submitted_at
+                      ? `Submitted ${new Date(a.quiz.submitted_at).toLocaleString()}`
+                      : `In progress · ${a.quiz.answered} of ${a.quiz.total} answered · due ${new Date(a.quiz.deadline_at).toLocaleTimeString()}`}
+                    {quizStage?.flags.includes("auto_submitted") ? " · submitted automatically at the time limit" : ""}
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Invited; not started yet.</p>
+                )}
+                {a.quiz?.submitted_at ? <QuizResults items={(quizStage?.evidence ?? []) as unknown as QuizResultItem[]} /> : null}
+              </CardContent>
+            </Card>
+          ) : null}
           {Object.keys(a.screening_answers).length ? (
             <Card>
               <CardHeader>

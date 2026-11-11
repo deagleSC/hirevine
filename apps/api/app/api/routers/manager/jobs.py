@@ -12,6 +12,7 @@ from app.agents import common, jd_agent
 from app.core.auth import PrincipalDep, require_role, user_tx
 from app.core.errors import ERROR_RESPONSES, AppError
 from app.services import jobs as svc
+from app.services import quiz as quiz_svc
 
 router = APIRouter(prefix="/v1/manager/jobs", tags=["manager", "jobs"], responses=ERROR_RESPONSES)
 
@@ -100,3 +101,21 @@ async def publish(job_id: UUID, principal: PrincipalDep) -> svc.Published:
     async with user_tx(principal) as (tx, user):
         require_role(user, "manager")
         return await svc.publish(tx, job_id, user)
+
+
+# ------------------------------------------------------------------ quiz generation (§14)
+
+@router.post("/{job_id}/quiz/generate", response_model=quiz_svc.GenerationQueued, status_code=202)
+async def generate_quiz(job_id: UUID, body: quiz_svc.GenerateRequest,
+                        principal: PrincipalDep) -> quiz_svc.GenerationQueued:
+    """Generate quiz questions in the background. They are added to the workflow as a new version."""
+    async with user_tx(principal) as (tx, user):
+        require_role(user, "manager")
+        return await quiz_svc.request_generation(tx, user, job_id, body)
+
+
+@router.get("/{job_id}/quiz/generate/{run_id}", response_model=quiz_svc.GenerationStatus)
+async def generation_status(job_id: UUID, run_id: UUID, principal: PrincipalDep) -> quiz_svc.GenerationStatus:
+    async with user_tx(principal) as (tx, user):
+        require_role(user, "manager")
+        return await quiz_svc.generation_status(tx, job_id, run_id)

@@ -107,6 +107,7 @@ export default function WorkflowEditorPage({ params }: { params: Promise<{ id: s
               <CollapsibleContent className="flex min-h-0 flex-1 flex-col">
                 <div className="min-h-0 flex-1 overflow-y-auto px-6 pt-4">
                   <NodePanel
+                    jobId={jobId}
                     base={definition}
                     node={node}
                     version={wf.data.version}

@@ -27,6 +27,9 @@ Object.assign(process.env, loadEnv(".env.e2e.local"), { ...process.env });
 
 export const API = "http://127.0.0.1:8100";
 export const APP = "http://localhost:3100";
+/** The candidate app, started only when a candidate test account is configured (.env.e2e.local). */
+export const CANDIDATE_APP = "http://localhost:3200";
+const withCandidate = !!process.env.E2E_CANDIDATE_EMAIL && !!process.env.E2E_CANDIDATE_PASSWORD;
 export const E2E_DB = "hirevine_e2e";
 
 export default defineConfig({
@@ -49,7 +52,7 @@ export default defineConfig({
         APP_ENV: "test",
         DATABASE_URL: `postgresql://hirevine_api:dev@localhost:5432/${E2E_DB}`,
         SUPABASE_URL: local.NEXT_PUBLIC_SUPABASE_URL ?? "",
-        CORS_ORIGINS: JSON.stringify([APP]),
+        CORS_ORIGINS: JSON.stringify([APP, CANDIDATE_APP]),
       },
     },
     {
@@ -59,5 +62,15 @@ export default defineConfig({
       timeout: 180_000,
       env: { NEXT_PUBLIC_API_URL: API, NEXT_DIST_DIR: ".next-e2e" },
     },
+    ...(withCandidate
+      ? [{
+          command: "pnpm exec next dev -p 3200",
+          cwd: "../candidate",
+          url: `${CANDIDATE_APP}/sign-in`,
+          reuseExistingServer: false,
+          timeout: 180_000,
+          env: { NEXT_PUBLIC_API_URL: API, NEXT_DIST_DIR: ".next-e2e", NEXT_PUBLIC_OTHER_APP_URL: APP },
+        }]
+      : []),
   ],
 });

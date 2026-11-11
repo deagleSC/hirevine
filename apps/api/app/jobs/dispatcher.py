@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Protocol
+from typing import Any, Protocol
 from uuid import UUID
 
 import inngest
@@ -22,11 +22,15 @@ from app.jobs.runs import JobRefs
 
 log = logging.getLogger("hirevine.jobs")
 
-# job type → Inngest event name. Later phases add screening, quiz, interview, report, ...
+# job type → Inngest event name. Later phases add interview and report.
 EVENTS: dict[str, str] = {
     "selftest": "selftest/requested",
     "screening": "application/submitted",
+    "quiz_generate": "quiz/generate.requested",
+    "quiz_deadline": "quiz/started",
 }
+# Runs that wait rather than work (they sleep until a deadline). Monitors do not count them as processing.
+WAITING_TYPES = ("quiz_deadline",)
 
 
 def event_id(run_id: UUID, attempts: int = 0) -> str:
@@ -41,7 +45,7 @@ def event_for(type: str, run_id: UUID, refs: JobRefs, attempts: int = 0) -> inng
 
 
 class JobDispatcher(Protocol):
-    async def enqueue(self, tx: Tx, type: str, refs: JobRefs) -> UUID: ...
+    async def enqueue(self, tx: Tx, type: str, refs: JobRefs, params: dict[str, Any] | None = None) -> UUID: ...
     async def resend(self, run: dict[str, object]) -> None: ...
 
 
@@ -49,10 +53,10 @@ class InngestDispatcher:
     def __init__(self, client: inngest.Inngest = inngest_client):
         self.client = client
 
-    async def enqueue(self, tx: Tx, type: str, refs: JobRefs) -> UUID:
+    async def enqueue(self, tx: Tx, type: str, refs: JobRefs, params: dict[str, Any] | None = None) -> UUID:
         if type not in EVENTS:
             raise ValueError(f"Unknown job type {type!r}")
-        run_id = await runs.create(tx, type, refs)
+        run_id = await runs.create(tx, type, refs, params)
         event = event_for(type, run_id, refs)
 
         async def send() -> None:
