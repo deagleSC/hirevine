@@ -46,3 +46,15 @@ describe("EvidenceList + ResumeViewer", () => {
     expect(screen.getByLabelText("0 of 4")).toBeInTheDocument();
   });
 });
+
+describe("StatusBadge", () => {
+  it("words a failed stage by its own rule", async () => {
+    const { StatusBadge } = await import("../src/blocks/status-badge");
+    const { rerender } = render(<StatusBadge status="failed" stage="quiz" />);
+    expect(screen.getByText("Below pass mark")).toBeInTheDocument();
+    rerender(<StatusBadge status="failed" />);
+    expect(screen.getByText("Below cutoff")).toBeInTheDocument();
+    rerender(<StatusBadge status="passed" stage="quiz" />);
+    expect(screen.getByText("Passed")).toBeInTheDocument();
+  });
+});

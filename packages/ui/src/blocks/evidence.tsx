@@ -26,6 +26,7 @@ const FLAG_COPY: Record<string, { label: string; hint: string; icon: typeof Tria
   missing_resume: { label: "Resume missing", hint: "The uploaded file could not be found.", icon: FileWarning },
   model_failed: { label: "AI failed", hint: "The AI could not produce a valid result. Retry or score by hand.", icon: TriangleAlert },
   not_scored: { label: "Not scored", hint: "Screening finished without a score.", icon: TriangleAlert },
+  auto_submitted: { label: "Auto-submitted", hint: "The quiz time ran out; the saved answers were graded.", icon: TriangleAlert },
 };
 
 export function flagLabel(flag: string): string {

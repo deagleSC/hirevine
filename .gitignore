@@ -34,3 +34,4 @@ apps/manager/e2e/.state.json
 test-results/
 playwright-report/
 .next-e2e/
+supabase/.temp/

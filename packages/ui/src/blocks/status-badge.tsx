@@ -26,12 +26,21 @@ const STATUSES: Record<string, { label: string; icon: LucideIcon; variant: Varia
   outcome_released: { label: "Outcome released", icon: CircleCheck, variant: "default" },
 };
 
-export function statusLabel(status: string): string {
+/** A failed stage is worded by its own rule: screening has a cutoff, a quiz a pass mark, an interview a threshold. */
+const FAILED_BY_STAGE: Record<string, string> = {
+  screening: "Below cutoff",
+  quiz: "Below pass mark",
+  interview: "Below threshold",
+};
+
+export function statusLabel(status: string, stage?: string): string {
+  if (status === "failed" && stage && FAILED_BY_STAGE[stage]) return FAILED_BY_STAGE[stage];
   return STATUSES[status]?.label ?? status.replace(/_/g, " ");
 }
 
-export function StatusBadge({ status, className }: { status: string; className?: string }) {
-  const s = STATUSES[status] ?? { label: statusLabel(status), icon: CircleDashed, variant: "outline" as const };
+export function StatusBadge({ status, stage, className }: { status: string; stage?: string; className?: string }) {
+  const base = STATUSES[status] ?? { label: statusLabel(status), icon: CircleDashed, variant: "outline" as const };
+  const s = { ...base, label: statusLabel(status, stage) };
   const Icon = s.icon;
   return (
     <Badge variant={s.variant} className={className}>

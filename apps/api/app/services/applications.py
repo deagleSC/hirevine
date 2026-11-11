@@ -20,8 +20,10 @@ from app.core.config import get_settings
 from app.core.db import Tx
 from app.core.errors import AppError
 from app.domain.workflow import Workflow
-from app.jobs.dispatcher import dispatcher
+from app.jobs.dispatcher import WAITING_TYPES, dispatcher
 from app.jobs.runs import JobRefs
+from app.services.quiz import QuizReview
+from app.services.quiz import review as quiz_review
 from app.services.storage import get_storage
 
 CONTENT_TYPES = {
@@ -74,6 +76,7 @@ class TrackerItem(BaseModel):
     campaign_id: UUID
     status: CandidateStatus
     next_action: Literal["quiz", "interview"] | None = None
+    action_deadline_at: datetime | None = Field(default=None, description="Set once a timed stage has started")
     created_at: datetime
 
 
@@ -150,6 +153,7 @@ class ApplicationDetail(BaseModel):
     screening_answers: dict[str, str]
     job_status: str | None
     job_error: str | None
+    quiz: QuizReview | None = None
 
 
 class Queued(BaseModel):
@@ -273,7 +277,9 @@ select a.id, a.campaign_id, a.created_at, a.current_node, c.status as campaign_s
        j.title as job_title, w.definition,
        s.status as stage_status,
        exists (select 1 from resume_texts r where r.application_id = a.id) as has_text,
-       coalesce(f.released, false) as released
+       coalesce(f.released, false) as released,
+       (select q.deadline_at from quiz_attempts q where q.application_id = a.id and q.submitted_at is null)
+         as quiz_deadline
 from applications a
 join campaigns c on c.id = a.campaign_id
 join jobs j on j.id = c.job_id
@@ -298,6 +304,7 @@ async def tracker(tx: Tx, user: CurrentUser, application_id: UUID | None = None)
                                           r["has_text"])
         out.append(TrackerItem(id=r["id"], job_id=r["job_id"], job_title=r["job_title"],
                                campaign_id=r["campaign_id"], status=status, next_action=action,  # type: ignore[arg-type]
+                               action_deadline_at=r["quiz_deadline"] if action == "quiz" else None,
                                created_at=r["created_at"]))
     return out
 
@@ -331,12 +338,13 @@ async def monitor(tx: Tx, campaign_id: UUID) -> CampaignMonitor:
         """
         select (select count(*) from applications where campaign_id = %(c)s)::int as total,
                (select count(distinct application_id) from job_runs
-                 where campaign_id = %(c)s and status in ('queued', 'running', 'deferred_budget', 'paused'))::int
+                 where campaign_id = %(c)s and status in ('queued', 'running', 'deferred_budget', 'paused')
+                   and type <> all(%(waiting)s))::int
                  as processing,
                (select count(*) from applications a join stage_results s on s.application_id = a.id
                  where a.campaign_id = %(c)s and s.status = 'needs_review')::int as needs_review
         """,
-        {"c": campaign_id},
+        {"c": campaign_id, "waiting": list(WAITING_TYPES)},
     )
     assert agg is not None
     return CampaignMonitor(
@@ -350,7 +358,7 @@ async def monitor(tx: Tx, campaign_id: UUID) -> CampaignMonitor:
 
 _LATEST_RUN = """
 left join lateral (select status, last_error from job_runs jr where jr.application_id = a.id
-                   order by created_at desc limit 1) jr on true
+                   and jr.type not in ('quiz_deadline') order by created_at desc limit 1) jr on true
 """
 
 
@@ -425,6 +433,7 @@ async def detail(tx: Tx, campaign_id: UUID, application_id: UUID) -> Application
                           parser=rt["parser"]) if rt else None,
         screening_answers={r["question_id"]: r["answer"] for r in answers},
         job_status=a["job_status"], job_error=a["last_error"],
+        quiz=await quiz_review(tx, application_id),
     )
 
 

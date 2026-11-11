@@ -129,7 +129,7 @@ export default function CampaignPage({ params }: { params: Promise<{ campaignId:
                     {r.job_status && ["queued", "running", "deferred_budget"].includes(r.job_status) ? (
                       <StatusBadge status={r.job_status} />
                     ) : r.stage_status ? (
-                      <StatusBadge status={r.stage_status} />
+                      <StatusBadge status={r.stage_status} stage={c.nodes.find((n) => n.id === r.current_node)?.type} />
                     ) : null}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">

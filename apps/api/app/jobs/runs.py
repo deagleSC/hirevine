@@ -9,6 +9,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
+from psycopg.types.json import Jsonb
 from pydantic import BaseModel
 
 from app.core.db import Tx, system_claims, transaction
@@ -28,15 +29,16 @@ class JobRefs(BaseModel):
         return data
 
 
-async def create(tx: Tx, type: str, refs: JobRefs) -> UUID:
-    """Insert a queued run inside the caller's transaction."""
+async def create(tx: Tx, type: str, refs: JobRefs, params: dict[str, Any] | None = None) -> UUID:
+    """Insert a queued run inside the caller's transaction. `params` are request settings the
+    function reads from the row (events carry IDs only)."""
     async with tx.as_system():
         row = await tx.fetchone(
             """
-            insert into job_runs (type, org_id, application_id, campaign_id, job_id)
-            values (%s, %s, %s, %s, %s) returning id
+            insert into job_runs (type, org_id, application_id, campaign_id, job_id, params)
+            values (%s, %s, %s, %s, %s, %s) returning id
             """,
-            (type, refs.org_id, refs.application_id, refs.campaign_id, refs.job_id),
+            (type, refs.org_id, refs.application_id, refs.campaign_id, refs.job_id, Jsonb(params or {})),
         )
     assert row is not None
     return UUID(str(row["id"]))

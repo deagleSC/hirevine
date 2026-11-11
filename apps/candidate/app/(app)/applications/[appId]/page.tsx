@@ -40,9 +40,14 @@ export default function ApplicationPage({ params }: { params: Promise<{ appId: s
         </CardHeader>
         <CardContent className="grid gap-3 text-sm">
           <p>{NEXT_STEP[a.status]}</p>
+          {a.action_deadline_at ? (
+            <p className="text-muted-foreground">
+              In progress — finish before {new Date(a.action_deadline_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}.
+            </p>
+          ) : null}
           {a.next_action ? (
             <Button asChild className="w-fit">
-              <Link href={`/applications/${a.id}/${a.next_action}`}>{a.next_action === "quiz" ? "Take quiz" : "Start interview"}</Link>
+              <Link href={`/applications/${a.id}/${a.next_action}`}>{a.next_action === "quiz" ? (a.action_deadline_at ? "Continue quiz" : "Take quiz") : "Start interview"}</Link>
             </Button>
           ) : null}
         </CardContent>

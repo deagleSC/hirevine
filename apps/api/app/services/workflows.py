@@ -103,6 +103,15 @@ async def create_initial(tx: Tx, job_id: UUID, workflow: Workflow, actor: UUID |
     return _version(dict(row))
 
 
+def require_runnable(wf: Workflow) -> None:
+    """A live workflow must be one candidates can finish: an enabled quiz needs questions."""
+    for n in wf.nodes:
+        if n.type == "quiz" and n.enabled and not n.config.questions:  # type: ignore[union-attr]
+            raise AppError(422, "quiz_has_no_questions",
+                           "The quiz has no questions. Add or generate questions, or turn the quiz off.",
+                           {"node": n.id})
+
+
 def _apply(base: Workflow, patches: list[Patch]) -> ApplyResult:
     try:
         return apply_patches(base, patches)
@@ -182,6 +191,7 @@ async def _commit_version(
     moved: list[UUID] = []
     note = None
     if campaign:
+        require_runnable(result.workflow)
         moved, _, note = await _affected(tx, campaign["id"], result.workflow, result.changed_nodes)
         notify = next(n for n in result.workflow.nodes if n.type == "final").config.notify_on_complete  # type: ignore[union-attr]
         await tx.conn.execute(
