@@ -73,7 +73,7 @@ jobs:
       - name: Lint
         run: pnpm lint
       - name: Unit and component tests
-        run: pnpm test
+        run: pnpm turbo run test --filter=!@hirevine/api   # the api job runs pytest against Postgres
       - name: Build manager (budget 550 kB per route, 110 kB shared)
         run: pnpm --filter @hirevine/manager build | node scripts/check-bundle.mjs --route 550 --shared 110
       - name: Build candidate (budget 300 kB per route, 110 kB shared)
