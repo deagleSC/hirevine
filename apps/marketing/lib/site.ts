@@ -39,6 +39,7 @@ export const LINKS = {
   managerSignIn: `${MANAGER_URL}/sign-in`,
   browseJobs: `${CANDIDATE_URL}/jobs`,
   candidateSignUp: `${CANDIDATE_URL}/sign-up`,
+  candidateSignIn: `${CANDIDATE_URL}/sign-in`,
   github: "https://github.com/deagleSC/hirevine",
 };
 
@@ -49,7 +50,6 @@ export const NAV = [
   { label: "How it works", href: "/#how-it-works" },
   { label: "Features", href: "/#features" },
   { label: "Responsible AI", href: "/responsible-ai" },
-  { label: "For candidates", href: "/candidates" },
   { label: "Pricing", href: "/#pricing" },
 ];
 
@@ -67,7 +67,7 @@ export const FOOTER = [
     title: "People",
     links: [
       { label: "For hiring teams", href: "/#features" },
-      { label: "For candidates", href: "/candidates" },
+      { label: "For jobseekers", href: "/?for=jobseekers" },
       { label: "Browse open roles", href: LINKS.browseJobs },
     ],
   },

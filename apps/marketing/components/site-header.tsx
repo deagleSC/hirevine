@@ -5,6 +5,7 @@ import { Button } from "@hirevine/ui/components/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@hirevine/ui/components/sheet";
 import { Menu } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -13,6 +14,18 @@ import { LINKS, NAV } from "@/lib/site";
 export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const jobseeker = useSearchParams().get("for") === "jobseekers";
+  const nav = jobseeker
+    ? [
+        { label: "How it works", href: "/?for=jobseekers#how-it-works" },
+        { label: "What you get", href: "/?for=jobseekers#features" },
+        { label: "Responsible AI", href: "/responsible-ai" },
+        { label: "FAQ", href: "/?for=jobseekers#faq" },
+      ]
+    : NAV;
+  const cta = jobseeker
+    ? { label: "Browse open roles", href: LINKS.browseJobs, signIn: LINKS.candidateSignIn }
+    : { label: "Try the preview", href: LINKS.tryPreview, signIn: LINKS.managerSignIn };
   useEffect(() => {
     const on = () => setScrolled(window.scrollY > 8);
     on();
@@ -33,7 +46,7 @@ export function SiteHeader() {
           Hirevine
         </Link>
         <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
-          {NAV.map((n) => (
+          {nav.map((n) => (
             <Link
               key={n.href}
               href={n.href}
@@ -46,10 +59,10 @@ export function SiteHeader() {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <Button asChild variant="ghost" className="hidden sm:inline-flex">
-            <a href={LINKS.managerSignIn}>Sign in</a>
+            <a href={cta.signIn}>Sign in</a>
           </Button>
           <Button asChild className="hidden sm:inline-flex">
-            <a href={LINKS.managerSignUp}>Try the preview</a>
+            <a href={cta.href}>{cta.label}</a>
           </Button>
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
@@ -62,7 +75,7 @@ export function SiteHeader() {
                 <SheetTitle>Menu</SheetTitle>
               </SheetHeader>
               <nav aria-label="Mobile" className="grid gap-1 px-4">
-                {NAV.map((n) => (
+                {nav.map((n) => (
                   <Link key={n.href} href={n.href} onClick={() => setOpen(false)} className="rounded-md px-3 py-2.5 hover:bg-muted">
                     {n.label}
                   </Link>
@@ -70,10 +83,10 @@ export function SiteHeader() {
               </nav>
               <div className="grid gap-2 p-4">
                 <Button asChild>
-                  <a href={LINKS.managerSignUp}>Try the preview</a>
+                  <a href={cta.href}>{cta.label}</a>
                 </Button>
                 <Button asChild variant="outline">
-                  <a href={LINKS.managerSignIn}>Sign in</a>
+                  <a href={cta.signIn}>Sign in</a>
                 </Button>
               </div>
             </SheetContent>
