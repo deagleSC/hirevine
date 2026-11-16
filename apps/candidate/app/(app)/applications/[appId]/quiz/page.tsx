@@ -3,7 +3,7 @@
 import { ApiError, messageFor } from "@hirevine/api-client";
 import { PageHeader } from "@hirevine/ui/blocks/dashboard-layout";
 import { QuizRunner } from "@hirevine/ui/blocks/quiz-runner";
-import { ErrorState, PageSkeleton } from "@hirevine/ui/blocks/states";
+import { ErrorState, PageSkeleton, StatusCard } from "@hirevine/ui/blocks/states";
 import { Alert, AlertDescription, AlertTitle } from "@hirevine/ui/components/alert";
 import { Button } from "@hirevine/ui/components/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@hirevine/ui/components/card";
@@ -22,26 +22,24 @@ export default function QuizPage({ params }: { params: Promise<{ appId: string }
   if (quiz.isError) return <ErrorState message={messageFor(quiz.error)} />;
   if (quiz.isPending) return <PageSkeleton />;
   const q = quiz.data;
+  const backTo = { href: `/applications/${appId}`, label: "Application" };
   const back = (
     <Button asChild variant="outline">
-      <Link href={`/applications/${appId}`}>Back to application</Link>
+      <Link href={backTo.href}>Back to application</Link>
     </Button>
   );
 
   if (q.status === "submitted") {
     return (
       <>
-        <PageHeader title="Skills quiz" />
-        <Card className="max-w-xl">
-          <CardHeader>
-            <CheckCircle2 className="mb-2 size-6 text-emerald-600 dark:text-emerald-400" />
-            <CardTitle>Answers submitted</CardTitle>
-            <CardDescription>
-              Thanks. The hiring team will review your application; results are shared when they release outcomes.
-            </CardDescription>
-          </CardHeader>
-          <CardFooter>{back}</CardFooter>
-        </Card>
+        <PageHeader title="Skills quiz" back={backTo} />
+        <StatusCard
+          icon={<CheckCircle2 />}
+          tone="success"
+          title="Answers submitted"
+          description="Thanks. The hiring team will review your application; results are shared when they release outcomes."
+          actions={back}
+        />
       </>
     );
   }
@@ -49,14 +47,13 @@ export default function QuizPage({ params }: { params: Promise<{ appId: string }
   if (q.status === "closed") {
     return (
       <>
-        <PageHeader title="Skills quiz" />
-        <Card className="max-w-xl">
-          <CardHeader>
-            <CardTitle>This quiz is not open</CardTitle>
-            <CardDescription>Your application is not at the quiz step right now.</CardDescription>
-          </CardHeader>
-          <CardFooter>{back}</CardFooter>
-        </Card>
+        <PageHeader title="Skills quiz" back={backTo} />
+        <StatusCard
+          icon={<ListChecks />}
+          title="This quiz is not open"
+          description="Your application is not at the quiz step right now."
+          actions={back}
+        />
       </>
     );
   }
@@ -65,21 +62,29 @@ export default function QuizPage({ params }: { params: Promise<{ appId: string }
     const notReady = start.error instanceof ApiError && start.error.code === "quiz_not_ready";
     return (
       <>
-        <PageHeader title="Skills quiz" />
-        <Card className="max-w-xl">
+        <PageHeader title="Skills quiz" back={backTo} />
+        <Card>
           <CardHeader>
             <CardTitle>Before you start</CardTitle>
             <CardDescription>Read this first: the timer cannot be paused.</CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-3 text-sm">
-            <p className="flex items-center gap-2">
-              <ListChecks className="size-4 text-muted-foreground" aria-hidden />
-              {q.question_count} multiple-choice question{q.question_count === 1 ? "" : "s"}
-            </p>
-            <p className="flex items-center gap-2">
-              <Clock className="size-4 text-muted-foreground" aria-hidden />
-              {q.time_limit_min} minutes, starting when you press Start
-            </p>
+          <CardContent className="grid gap-4 text-sm">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <p className="flex items-center gap-3 rounded-lg border bg-muted/40 p-3">
+                <ListChecks className="size-5 text-primary" aria-hidden />
+                <span>
+                  <span className="block font-medium">{q.question_count} question{q.question_count === 1 ? "" : "s"}</span>
+                  <span className="text-muted-foreground">Multiple choice</span>
+                </span>
+              </p>
+              <p className="flex items-center gap-3 rounded-lg border bg-muted/40 p-3">
+                <Clock className="size-5 text-primary" aria-hidden />
+                <span>
+                  <span className="block font-medium">{q.time_limit_min} minutes</span>
+                  <span className="text-muted-foreground">Starts when you press Start</span>
+                </span>
+              </p>
+            </div>
             <p className="text-muted-foreground">
               Answers save automatically. If you close the page, come back before time runs out to continue. When the
               time is up, your saved answers are submitted for you. You have one attempt.
@@ -96,7 +101,6 @@ export default function QuizPage({ params }: { params: Promise<{ appId: string }
               {start.isPending ? <Loader2 className="animate-spin" /> : null}
               Start quiz
             </Button>
-            {back}
           </CardFooter>
         </Card>
       </>
@@ -104,10 +108,10 @@ export default function QuizPage({ params }: { params: Promise<{ appId: string }
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl">
+    <>
       <PageHeader title="Skills quiz" description="Choose one answer per question." />
       {submit.isError ? (
-        <Alert variant="destructive" className="mb-4">
+        <Alert variant="destructive" >
           <AlertTitle>Could not submit</AlertTitle>
           <AlertDescription>{messageFor(submit.error)} Your answers are saved; try again.</AlertDescription>
         </Alert>
@@ -122,6 +126,6 @@ export default function QuizPage({ params }: { params: Promise<{ appId: string }
           await submit.mutateAsync();
         }}
       />
-    </div>
+    </>
   );
 }

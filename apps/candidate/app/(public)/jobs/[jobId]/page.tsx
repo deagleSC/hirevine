@@ -23,6 +23,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ jobId: str
     <>
       <PageHeader
         title={j.title}
+        back={{ href: "/jobs", label: "All roles" }}
         description={[j.seniority, j.location].filter(Boolean).join(" · ") || undefined}
         actions={
           <Button asChild>
@@ -30,7 +31,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ jobId: str
           </Button>
         }
       />
-      <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">About the role</CardTitle>

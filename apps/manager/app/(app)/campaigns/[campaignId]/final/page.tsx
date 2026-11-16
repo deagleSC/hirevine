@@ -57,17 +57,13 @@ export default function FinalPage({ params }: { params: Promise<{ campaignId: st
       <PageHeader
         title={`${r.job_title} — final list`}
         description={`${r.finalists} finalist${r.finalists === 1 ? "" : "s"} of ${r.total} applicant${r.total === 1 ? "" : "s"}`}
+        back={{ href: `/campaigns/${campaignId}`, label: "Campaign" }}
         actions={
-          <div className="flex gap-2">
-            <Button asChild variant="outline">
-              <Link href={`/campaigns/${campaignId}`}>Back to campaign</Link>
+          !done ? (
+            <Button variant="destructive" onClick={() => setOpen(true)} disabled={!r.total}>
+              Complete campaign
             </Button>
-            {!done ? (
-              <Button variant="destructive" onClick={() => setOpen(true)} disabled={!r.total}>
-                Complete campaign
-              </Button>
-            ) : null}
-          </div>
+          ) : null
         }
       />
       <DemoBanner campaignId={campaignId} />

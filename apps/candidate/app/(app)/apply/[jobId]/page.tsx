@@ -9,7 +9,7 @@ import {
   unwrap,
   uploadToSignedUrl,
 } from "@hirevine/api-client";
-import { PageHeader } from "@hirevine/ui/blocks/dashboard-layout";
+import { PageHeader, SplitLayout } from "@hirevine/ui/blocks/dashboard-layout";
 import { ErrorState, PageSkeleton } from "@hirevine/ui/blocks/states";
 import { Alert, AlertDescription, AlertTitle } from "@hirevine/ui/components/alert";
 import { Button } from "@hirevine/ui/components/button";
@@ -136,8 +136,35 @@ export default function ApplyPage({ params }: { params: Promise<{ jobId: string 
   const error = submit.error instanceof ApiError ? submit.error : null;
   return (
     <>
-      <PageHeader title={`Apply: ${job.data.title}`} description={[job.data.seniority, job.data.location].filter(Boolean).join(" · ")} />
-      <div className="grid max-w-2xl gap-4">
+      <PageHeader
+        title={`Apply: ${job.data.title}`}
+        description={[job.data.seniority, job.data.location].filter(Boolean).join(" · ")}
+        back={{ href: `/jobs/${jobId}`, label: "Role details" }}
+      />
+      <SplitLayout
+        asideWidth="20rem"
+        aside={
+          <Card className="hidden lg:sticky lg:top-4 lg:flex">
+            <CardHeader>
+              <CardTitle className="text-base">How applying works</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ol className="grid gap-3 text-sm">
+                {["Upload your resume", "Read how it is assessed and agree", "Submit, then follow each step from My applications"].map(
+                  (t, i) => (
+                    <li key={t} className="flex gap-3">
+                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                        {i + 1}
+                      </span>
+                      <span className="pt-0.5 text-muted-foreground">{t}</span>
+                    </li>
+                  ),
+                )}
+              </ol>
+            </CardContent>
+          </Card>
+        }
+      >
         {resume ? (
           <Alert>
             <FileCheck2 />
@@ -206,7 +233,7 @@ export default function ApplyPage({ params }: { params: Promise<{ jobId: string 
             </Button>
           </CardFooter>
         </Card>
-      </div>
+      </SplitLayout>
     </>
   );
 }

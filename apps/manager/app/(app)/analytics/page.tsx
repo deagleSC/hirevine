@@ -19,7 +19,7 @@ export default function OverviewPage() {
   return (
     <>
       <PageHeader title="Analytics" description="Across all your jobs. Open a campaign for its funnel and scores." />
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5 [&>*:last-child:nth-child(odd)]:col-span-2 xl:[&>*:last-child:nth-child(odd)]:col-span-1">
         <StatTile label="Open jobs" value={o.open_jobs} />
         <StatTile label="Applications" value={o.applications} />
         <StatTile label="Time to shortlist" value={hours(o.time_to_shortlist_hours)} hint="Median, first application to release" />

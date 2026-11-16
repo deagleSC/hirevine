@@ -30,7 +30,7 @@ export default function MyAnalyticsPage() {
   return (
     <>
       <PageHeader title="My analytics" description="Your applications at a glance. Scores appear only after a hiring team releases outcomes." />
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 [&>*:last-child:nth-child(odd)]:col-span-2 sm:[&>*:last-child:nth-child(odd)]:col-span-1">
         <StatTile label="Applications" value={a.applications} />
         <StatTile
           label="Typical time to outcome"

@@ -1,13 +1,13 @@
 "use client";
 
 import { messageFor } from "@hirevine/api-client";
-import { PageHeader } from "@hirevine/ui/blocks/dashboard-layout";
+import { PageHeader, SplitLayout } from "@hirevine/ui/blocks/dashboard-layout";
 import { CitationChip, ResumeViewer } from "@hirevine/ui/blocks/evidence";
 import { QuizResults } from "@hirevine/ui/blocks/quiz-runner";
-import { ErrorState, PageSkeleton } from "@hirevine/ui/blocks/states";
+import { ErrorState, PageSkeleton, StatusCard } from "@hirevine/ui/blocks/states";
 import { Badge } from "@hirevine/ui/components/badge";
 import { Button } from "@hirevine/ui/components/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@hirevine/ui/components/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@hirevine/ui/components/card";
 import { Hourglass } from "lucide-react";
 import Link from "next/link";
 import { use, useMemo, useState } from "react";
@@ -40,17 +40,13 @@ export default function FeedbackPage({ params }: { params: Promise<{ appId: stri
   if (fb.data === null) {
     return (
       <>
-        <PageHeader title="Feedback" />
-        <Card className="max-w-xl">
-          <CardHeader>
-            <Hourglass className="mb-2 size-6 text-muted-foreground" aria-hidden />
-            <CardTitle>Feedback is not available yet.</CardTitle>
-            <CardDescription>
-              The hiring team shares outcomes and feedback with everyone at once, when they finish reviewing. We&apos;ll let you know.
-            </CardDescription>
-          </CardHeader>
-          <CardFooter>{back}</CardFooter>
-        </Card>
+        <PageHeader title="Feedback" back={{ href: `/applications/${appId}`, label: "Application" }} />
+        <StatusCard
+          icon={<Hourglass />}
+          title="Feedback is not available yet."
+          description="The hiring team shares outcomes and feedback with everyone at once, when they finish reviewing. We'll let you know."
+          actions={back}
+        />
       </>
     );
   }
@@ -60,9 +56,32 @@ export default function FeedbackPage({ params }: { params: Promise<{ appId: stri
       <PageHeader
         title={`Feedback: ${f.job_title}`}
         description={`Released ${new Date(f.released_at).toLocaleDateString()}`}
-        actions={back}
+        back={{ href: `/applications/${appId}`, label: "Application" }}
       />
-      <div className="grid max-w-3xl gap-4">
+      <SplitLayout
+        aside={
+          f.stages.length ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Your results</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <dl className="grid gap-2 text-sm">
+                  {f.stages.map((s) => (
+                    <div key={s.node_type} className="flex items-center justify-between gap-4 border-b pb-2 last:border-0">
+                      <dt>{STAGE[s.node_type] ?? s.node_type}</dt>
+                      <dd className="flex items-center gap-3">
+                        <span className="text-muted-foreground">{STATUS[s.status] ?? s.status}</span>
+                        {s.score != null ? <span className="font-semibold tabular-nums">{s.score}%</span> : null}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </CardContent>
+            </Card>
+          ) : null
+        }
+      >
         <Card>
           <CardHeader>
             <CardTitle className="flex flex-wrap items-center gap-2 text-base">
@@ -76,26 +95,6 @@ export default function FeedbackPage({ params }: { params: Promise<{ appId: stri
             <p className="whitespace-pre-wrap text-sm leading-relaxed">{f.feedback}</p>
           </CardContent>
         </Card>
-        {f.stages.length ? (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Your results</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <dl className="grid gap-2 text-sm">
-                {f.stages.map((s) => (
-                  <div key={s.node_type} className="flex items-center justify-between gap-4 border-b pb-2 last:border-0">
-                    <dt>{STAGE[s.node_type] ?? s.node_type}</dt>
-                    <dd className="flex items-center gap-3">
-                      <span className="text-muted-foreground">{STATUS[s.status] ?? s.status}</span>
-                      {s.score != null ? <span className="font-semibold tabular-nums">{s.score}%</span> : null}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            </CardContent>
-          </Card>
-        ) : null}
         {f.resume_citations?.length ? (
           <Card>
             <CardHeader>
@@ -147,7 +146,7 @@ export default function FeedbackPage({ params }: { params: Promise<{ appId: stri
             </CardContent>
           </Card>
         ) : null}
-      </div>
+      </SplitLayout>
     </>
   );
 }

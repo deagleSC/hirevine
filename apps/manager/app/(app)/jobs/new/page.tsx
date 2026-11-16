@@ -184,9 +184,9 @@ function NewJobChat() {
   if (chat.isError) return <ErrorState message={messageFor(chat.error)} />;
 
   return (
-    <div className="mx-auto flex h-[calc(100svh-6rem)] w-full max-w-3xl flex-col gap-4">
+    <div className="flex h-[calc(100svh-6rem)] w-full flex-col gap-4">
       <PageHeader title="New job" description="Describe the role. Hirevine drafts the screening pipeline." />
-      <Conversation className="min-h-0 flex-1 rounded-xl border">
+      <Conversation className="min-h-0 flex-1 rounded-xl border bg-card shadow-sm">
         <ConversationContent>
           <Messages state={state} pending={send.isPending} onStarter={(t) => void sendMessage(t).catch(() => {})} />
           {state?.complete ? <Summary state={state} onConfirm={onConfirm} confirming={confirm.isPending} /> : null}

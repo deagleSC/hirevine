@@ -13,7 +13,6 @@ import { Alert, AlertDescription, AlertTitle } from "@hirevine/ui/components/ale
 import { Button } from "@hirevine/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@hirevine/ui/components/card";
 import { ShieldAlert } from "lucide-react";
-import Link from "next/link";
 import { use, useMemo, useState } from "react";
 
 import { DemoBanner } from "@/components/demo-banner";
@@ -46,11 +45,7 @@ export default function CandidatePage({ params }: { params: Promise<{ campaignId
       <PageHeader
         title={candidateLabel(a.id, a.candidate_name)}
         description={`Applied ${new Date(a.created_at).toLocaleDateString()}`}
-        actions={
-          <Button asChild variant="outline">
-            <Link href={`/campaigns/${campaignId}`}>Back to campaign</Link>
-          </Button>
-        }
+        back={{ href: `/campaigns/${campaignId}`, label: "Campaign" }}
       />
       <DemoBanner campaignId={campaignId} />
       {flags.length ? <FlagBadges flags={flags} /> : null}

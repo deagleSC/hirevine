@@ -1,7 +1,7 @@
 "use client";
 
 import { messageFor } from "@hirevine/api-client";
-import { PageHeader } from "@hirevine/ui/blocks/dashboard-layout";
+import { PageHeader, SplitLayout } from "@hirevine/ui/blocks/dashboard-layout";
 import { Alert, AlertDescription, AlertTitle } from "@hirevine/ui/components/alert";
 import { Button } from "@hirevine/ui/components/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@hirevine/ui/components/card";
@@ -24,7 +24,59 @@ export default function AccountPage() {
   return (
     <>
       <PageHeader title="Account" description="Notifications and your data." />
-      <div className="grid max-w-3xl gap-4">
+      <SplitLayout
+        asideWidth="24rem"
+        aside={
+          <>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Download your data</CardTitle>
+                <CardDescription>
+                  One JSON file with your profile, applications, answers, interview transcripts, released results and feedback,
+                  plus a link to each resume you uploaded (valid for 24 hours).
+                </CardDescription>
+              </CardHeader>
+              <CardFooter className="flex-col items-start gap-2">
+                <Button variant="outline" onClick={() => exp.mutate()} disabled={exp.isPending}>
+                  {exp.isPending ? <Loader2 className="animate-spin" /> : <Download />}
+                  Download my data
+                </Button>
+                {exp.isError ? <p className="text-sm text-destructive">{messageFor(exp.error)}</p> : null}
+              </CardFooter>
+            </Card>
+
+            <Card className="border-destructive/40">
+              <CardHeader>
+                <CardTitle className="text-base">Delete your account</CardTitle>
+                <CardDescription>
+                  This permanently deletes your account, your resumes, the text read from them, your answers, interview transcripts,
+                  results, feedback and notifications. Hiring teams will no longer see your applications. It cannot be undone.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-2">
+                <Label htmlFor="delete-confirm">Type DELETE to confirm</Label>
+                <Input id="delete-confirm" className="sm:max-w-56" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="off" />
+                {del.isError ? (
+                  <Alert variant="destructive">
+                    <AlertTitle>Could not delete</AlertTitle>
+                    <AlertDescription>{messageFor(del.error)}</AlertDescription>
+                  </Alert>
+                ) : null}
+              </CardContent>
+              <CardFooter>
+                <Button variant="destructive" disabled={confirm.trim().toUpperCase() !== "DELETE" || del.isPending} onClick={() => del.mutate(confirm)}>
+                  {del.isPending ? <Loader2 className="animate-spin" /> : <Trash2 />}
+                  Delete my account
+                </Button>
+              </CardFooter>
+            </Card>
+            <p className="text-xs text-muted-foreground">
+              See the <Link className="underline" href="/privacy">privacy notice</Link>, <Link className="underline" href="/terms">terms</Link> and{" "}
+              <Link className="underline" href="/ai-evaluation">how AI evaluation works</Link>.
+            </p>
+          </>
+        }
+      >
         <Card id="notifications">
           <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
             <div>
@@ -66,53 +118,7 @@ export default function AccountPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Download your data</CardTitle>
-            <CardDescription>
-              One JSON file with your profile, applications, answers, interview transcripts, released results and feedback,
-              plus a link to each resume you uploaded (valid for 24 hours).
-            </CardDescription>
-          </CardHeader>
-          <CardFooter className="flex-col items-start gap-2">
-            <Button variant="outline" onClick={() => exp.mutate()} disabled={exp.isPending}>
-              {exp.isPending ? <Loader2 className="animate-spin" /> : <Download />}
-              Download my data
-            </Button>
-            {exp.isError ? <p className="text-sm text-destructive">{messageFor(exp.error)}</p> : null}
-          </CardFooter>
-        </Card>
-
-        <Card className="border-destructive/40">
-          <CardHeader>
-            <CardTitle className="text-base">Delete your account</CardTitle>
-            <CardDescription>
-              This permanently deletes your account, your resumes, the text read from them, your answers, interview transcripts,
-              results, feedback and notifications. Hiring teams will no longer see your applications. It cannot be undone.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-2">
-            <Label htmlFor="delete-confirm">Type DELETE to confirm</Label>
-            <Input id="delete-confirm" className="max-w-56" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="off" />
-            {del.isError ? (
-              <Alert variant="destructive">
-                <AlertTitle>Could not delete</AlertTitle>
-                <AlertDescription>{messageFor(del.error)}</AlertDescription>
-              </Alert>
-            ) : null}
-          </CardContent>
-          <CardFooter>
-            <Button variant="destructive" disabled={confirm.trim().toUpperCase() !== "DELETE" || del.isPending} onClick={() => del.mutate(confirm)}>
-              {del.isPending ? <Loader2 className="animate-spin" /> : <Trash2 />}
-              Delete my account
-            </Button>
-          </CardFooter>
-        </Card>
-        <p className="text-xs text-muted-foreground">
-          See the <Link className="underline" href="/privacy">privacy notice</Link>, <Link className="underline" href="/terms">terms</Link> and{" "}
-          <Link className="underline" href="/ai-evaluation">how AI evaluation works</Link>.
-        </p>
-      </div>
+      </SplitLayout>
     </>
   );
 }

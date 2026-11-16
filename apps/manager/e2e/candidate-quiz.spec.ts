@@ -59,7 +59,7 @@ select id from a;`,
   await page.getByLabel("Password").fill(process.env.E2E_CANDIDATE_PASSWORD!);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByText("Before you start")).toBeVisible({ timeout: 60_000 });
-  await expect(page.getByText("3 multiple-choice questions")).toBeVisible();
+  await expect(page.getByText("3 questions", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "Start quiz" }).click();
   await expect(page.getByRole("timer")).toBeVisible();
