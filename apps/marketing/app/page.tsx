@@ -1,70 +1,51 @@
-import { Badge } from "@hirevine/ui/components/badge";
 import { Button } from "@hirevine/ui/components/button";
-import {
-  ArrowRight,
-  BadgeCheck,
-  Check,
-  EyeOff,
-  FileSearch,
-  ListChecks,
-  Megaphone,
-  MessagesSquare,
-  Mic,
-  PenLine,
-  Quote,
-  ShieldCheck,
-  Users,
-  Workflow,
-} from "lucide-react";
+import { ArrowRight, ArrowUpRight, Check, Sparkles } from "lucide-react";
 import Link from "next/link";
 
-import { CtaBand } from "@/components/cta-band";
 import { Faq, faqSchema, type FaqItem } from "@/components/faq";
-import { FeatureRow, Screenshot, Section } from "@/components/section";
+import { HowItWorks, type Step } from "@/components/how-it-works";
+import { AnalyticsMock, EvidenceMock, InjectionMock, InterviewMock, PipelineMock, RedactionMock, ReleaseMock } from "@/components/mocks";
+import { CountUp, Reveal } from "@/components/reveal";
+import { Screenshot } from "@/components/section";
 import { StructuredData } from "@/components/structured-data";
-import { CONTACT_EMAIL, LINKS, MANAGER_URL, RESULTS, SITE_DESCRIPTION, SITE_NAME, siteUrl } from "@/lib/site";
+import { CONTACT_EMAIL, CONTAINER, LINKS, RESULTS, SITE_DESCRIPTION, SITE_NAME, siteUrl } from "@/lib/site";
 
-const STEPS = [
+const STEPS: Step[] = [
   {
-    icon: MessagesSquare,
-    title: "Describe the role",
-    body: "Tell Hirevine about the job in a chat. It asks for anything missing — skills, seniority, location — and drafts the listing.",
+    title: "Describe the role in a chat",
+    body: "Say who you're hiring in plain words. Hirevine asks for anything missing — must-have skills, seniority, location — and drafts the listing.",
+    image: { src: "/screens/new-job.png", alt: "The new job chat asking for the role description" },
   },
   {
-    icon: Workflow,
-    title: "Review the pipeline",
-    body: "Get a drafted pipeline: resume screening, an optional skills quiz and an optional AI interview. Edit any step by hand or by chat, then publish.",
+    title: "Get a pipeline you can edit",
+    body: "Hirevine proposes resume criteria and a cutoff, a timed skills quiz and an interview rubric. Change any step on the canvas or by asking in chat, then publish.",
+    image: { src: "/screens/workflow-editor.png", alt: "The pipeline editor with screening settings" },
   },
   {
-    icon: Mic,
     title: "Candidates take each step",
-    body: "Applicants upload a resume, take a timed quiz, and answer a spoken AI interview whose questions draw on their own experience.",
+    body: "Applicants upload a resume, take the quiz, and answer a spoken AI interview that asks about the projects on their own resume.",
+    image: { src: "/screens/candidate-interview.png", alt: "The voice AI interview with a live transcript" },
   },
   {
-    icon: Quote,
-    title: "Review the evidence",
-    body: "Every score quotes the resume line or interview answer behind it. AI drafts each candidate's feedback; your team edits and decides.",
+    title: "Review evidence, not guesses",
+    body: "Every score quotes the resume line or interview answer it rests on. Flags show what needs a person. You can override anything.",
+    image: { src: "/screens/campaign.png", alt: "Campaign view with candidates, stages and match scores" },
   },
   {
-    icon: Megaphone,
     title: "Release outcomes together",
-    body: "When you complete the campaign, every applicant gets their outcome and personal feedback at the same time.",
+    body: "Edit the AI-drafted feedback, complete the campaign, and every applicant gets their outcome and reasons at the same moment.",
+    image: { src: "/screens/final-released.png", alt: "The final list after outcomes were released" },
   },
-];
-
-const PRINCIPLES = [
-  { icon: Quote, title: "Evidence or zero", body: "A score has to quote its source. Code checks the quote against the resume; if it can't be found, the score is zero." },
-  { icon: EyeOff, title: "Names never reach the model", body: "Names, contact details, addresses and dates of birth are removed before any AI model reads a resume." },
-  { icon: ShieldCheck, title: "Injection-resistant", body: "Hidden instructions and keyword stuffing in resumes are detected, flagged to the team and never count as evidence." },
-  { icon: Users, title: "People decide", body: "AI suggests; your team can override any score, edits all feedback and makes every hiring decision." },
-  { icon: BadgeCheck, title: "Fair release", body: "Nobody sees outcomes early. Results and feedback go to every applicant of a job at once." },
-  { icon: FileSearch, title: "Disclosed and auditable", body: "Candidates are told when they talk to an AI. Recordings are transcribed and discarded; model calls are traced." },
 ];
 
 const FAQ: FaqItem[] = [
   {
-    q: "What does Hirevine actually do?",
-    a: "It runs the screening steps of a hiring process: resume screening against your criteria, an optional timed skills quiz, and an optional spoken AI interview. It ranks applicants with the evidence behind every score and drafts personal feedback, and your team reviews, edits and decides.",
+    q: "What does Hirevine do?",
+    a: "It runs the screening steps of a hiring process: resume screening against your criteria, an optional timed skills quiz, and an optional spoken AI interview. It ranks applicants with the evidence behind every score and drafts personal feedback; your team reviews, edits and decides.",
+  },
+  {
+    q: "Is it ready for real hiring?",
+    a: "Not yet. Hirevine is in preview: you can try the full flow end to end, but the legal terms are drafts and limits are conservative. We'll announce when it's ready for live hiring.",
   },
   {
     q: "Does the AI make hiring decisions?",
@@ -72,11 +53,11 @@ const FAQ: FaqItem[] = [
   },
   {
     q: "How does the AI interview work?",
-    a: "Candidates are told up front that the interviewer is an AI. Each question is read aloud and the candidate answers by speaking, one take per question. Answers are transcribed and the recordings discarded. Questions follow the role's themes and refer to projects from the candidate's own resume.",
+    a: "Candidates are told up front that the interviewer is an AI. Each question is read aloud and the candidate answers by speaking, one take per question. Answers are transcribed and recordings discarded. Questions follow the role's themes and refer to projects from the candidate's own resume.",
   },
   {
     q: "How do you prevent bias?",
-    a: "Personal details are removed before any model sees a resume, the models are instructed not to consider protected characteristics, accent or writing style, and every score must cite evidence. We run a bias audit that swaps names and gendered signals: 0% of 42 variants moved beyond run-to-run noise.",
+    a: "Personal details are removed before any model sees a resume, models are told not to consider protected characteristics, accent or writing style, and every score must cite evidence. Our bias audit swaps names and gendered signals: 0% of 42 variants moved beyond run-to-run noise.",
   },
   {
     q: "What happens with candidate data?",
@@ -84,44 +65,23 @@ const FAQ: FaqItem[] = [
   },
   {
     q: "Which AI models do you use?",
-    a: "Models are routed through OpenRouter: open-weight models (currently Google Gemma and NVIDIA Nemotron) for scoring and conversation, Whisper for transcription and ElevenLabs for the interviewer's voice. Each call is validated against a schema and counted against daily limits.",
-  },
-  {
-    q: "How much does it cost?",
-    a: "Hirevine is in its pilot phase and free for pilot teams. Paid plans will follow; pilot teams will get notice and their data stays theirs.",
+    a: "Models are routed through OpenRouter: open-weight models (currently Google Gemma and NVIDIA Nemotron) for scoring and conversation, Whisper for transcription and ElevenLabs for the interviewer's voice.",
   },
 ];
 
-const PLANS = [
-  {
-    name: "Pilot",
-    price: "Free",
-    note: "while we're in pilot",
-    badge: "Available now",
-    features: ["Jobs, campaigns and analytics", "Resume screening, skills quiz and voice AI interview", "Evidence-backed scores and AI-drafted feedback", "Email invitations and outcome notices"],
-    cta: { label: "Start a pilot", href: LINKS.managerSignUp },
-    highlight: true,
-  },
-  {
-    name: "Team",
-    price: "Coming soon",
-    note: "for growing hiring teams",
-    badge: "Planned",
-    features: ["Everything in Pilot", "Multiple managers per organisation", "Higher AI usage limits", "Email support"],
-    cta: { label: "Talk to us", href: "#contact" },
-  },
-  {
-    name: "Enterprise",
-    price: "Custom",
-    note: "for regulated or high-volume hiring",
-    badge: "Planned",
-    features: ["Company knowledge base for questions", "SSO and data residency options", "Custom retention and audit exports", "Integrations with your ATS"],
-    cta: { label: "Contact us", href: "#contact" },
-  },
+const TICKER = [
+  "Every score quotes its evidence",
+  "Names removed before AI reads a resume",
+  "Spoken interviews grounded in the resume",
+  "Recordings never stored",
+  "People make every decision",
+  "Feedback for every applicant",
+  "Outcomes released to everyone at once",
 ];
+
+const BENTO_CARD = "min-w-0 rounded-3xl border bg-card p-6 sm:p-8";
 
 export default function Home() {
-  const url = siteUrl();
   return (
     <>
       <StructuredData
@@ -131,7 +91,7 @@ export default function Home() {
           name: SITE_NAME,
           applicationCategory: "BusinessApplication",
           operatingSystem: "Web",
-          url,
+          url: siteUrl(),
           description: SITE_DESCRIPTION,
           offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
         }}
@@ -139,149 +99,201 @@ export default function Home() {
       <StructuredData data={faqSchema(FAQ)} />
 
       {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-x-0 top-0 -z-10 h-[36rem] bg-[radial-gradient(ellipse_at_top,var(--color-primary)_0%,transparent_60%)] opacity-15" aria-hidden />
-        <div className="mx-auto grid max-w-6xl gap-12 px-4 pt-16 pb-12 sm:px-6 sm:pt-24">
-          <div className="mx-auto grid max-w-3xl justify-items-center gap-6 text-center">
-            <Badge variant="secondary" className="gap-1.5 px-3 py-1">
-              <span className="size-1.5 rounded-full bg-emerald-500" aria-hidden />
-              Now in pilot · free for early teams
-            </Badge>
-            <h1 className="text-4xl font-bold tracking-tight text-balance sm:text-5xl lg:text-6xl">
-              Screen every applicant fairly. <span className="text-primary">Decide every hire yourself.</span>
-            </h1>
-            <p className="max-w-2xl text-lg text-pretty text-muted-foreground">
-              Hirevine runs resume screening, skills quizzes and spoken AI interviews for your roles. Every score quotes its
-              evidence, every candidate gets real feedback, and every decision stays with your team.
-            </p>
-            <div className="flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row">
-              <Button asChild size="lg">
-                <a href={LINKS.managerSignUp}>
-                  Start a pilot <ArrowRight />
+      <section className="relative isolate overflow-hidden">
+        <div className="hv-grid absolute inset-0 -z-10 [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" aria-hidden />
+        <div className="absolute top-[-12rem] left-1/2 -z-10 h-[34rem] w-[60rem] max-w-[200vw] -translate-x-1/2 rounded-full bg-primary/20 blur-3xl" aria-hidden />
+        <div className={`${CONTAINER} grid gap-14 pt-14 pb-16 sm:pt-20 lg:pt-24`}>
+          <div className="mx-auto grid max-w-4xl justify-items-center gap-6 text-center">
+            <Reveal>
+              <a
+                href={LINKS.tryPreview}
+                className="group inline-flex items-center gap-2 rounded-full border bg-background/70 py-1 pr-3 pl-1 text-sm backdrop-blur transition-colors hover:border-primary/50"
+              >
+                <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">Preview</span>
+                <span className="text-muted-foreground">Try the full hiring flow today</span>
+                <ArrowRight className="size-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+              </a>
+            </Reveal>
+            <Reveal delay={80}>
+              <h1 className="text-[2.6rem] leading-[1.05] font-bold tracking-tight text-balance sm:text-6xl lg:text-7xl">
+                Screen every applicant fairly. <span className="hv-gradient-text">Decide every hire yourself.</span>
+              </h1>
+            </Reveal>
+            <Reveal delay={160}>
+              <p className="max-w-2xl text-lg text-pretty text-muted-foreground sm:text-xl">
+                Resume screening, skills quizzes and spoken AI interviews — with every score backed by quoted evidence and every
+                decision left to your team.
+              </p>
+            </Reveal>
+            <Reveal delay={240} className="flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row">
+              <Button asChild size="lg" className="h-12 px-6 text-base">
+                <a href={LINKS.tryPreview}>
+                  Try the preview <ArrowRight />
                 </a>
               </Button>
-              <Button asChild size="lg" variant="outline">
+              <Button asChild size="lg" variant="outline" className="h-12 bg-background/60 px-6 text-base backdrop-blur">
                 <Link href="#how-it-works">See how it works</Link>
               </Button>
-            </div>
-            <ul className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
-              {["No credit card", "Names hidden from AI", "Feedback for every applicant"].map((t) => (
-                <li key={t} className="flex items-center gap-1.5">
-                  <Check className="size-4 text-primary" aria-hidden /> {t}
-                </li>
-              ))}
-            </ul>
+            </Reveal>
           </div>
-          <div className="mx-auto w-full max-w-5xl">
+
+          <Reveal delay={320} className="relative mx-auto w-full max-w-6xl">
             <Screenshot src="/screens/final-released.png" alt="Hirevine final list: candidates ranked by overall score with stage scores and recommendations" priority />
+            <div className="hv-float absolute -top-6 -left-2 hidden w-64 rounded-xl border bg-card/95 p-3 text-xs shadow-xl backdrop-blur md:block lg:-left-10" aria-hidden>
+              <p className="mb-1.5 font-semibold">Why 86%?</p>
+              <p className="rounded bg-primary/10 px-2 py-1 font-mono text-[11px] ring-1 ring-primary/30">
+                “Built Python services on PostgreSQL handling 2k requests per second.”
+              </p>
+              <p className="mt-1.5 text-muted-foreground">Quoted from resume line 5 · verified</p>
+            </div>
+            <div className="hv-float-slow absolute -right-2 -bottom-10 hidden w-60 md:block lg:-right-10">
+              <InterviewMock className="p-3" />
+            </div>
+          </Reveal>
+        </div>
+
+        <div className="relative overflow-hidden border-y bg-muted/30 py-4 [mask-image:linear-gradient(90deg,transparent,black_10%,black_90%,transparent)]">
+          <div className="hv-marquee flex w-max gap-10" aria-hidden>
+            {[...TICKER, ...TICKER].map((t, i) => (
+              <span key={i} className="flex items-center gap-2 text-sm whitespace-nowrap text-muted-foreground">
+                <Sparkles className="size-3.5 text-primary" />
+                {t}
+              </span>
+            ))}
           </div>
+          <ul className="sr-only">
+            {TICKER.map((t) => (
+              <li key={t}>{t}</li>
+            ))}
+          </ul>
         </div>
       </section>
 
       {/* How it works */}
-      <Section
-        id="how-it-works"
-        eyebrow="How it works"
-        title="From a job description to fair, explained outcomes"
-        intro="One pipeline per role. AI does the repetitive screening; your team reviews the evidence and makes the calls."
-        muted
-      >
-        <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {STEPS.map((s, i) => (
-            <li key={s.title} className="relative grid content-start gap-3 rounded-xl border bg-card p-5 shadow-xs">
-              <div className="flex items-center justify-between">
-                <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <s.icon className="size-5" aria-hidden />
-                </span>
-                <span className="text-sm font-semibold text-muted-foreground tabular-nums">0{i + 1}</span>
-              </div>
-              <h3 className="font-semibold">{s.title}</h3>
-              <p className="text-sm text-muted-foreground">{s.body}</p>
-            </li>
-          ))}
-        </ol>
-      </Section>
-
-      {/* Features */}
-      <Section id="features" eyebrow="For hiring teams" title="Everything between the job post and the shortlist">
-        <div className="grid gap-20 sm:gap-28">
-          <FeatureRow
-            eyebrow="Pipeline builder"
-            title="A screening pipeline drafted from a conversation"
-            body="Describe the role and Hirevine proposes the steps, criteria, cutoffs, quiz and interview rubric. Change anything on the visual editor or just ask in chat, preview the diff, and undo whenever you like."
-            points={["Weighted criteria with must-haves", "Timed skills quiz generated for the role", "Interview themes and scoring rubric", "Version history with one-click undo"]}
-            image={{ src: "/screens/workflow-editor.png", alt: "Pipeline editor with resume screening and final review steps" }}
-          />
-          <FeatureRow
-            reverse
-            eyebrow="Voice AI interview"
-            title="A first-round interview that knows the candidate's resume"
-            body="Candidates join a call-style interview at a time that suits them. The AI interviewer asks one question at a time about the projects and tools on their own resume, follows up on their answers, and scores the transcript against your rubric."
-            points={["Questions read aloud, answers spoken", "Grounded in the candidate's redacted resume", "Live transcript; recordings never stored", "Consistent scoring: 0.24 pt std dev across re-runs"]}
-            image={{ src: "/screens/candidate-interview.png", alt: "The voice AI interview as a call with a live transcript panel" }}
-          />
-          <FeatureRow
-            eyebrow="Evidence-first review"
-            title="See why, not just a number"
-            body="Each applicant's page shows the scores for every step with the exact resume lines and interview answers they rest on. Flags highlight anything that needs a person: missing evidence, unusual text, or a model that couldn't finish."
-            points={["Citations you can click to the source line", "Prompt-injection and keyword-stuffing flags", "Manual scoring and overrides at every step", "AI-drafted feedback you edit before release"]}
-            image={{ src: "/screens/campaign.png", alt: "Campaign view with applicants, stages, statuses and match scores" }}
-          />
-          <FeatureRow
-            reverse
-            eyebrow="Analytics"
-            title="Know where your funnel leaks"
-            body="Per-campaign funnels, score distributions with the pass mark, time per stage, and what would change at a different cutoff. Across all jobs: applications per week, time to shortlist and how often your team agrees with the AI."
-            points={["Cutoff impact before you change it", "Drop-off per stage", "AI agreement and unedited-draft rates", "Every chart has a table view"]}
-            image={{ src: "/screens/analytics-campaign.png", alt: "Campaign analytics with funnel, cutoff impact and score distribution" }}
-          />
+      <section id="how-it-works" className="scroll-mt-16 py-20 sm:py-28">
+        <div className={CONTAINER}>
+          <Reveal className="mb-12 max-w-2xl lg:mb-4">
+            <p className="text-sm font-semibold text-primary">How it works</p>
+            <h2 className="mt-2 text-4xl font-bold tracking-tight text-balance sm:text-5xl">From a job description to explained outcomes.</h2>
+          </Reveal>
+          <HowItWorks steps={STEPS} />
         </div>
-      </Section>
+      </section>
 
-      {/* Responsible AI */}
-      <Section
-        eyebrow="Responsible by design"
-        title="Built so you can explain every outcome"
-        intro="Automated screening is only useful if it's fair and explainable. These rules are enforced in code, and we measure them."
-        muted
-      >
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {PRINCIPLES.map((p) => (
-            <div key={p.title} className="grid content-start gap-2 rounded-xl border bg-card p-5">
-              <p.icon className="size-5 text-primary" aria-hidden />
-              <h3 className="font-semibold">{p.title}</h3>
-              <p className="text-sm text-muted-foreground">{p.body}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-12 grid gap-4 rounded-2xl border bg-card p-6 sm:grid-cols-2 sm:p-8 lg:grid-cols-4">
-          {RESULTS.map((r) => (
-            <div key={r.label} className="grid content-start gap-1">
-              <span className="text-3xl font-bold tracking-tight text-primary tabular-nums">{r.value}</span>
-              <span className="text-sm font-medium">{r.label}</span>
-              <span className="text-xs text-muted-foreground">{r.note}</span>
-            </div>
-          ))}
-        </div>
-        <p className="mt-4 text-center text-sm text-muted-foreground">
-          Measured on synthetic data with the production code. <Link href="/responsible-ai" className="font-medium text-primary hover:underline">How we test →</Link>
-        </p>
-      </Section>
-
-      {/* Candidates teaser */}
-      <Section>
-        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
-          <Screenshot src="/screens/journey-feedback.png" alt="A candidate's released feedback with the resume lines the review relied on" />
-          <div className="grid gap-4">
-            <p className="text-sm font-semibold text-primary">For candidates</p>
-            <h2 className="text-3xl font-bold tracking-tight text-balance">Every applicant hears back, with reasons</h2>
-            <p className="text-muted-foreground">
-              Candidates follow each step in one place, take the quiz and interview when it suits them, and receive personal
-              feedback that points to what in their resume and answers made the difference.
+      {/* Bento */}
+      <section id="features" className="scroll-mt-16 bg-muted/30 py-20 sm:py-28">
+        <div className={CONTAINER}>
+          <Reveal className="mb-12 grid max-w-3xl gap-3">
+            <p className="text-sm font-semibold text-primary">For hiring teams</p>
+            <h2 className="text-4xl font-bold tracking-tight text-balance sm:text-5xl">The screening work, done carefully.</h2>
+            <p className="text-lg text-muted-foreground">
+              Every part of the pipeline is built to be checked: what the AI read, what it quoted, and why it scored.
             </p>
-            <div className="flex flex-wrap gap-3">
+          </Reveal>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-6">
+            <Reveal className={`${BENTO_CARD} md:col-span-4`}>
+              <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:items-center [&>*]:min-w-0">
+                <div className="grid gap-3">
+                  <h3 className="text-2xl font-semibold tracking-tight">Scores that show their work</h3>
+                  <p className="text-muted-foreground">
+                    Every resume score quotes the line it rests on, and code checks the quote is really there. No quote, no points.
+                  </p>
+                </div>
+                <div className="pb-6">
+                  <EvidenceMock />
+                </div>
+              </div>
+            </Reveal>
+            <Reveal delay={80} className="relative overflow-hidden rounded-3xl bg-neutral-950 p-6 text-neutral-100 sm:p-8 md:col-span-2">
+              <h3 className="text-2xl font-semibold tracking-tight">An interview that has read the resume</h3>
+              <p className="mt-2 text-sm text-neutral-400">Spoken questions about the candidate's own projects. Only the transcript is kept.</p>
+              <div className="hv-wave mt-8 flex h-16 items-center justify-center gap-1.5" aria-hidden>
+                {Array.from({ length: 18 }, (_, i) => (
+                  <span key={i} className="h-full w-1.5 rounded-full bg-gradient-to-t from-primary to-sky-400" style={{ animationDelay: `${(i % 6) * 0.12}s` }} />
+                ))}
+              </div>
+            </Reveal>
+            <Reveal className={`${BENTO_CARD} md:col-span-2`}>
+              <h3 className="mb-2 text-xl font-semibold tracking-tight">Names never reach the model</h3>
+              <p className="mb-6 text-sm text-muted-foreground">Personal details are stripped before any AI reads a resume.</p>
+              <RedactionMock />
+            </Reveal>
+            <Reveal delay={80} className={`${BENTO_CARD} md:col-span-2`}>
+              <h3 className="mb-2 text-xl font-semibold tracking-tight">Tricks get flagged</h3>
+              <p className="mb-6 text-sm text-muted-foreground">Hidden instructions and keyword stuffing never count as evidence.</p>
+              <InjectionMock />
+            </Reveal>
+            <Reveal delay={160} className={`${BENTO_CARD} md:col-span-2`}>
+              <h3 className="mb-2 text-xl font-semibold tracking-tight">Know where the cutoff bites</h3>
+              <p className="mb-6 text-sm text-muted-foreground">Score spread, funnel drop-off and what a new cutoff would change.</p>
+              <AnalyticsMock />
+            </Reveal>
+            <Reveal className={`${BENTO_CARD} md:col-span-3`}>
+              <h3 className="mb-2 text-xl font-semibold tracking-tight">A pipeline per role</h3>
+              <p className="mb-6 text-sm text-muted-foreground">Drafted from your description, edited on a canvas or by chat, with full undo history.</p>
+              <PipelineMock />
+            </Reveal>
+            <Reveal delay={80} className={`${BENTO_CARD} pb-12 md:col-span-3`}>
+              <h3 className="mb-2 text-xl font-semibold tracking-tight">Everyone hears back, at once</h3>
+              <p className="mb-6 text-sm text-muted-foreground">Feedback you've reviewed goes to every applicant when you complete the campaign.</p>
+              <ReleaseMock />
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
+      {/* Proof */}
+      <section className="relative isolate overflow-hidden bg-neutral-950 py-20 text-neutral-100 sm:py-28">
+        <div className="hv-grid absolute inset-0 -z-10 opacity-40 [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]" aria-hidden />
+        <div className="absolute -bottom-40 left-1/2 -z-10 h-80 w-[50rem] max-w-[200vw] -translate-x-1/2 rounded-full bg-primary/25 blur-3xl" aria-hidden />
+        <div className={CONTAINER}>
+          <Reveal className="grid max-w-3xl gap-3">
+            <p className="text-sm font-semibold text-sky-400">Measured, not promised</p>
+            <h2 className="text-4xl font-bold tracking-tight text-balance sm:text-5xl">We test the AI the way you&apos;d audit a hire.</h2>
+            <p className="text-lg text-neutral-400">Real runs of the production code against labelled, synthetic applicants.</p>
+          </Reveal>
+          <div className="mt-14 grid gap-px overflow-hidden rounded-2xl bg-white/10 sm:grid-cols-2 lg:grid-cols-4">
+            {RESULTS.map((r, i) => (
+              <Reveal key={r.label} delay={i * 90} className="grid content-start gap-2 bg-neutral-950 p-6 sm:p-8">
+                <CountUp value={r.value} className="text-5xl font-bold tracking-tight tabular-nums" />
+                <span className="text-sm font-medium text-neutral-200">{r.label}</span>
+                <span className="text-xs text-neutral-500">{r.note}</span>
+              </Reveal>
+            ))}
+          </div>
+          <Reveal className="mt-8">
+            <Link href="/responsible-ai" className="inline-flex items-center gap-1.5 text-sm font-medium text-sky-400 hover:text-sky-300">
+              How we test, and what the tests changed <ArrowUpRight className="size-4" />
+            </Link>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* Candidates */}
+      <section className="py-20 sm:py-28">
+        <div className={`${CONTAINER} grid items-center gap-12 lg:grid-cols-2 lg:gap-20`}>
+          <Reveal>
+            <Screenshot src="/screens/journey-feedback.png" alt="A candidate's released feedback" />
+          </Reveal>
+          <Reveal delay={100} className="grid gap-5">
+            <p className="text-sm font-semibold text-primary">For candidates</p>
+            <h2 className="text-4xl font-bold tracking-tight text-balance">No more applying into silence.</h2>
+            <p className="text-lg text-muted-foreground">
+              Candidates follow every step in one place, take the quiz and interview when it suits them, and get feedback that
+              points to what made the difference.
+            </p>
+            <ul className="grid gap-2.5">
+              {["Told up front when the interviewer is an AI", "Feedback written for them, with reasons", "Download or delete their data any time"].map((t) => (
+                <li key={t} className="flex items-center gap-3">
+                  <Check className="size-5 shrink-0 rounded-full bg-primary/10 p-1 text-primary" aria-hidden />
+                  {t}
+                </li>
+              ))}
+            </ul>
+            <div className="flex flex-wrap gap-3 pt-2">
               <Button asChild variant="outline">
-                <Link href="/candidates">What candidates experience</Link>
+                <Link href="/candidates">The candidate experience</Link>
               </Button>
               <Button asChild variant="ghost">
                 <a href={LINKS.browseJobs}>
@@ -289,73 +301,95 @@ export default function Home() {
                 </a>
               </Button>
             </div>
-          </div>
+          </Reveal>
         </div>
-      </Section>
+      </section>
 
-      {/* Pricing */}
-      <Section id="pricing" eyebrow="Pricing" title="Free while we're in pilot" intro="Run real hiring with Hirevine today. Paid plans come later, with notice." center muted>
-        <div className="grid gap-4 lg:grid-cols-3">
-          {PLANS.map((p) => (
-            <div
-              key={p.name}
-              className={
-                "flex flex-col gap-6 rounded-2xl border bg-card p-6 " + (p.highlight ? "border-primary shadow-lg ring-1 ring-primary" : "")
-              }
-            >
-              <div className="grid gap-1">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">{p.name}</h3>
-                  <Badge variant={p.highlight ? "default" : "secondary"}>{p.badge}</Badge>
-                </div>
-                <p className="text-3xl font-bold tracking-tight">{p.price}</p>
-                <p className="text-sm text-muted-foreground">{p.note}</p>
+      {/* Availability */}
+      <section id="pricing" className="scroll-mt-16 bg-muted/30 py-20 sm:py-28">
+        <div className={`${CONTAINER} grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:items-center lg:gap-20`}>
+          <Reveal className="grid gap-4">
+            <p className="text-sm font-semibold text-primary">Availability</p>
+            <h2 className="text-4xl font-bold tracking-tight text-balance sm:text-5xl">Free to try while in preview.</h2>
+            <p className="text-lg text-muted-foreground">
+              The whole flow works today, from job chat to released feedback. It isn&apos;t ready for live hiring yet: explore it
+              with test roles and sample resumes, and tell us what you&apos;d need.
+            </p>
+          </Reveal>
+          <Reveal delay={100} className="relative overflow-hidden rounded-3xl border bg-card p-6 shadow-xl sm:p-10">
+            <div className="absolute -top-20 -right-20 size-56 rounded-full bg-primary/15 blur-3xl" aria-hidden />
+            <div className="relative flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Preview access</p>
+                <p className="text-5xl font-bold tracking-tight">$0</p>
               </div>
-              <ul className="grid flex-1 content-start gap-2 text-sm">
-                {p.features.map((f) => (
-                  <li key={f} className="flex gap-2">
-                    <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Button asChild variant={p.highlight ? "default" : "outline"}>
-                <a href={p.cta.href}>{p.cta.label}</a>
+              <span className="rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">No card needed</span>
+            </div>
+            <ul className="relative mt-8 grid gap-3 sm:grid-cols-2">
+              {["Job chat and pipeline editor", "Resume screening with evidence", "Timed skills quizzes", "Voice AI interviews", "AI-drafted, editable feedback", "Campaign analytics"].map((f) => (
+                <li key={f} className="flex items-center gap-2.5 text-sm">
+                  <Check className="size-4 shrink-0 text-primary" aria-hidden />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <div className="relative mt-8 flex flex-wrap gap-3">
+              <Button asChild size="lg">
+                <a href={LINKS.tryPreview}>
+                  Try the preview <ArrowRight />
+                </a>
+              </Button>
+              <Button asChild size="lg" variant="ghost">
+                <a href="#faq">Read the FAQ</a>
               </Button>
             </div>
-          ))}
+          </Reveal>
         </div>
-      </Section>
+      </section>
 
       {/* FAQ */}
-      <Section id="faq" eyebrow="FAQ" title="Questions hiring teams ask" center>
-        <Faq items={FAQ} />
-      </Section>
-
-      {/* Contact */}
-      <div id="contact" className="scroll-mt-20">
-        <CtaBand
-          title="Run your next role on Hirevine"
-          body="Create a free pilot account, describe a role, and have a screening pipeline ready to publish in minutes."
-        />
-        <div className="mx-auto -mt-8 mb-16 flex max-w-6xl flex-wrap items-center justify-center gap-x-6 gap-y-2 px-4 text-sm text-muted-foreground sm:px-6">
-          <span className="flex items-center gap-1.5">
-            <PenLine className="size-4" aria-hidden /> Questions or a pilot for a larger team?
-          </span>
-          {CONTACT_EMAIL ? (
-            <a href={`mailto:${CONTACT_EMAIL}`} className="font-medium text-primary hover:underline">
-              Email us
-            </a>
-          ) : (
-            <a href={`${LINKS.github}/issues`} className="font-medium text-primary hover:underline">
-              Open an issue on GitHub
-            </a>
-          )}
-          <a href={MANAGER_URL} className="flex items-center gap-1.5 hover:text-foreground">
-            <ListChecks className="size-4" aria-hidden /> Already a pilot team? Sign in
-          </a>
+      <section id="faq" className="scroll-mt-16 py-20 sm:py-28">
+        <div className={`${CONTAINER} grid gap-10 lg:grid-cols-[1fr_2fr] lg:gap-20`}>
+          <Reveal className="grid content-start gap-3">
+            <p className="text-sm font-semibold text-primary">FAQ</p>
+            <h2 className="text-4xl font-bold tracking-tight">Questions, answered.</h2>
+            <p className="text-muted-foreground">
+              Something else?{" "}
+              {CONTACT_EMAIL ? (
+                <a href={`mailto:${CONTACT_EMAIL}`} className="font-medium text-primary hover:underline">Email us</a>
+              ) : (
+                <a href={`${LINKS.github}/issues`} className="font-medium text-primary hover:underline">Ask on GitHub</a>
+              )}
+              .
+            </p>
+          </Reveal>
+          <Reveal delay={80}>
+            <Faq items={FAQ} />
+          </Reveal>
         </div>
-      </div>
+      </section>
+
+      {/* CTA */}
+      <section id="contact" className="scroll-mt-16 px-4 pb-20 sm:px-6 sm:pb-28 lg:px-8">
+        <Reveal className="relative isolate mx-auto max-w-7xl overflow-hidden rounded-[2rem] bg-neutral-950 px-6 py-16 text-center text-neutral-100 sm:px-12 sm:py-24">
+          <div className="hv-grid absolute inset-0 -z-10 opacity-30" aria-hidden />
+          <div className="absolute top-1/2 left-1/2 -z-10 h-72 w-[42rem] max-w-[200vw] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/40 blur-3xl" aria-hidden />
+          <h2 className="mx-auto max-w-3xl text-4xl font-bold tracking-tight text-balance sm:text-6xl">See your next role through Hirevine.</h2>
+          <p className="mx-auto mt-4 max-w-xl text-lg text-neutral-300">
+            Create a preview account, describe a role, and have a screening pipeline ready in minutes.
+          </p>
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <Button asChild size="lg" className="h-12 px-6 text-base">
+              <a href={LINKS.tryPreview}>
+                Try the preview <ArrowRight />
+              </a>
+            </Button>
+            <Button asChild size="lg" variant="ghost" className="h-12 px-6 text-base text-neutral-100 hover:bg-white/10 hover:text-white">
+              <a href={LINKS.browseJobs}>Browse open roles</a>
+            </Button>
+          </div>
+        </Reveal>
+      </section>
     </>
   );
 }

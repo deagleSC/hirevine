@@ -27,7 +27,7 @@ export function SiteHeader() {
         (scrolled ? "border-b bg-background/85 backdrop-blur" : "border-b border-transparent")
       }
     >
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
           <HirevineMark size={28} className="size-7 rounded-md shadow-none" />
           Hirevine
@@ -49,7 +49,7 @@ export function SiteHeader() {
             <a href={LINKS.managerSignIn}>Sign in</a>
           </Button>
           <Button asChild className="hidden sm:inline-flex">
-            <a href={LINKS.managerSignUp}>Start a pilot</a>
+            <a href={LINKS.managerSignUp}>Try the preview</a>
           </Button>
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
@@ -70,7 +70,7 @@ export function SiteHeader() {
               </nav>
               <div className="grid gap-2 p-4">
                 <Button asChild>
-                  <a href={LINKS.managerSignUp}>Start a pilot</a>
+                  <a href={LINKS.managerSignUp}>Try the preview</a>
                 </Button>
                 <Button asChild variant="outline">
                   <a href={LINKS.managerSignIn}>Sign in</a>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { PageHero } from "@/components/page-hero";
+import { CountUp, Reveal } from "@/components/reveal";
 import { Section } from "@/components/section";
 import { LINKS, RESULTS } from "@/lib/site";
 
@@ -54,23 +55,23 @@ export default function ResponsibleAiPage() {
         intro="Hiring is high-stakes, so Hirevine's AI works under rules enforced in code, and we measure whether they hold."
       />
       <Section eyebrow="The rules" title="What the AI must do, and can't do">
-        <div className="grid gap-4 md:grid-cols-2">
+        <ol className="grid gap-x-12 gap-y-12 md:grid-cols-2">
           {RULES.map((r, i) => (
-            <div key={r.title} className="grid content-start gap-2 rounded-xl border bg-card p-6">
-              <span className="text-sm font-semibold text-primary tabular-nums">0{i + 1}</span>
+            <Reveal as="li" key={r.title} delay={(i % 2) * 90} className="grid grid-cols-[auto_1fr] gap-x-5 gap-y-2 border-t pt-6">
+              <span className="row-span-2 text-4xl font-bold tracking-tight text-primary/25 tabular-nums">{String(i + 1).padStart(2, "0")}</span>
               <h2 className="text-lg font-semibold">{r.title}</h2>
               <p className="text-sm leading-relaxed text-muted-foreground">{r.body}</p>
-            </div>
+            </Reveal>
           ))}
-        </div>
+        </ol>
       </Section>
       <Section muted eyebrow="Measured" title="How we test it" intro="Each evaluation runs the production code paths against a real model on synthetic data — no real applicants. Reports are versioned in the repository.">
-        <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {RESULTS.map((r) => (
-            <div key={r.label} className="grid content-start gap-1 rounded-xl border bg-card p-5">
-              <span className="text-3xl font-bold tracking-tight text-primary tabular-nums">{r.value}</span>
+        <div className="mb-8 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border bg-border lg:grid-cols-4">
+          {RESULTS.map((r, i) => (
+            <Reveal key={r.label} delay={i * 80} className="grid content-start gap-1 bg-card p-5 sm:p-6">
+              <CountUp value={r.value} className="text-4xl font-bold tracking-tight text-primary tabular-nums" />
               <span className="text-sm font-medium">{r.label}</span>
-            </div>
+            </Reveal>
           ))}
         </div>
         <div className="overflow-hidden rounded-xl border bg-card">

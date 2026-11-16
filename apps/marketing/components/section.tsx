@@ -20,7 +20,7 @@ export function Section({
 }) {
   return (
     <section id={id} className={"scroll-mt-20 py-16 sm:py-24 " + (muted ? "bg-muted/30" : "")}>
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {title ? (
           <div className={"mb-10 grid max-w-2xl gap-3 sm:mb-14 " + (center ? "mx-auto text-center" : "")}>
             {eyebrow ? <p className="text-sm font-semibold text-primary">{eyebrow}</p> : null}

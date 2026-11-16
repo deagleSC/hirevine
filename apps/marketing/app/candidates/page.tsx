@@ -2,7 +2,9 @@ import { Button } from "@hirevine/ui/components/button";
 import { ArrowRight, Bell, Clock, Download, FileText, Mic, MessageSquareQuote } from "lucide-react";
 import type { Metadata } from "next";
 
+import { InterviewMock } from "@/components/mocks";
 import { PageHero } from "@/components/page-hero";
+import { Reveal } from "@/components/reveal";
 import { Screenshot, Section } from "@/components/section";
 import { LINKS } from "@/lib/site";
 
@@ -41,18 +43,16 @@ export default function CandidatesPage() {
         </div>
       </PageHero>
       <Section eyebrow="Your journey" title="What applying through Hirevine looks like">
-        <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ol className="grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
           {STEPS.map((s, i) => (
-            <li key={s.title} className="grid content-start gap-3 rounded-xl border bg-card p-5">
-              <div className="flex items-center justify-between">
-                <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <s.icon className="size-5" aria-hidden />
-                </span>
-                <span className="text-sm font-semibold text-muted-foreground tabular-nums">0{i + 1}</span>
+            <Reveal as="li" key={s.title} delay={(i % 3) * 90} className="grid content-start gap-3 border-t pt-6">
+              <div className="flex items-center gap-3">
+                <span className="text-4xl font-bold tracking-tight text-primary/25 tabular-nums">{String(i + 1).padStart(2, "0")}</span>
+                <s.icon className="size-5 text-primary" aria-hidden />
               </div>
-              <h2 className="font-semibold">{s.title}</h2>
-              <p className="text-sm text-muted-foreground">{s.body}</p>
-            </li>
+              <h2 className="text-lg font-semibold">{s.title}</h2>
+              <p className="text-sm leading-relaxed text-muted-foreground">{s.body}</p>
+            </Reveal>
           ))}
         </ol>
       </Section>
@@ -71,7 +71,9 @@ export default function CandidatesPage() {
             </p>
             <p className="text-sm">Use a quiet room and allow microphone access when asked. Recordings are never stored.</p>
           </div>
-          <Screenshot src="/screens/candidate-interview.png" alt="The AI interview call with live transcript" />
+          <Reveal delay={100} className="mx-auto w-full max-w-md">
+            <InterviewMock className="p-6" />
+          </Reveal>
         </div>
       </Section>
       <Section eyebrow="Open roles" title="Find your next role">

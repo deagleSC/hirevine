@@ -12,12 +12,12 @@ export const metadata: Metadata = {
 export default function TermsPage() {
   return (
     <>
-      <PageHero eyebrow="Legal" title="Terms" intro="Last updated 16 November 2026. Draft for the pilot, pending legal review." />
+      <PageHero eyebrow="Legal" title="Terms" intro="Last updated 16 November 2026. Draft for the preview, pending legal review." />
       <Prose>
-        <h2>The pilot</h2>
+        <h2>The preview</h2>
         <p>
-          Hirevine is offered free during its pilot. Features, limits and availability may change, and we will give pilot teams
-          notice before introducing paid plans.
+          Hirevine is offered free as a preview for evaluation. It is not yet intended for live hiring with real applicants.
+          Features, limits and availability may change, and data in the preview may be reset with notice.
         </p>
         <h2>Hiring teams</h2>
         <ul>

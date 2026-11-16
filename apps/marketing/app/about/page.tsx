@@ -38,11 +38,11 @@ export default function AboutPage() {
         </p>
         <h2>Where we are</h2>
         <p>
-          Hirevine is in its pilot phase. Pilot teams use it free while we refine the product with them; paid plans will follow
-          with notice.
+          Hirevine is in preview. The full flow works end to end and is free to try, but it isn&apos;t ready for live hiring yet:
+          the legal terms are drafts and usage limits are conservative. We&apos;ll announce when it is.
         </p>
       </Prose>
-      <CtaBand title="Try Hirevine on your next role" body="Create a pilot account and have a screening pipeline ready in minutes." />
+      <CtaBand title="Try Hirevine on your next role" body="Create a preview account and have a screening pipeline ready in minutes." />
     </>
   );
 }
