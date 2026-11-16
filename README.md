@@ -4,14 +4,15 @@ AI does the screening work; people make the decisions.
 
 A hiring manager describes a role in chat, gets a pipeline (resume screening → optional skills quiz →
 optional AI interview → final list), edits it by hand or by chat, and publishes it. Candidates apply
-with a resume, take the quiz and interview, and later receive personal feedback. Every AI score
+with a resume, take the quiz and a spoken AI interview whose questions draw on their own resume, and
+later receive personal feedback. Every AI score
 quotes its evidence, the hiring team edits every piece of feedback, and outcomes are released to
 everyone at once when the manager completes the campaign.
 
 | Manager | Candidate |
 | --- | --- |
 | ![Campaign analytics](docs/screenshots/analytics-campaign.png) | ![Released feedback with cited resume lines](docs/screenshots/journey-feedback.png) |
-| ![Final list after release](docs/screenshots/final-released.png) | ![The AI interview, mid-stream](docs/screenshots/candidate-interview.png) |
+| ![Final list after release](docs/screenshots/final-released.png) | ![The voice AI interview as a call, with the live transcript](docs/screenshots/candidate-interview.png) |
 
 ## Measured results
 
@@ -54,8 +55,9 @@ compare against it.
 ```
 apps/manager ─┐                         ┌─ Postgres (Supabase): RLS on every table
               ├─ HTTPS ─▶ apps/api ─────┼─ Supabase Storage (private resume bucket)
-apps/candidate┘   (FastAPI, the only    ├─ OpenRouter (models) — redacted text only
-                   gateway)             └─ Inngest (background jobs) — record IDs only
+apps/candidate┘   (FastAPI, the only    ├─ Supabase Edge Function `embed` (gte-small vectors)
+                   gateway)             ├─ OpenRouter (models, speech-to-text, text-to-speech) — redacted text only
+                                        └─ Inngest (background jobs) — record IDs only
 ```
 
 | Path | What |
@@ -63,7 +65,7 @@ apps/candidate┘   (FastAPI, the only    ├─ OpenRouter (models) — redacte
 | `apps/manager` | Next.js app for hiring managers (port 3000) |
 | `apps/candidate` | Next.js app for candidates (port 3001) |
 | `apps/api` | FastAPI service: the only gateway to the database and the only caller of models (port 8000) |
-| `packages/ui` | Design tokens and shared components (chat, quiz runner, interview chat, evidence, charts) |
+| `packages/ui` | Design tokens, layout primitives and shared components (chat, quiz runner, interview call, evidence, charts) |
 | `packages/api-client` | Typed client generated from the API's OpenAPI document |
 | `supabase/migrations` | Plain SQL migrations: schema, RLS policies, helper functions |
 | `docs/plans` | Backend and frontend implementation plans, with "As built" notes per phase |
@@ -78,6 +80,8 @@ Key decisions (see `docs/adr`):
 6. [Paid model variants, one fallback, then retry later](docs/adr/0006-paid-models-with-fallback.md)
 7. [End-to-end tests run the real pipeline against a fake model](docs/adr/0007-fake-model-and-inline-jobs-for-e2e.md)
 8. [Analytics as RLS-scoped queries, charts as small SVG components](docs/adr/0008-analytics-as-queries-and-svg-charts.md)
+9. [The AI interview is spoken; recordings are transcribed and discarded](docs/adr/0009-voice-interview.md)
+10. [Interview questions are grounded in retrieved resume excerpts](docs/adr/0010-resume-retrieval-for-interviews.md)
 
 ## Local setup
 
@@ -98,6 +102,10 @@ cp apps/candidate/.env.example apps/candidate/.env.local
 pnpm dev                                  # API + both apps
 pnpm --filter @hirevine/api dev:jobs      # Inngest dev server for background jobs (http://localhost:8288)
 ```
+
+In dev the interview takes typed answers; set `INTERVIEW_ANSWER_MODE=voice` in `apps/api/.env` to use
+the voice call (needs `OPENROUTER_API_KEY`). Without `EMBED_FUNCTION_URL` the API uses a local hashing
+embedder, so screening and interview retrieval work offline but rank less well than `gte-small`.
 
 Without Supabase Storage keys the API keeps resumes in memory and serves uploads itself
 (`/v1/dev/storage`, dev only). Without the Inngest dev server, queued jobs wait; set
@@ -121,6 +129,21 @@ uv run python -m evals.readme_results     # refresh the table above
 
 Run evals against a scratch database (`DATABASE_URL=…/hirevine_eval`) so their budget and cache rows
 stay out of anything shared.
+
+## AI interview
+
+- **Voice.** Each question is read aloud (`TTS_MODEL`, default `elevenlabs/eleven-flash-v2.5`, served
+  per question at `…/interview/speech?question=N`). The candidate records one take per answer; the
+  audio goes to OpenRouter for transcription (`STT_MODEL`, default `openai/whisper-large-v3-turbo`),
+  only the transcript is saved and the recording is discarded. Production defaults to voice; typed
+  answers are refused there (`voice_required`). The candidate sees a call layout with a collapsible
+  live transcript.
+- **Resume retrieval (RAG).** Screening stores a `gte-small` vector per redacted resume chunk
+  (pgvector, HNSW). Before each question, `app/services/retrieval.py` embeds the latest answer plus
+  the interview themes, picks the 3 closest chunks (similarity ≥ 0.2) and passes them to
+  `interview_next` as untrusted data. Retrieval is best effort: on any failure the interview
+  continues without excerpts. Retrieved chunk ids and scores are on each `interview-turn` trace.
+- Resume scoring does not use retrieval: it reads the whole redacted resume so no evidence is missed.
 
 ## Checks
 
@@ -148,6 +171,16 @@ E2E_CANDIDATE_PASSWORD=...
 Specs include the whole journey (`journey.spec.ts`: job chat → publish → apply with an upload →
 screening → release → feedback with citations), quiz resume and auto-submit, an interview reconnect
 mid-stream, the release rule, the analytics numbers, and an axe accessibility audit of both apps.
+The voice interview spec also runs in Firefox and WebKit with a fake microphone; macOS sandboxes
+that block the audio service make it hang, so run it from a normal terminal.
+
+For layout review, `tour.spec.ts` screenshots every route of both apps at 1440 px and 390 px and
+fails if a page scrolls sideways on a phone. Run it after specs that seed data:
+
+```bash
+UI_TOUR=/tmp/shots pnpm --filter @hirevine/manager exec playwright test \
+  journey release candidate-quiz candidate-interview tour --project=chromium
+```
 
 After changing API routes, regenerate the typed client: `pnpm gen:api`.
 
@@ -156,6 +189,12 @@ After changing API routes, regenerate the typed client: `pnpm gen:api`.
 Three Vercel projects (`hirevine-api`, `hirevine-manager`, `hirevine-candidate`) deploy from `main`.
 After each production API deploy, the `inngest-sync` workflow re-registers the background functions
 with Inngest. Database changes are SQL migrations applied with `npx supabase db push --linked`.
+
+Preview deployments of the two apps use the production API and Supabase project (their Preview
+environment variables are copies of Production's), so anything done in a preview changes real data.
+The API accepts preview origins through `CORS_ORIGIN_REGEX`, limited to this team's
+`hirevine-candidate-*` and `hirevine-manager-*` deployments. For sign-up confirmation or password
+reset emails to work from a preview, add the preview URL pattern to Supabase Auth's redirect URLs.
 
 ## Before a pilot with real applicants
 
