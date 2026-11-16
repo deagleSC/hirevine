@@ -272,12 +272,16 @@ async def begin_turn(tx: Tx, user: CurrentUser, application_id: UUID, body: Turn
                     transcript=tuple(t))
 
 
-async def current_question(tx: Tx, user: CurrentUser, application_id: UUID) -> str:
-    """The open question's text, for reading aloud. Only the candidate's own, unanswered question."""
+async def current_question(tx: Tx, user: CurrentUser, application_id: UUID, number: int) -> str:
+    """The open question's text, for reading aloud: only the candidate's own, unanswered question,
+    and only when `number` (1-based) is that question, so each question's audio has its own URL."""
     ctx = await _candidate_ctx(tx, user, application_id)
     t: list[interview.Entry] = ctx["entries"]
     if ctx["started_at"] is None or ctx["finished_at"] is not None or interview.awaiting(t) != "answer":
         raise AppError(409, "no_open_question", "There is no question to read right now.")
+    if number != interview.questions_asked(t):
+        raise AppError(409, "stale_turn", "This interview moved on. Reload to continue.",
+                       {"questions_asked": interview.questions_asked(t)})
     return t[-1].content
 
 

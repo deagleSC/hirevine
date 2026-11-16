@@ -5996,7 +5996,7 @@
     },
     "/v1/candidate/applications/{application_id}/interview/speech": {
       "get": {
-        "description": "The open question read aloud (MP3).",
+        "description": "The open question read aloud. Each question has its own URL, so the audio can be cached.",
         "operationId": "question_speech_v1_candidate_applications__application_id__interview_speech_get",
         "parameters": [
           {
@@ -6007,6 +6007,18 @@
               "format": "uuid",
               "title": "Application Id",
               "type": "string"
+            }
+          },
+          {
+            "description": "The open question's number (InterviewState.questions_asked)",
+            "in": "query",
+            "name": "question",
+            "required": true,
+            "schema": {
+              "description": "The open question's number (InterviewState.questions_asked)",
+              "minimum": 1,
+              "title": "Question",
+              "type": "integer"
             }
           }
         ],

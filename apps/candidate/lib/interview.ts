@@ -128,12 +128,13 @@ export function useInterviewTurn(appId: string) {
 
 /**
  * Reads the open question aloud (server TTS). `play` is called once per new question; failures are
- * silent because the question is always on screen too.
+ * silent because the question is always on screen too. Each question has its own URL
+ * (`?question=N`), so the browser's HTTP cache can never hand back an earlier question's audio.
  */
 export function useQuestionAudio(appId: string) {
   const [speaking, setSpeaking] = useState(false);
   const audio = useRef<HTMLAudioElement | null>(null);
-  const cache = useRef(new Map<string, string>());
+  const cache = useRef(new Map<number, string>());
   const seq = useRef(0);
 
   const stop = useCallback(() => {
@@ -152,7 +153,7 @@ export function useQuestionAudio(appId: string) {
   );
 
   const play = useCallback(
-    async (question: string) => {
+    async (question: number) => {
       stop();
       const mine = ++seq.current;
       setSpeaking(true);
@@ -160,7 +161,7 @@ export function useQuestionAudio(appId: string) {
         let url = cache.current.get(question);
         if (!url) {
           const token = (await supabase().auth.getSession()).data.session?.access_token;
-          const res = await fetch(`${env.apiUrl}/v1/candidate/applications/${appId}/interview/speech`, {
+          const res = await fetch(`${env.apiUrl}/v1/candidate/applications/${appId}/interview/speech?question=${question}`, {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           });
           if (!res.ok) throw new Error(`speech ${res.status}`);

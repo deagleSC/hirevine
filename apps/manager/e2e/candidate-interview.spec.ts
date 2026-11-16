@@ -68,9 +68,11 @@ select id from a;`,
     if (reloading && e.message.includes("due to access control checks")) return;
     errors.push(e.message);
   });
-  const spoken: number[] = [];
+  // Question audio fetched, as "question number:status".
+  const spoken: string[] = [];
   page.on("response", (r) => {
-    if (r.url().endsWith("/interview/speech")) spoken.push(r.status());
+    const m = /\/interview\/speech\?question=(\d+)$/.exec(r.url());
+    if (m) spoken.push(`${m[1]}:${r.status()}`);
   });
   await page.goto(`${CANDIDATE_APP}/sign-in?next=${encodeURIComponent(`/applications/${appId}/interview`)}`);
   await page.getByLabel("Email").fill(process.env.E2E_CANDIDATE_EMAIL!);
@@ -83,26 +85,37 @@ select id from a;`,
 
   // Start: the first question streams in.
   await page.getByRole("button", { name: "Start interview" }).click();
-  await expect(page.getByText("Question 1: tell me about a project where you used this skill?")).toBeVisible({ timeout: 20_000 });
+  // A call with the AI: the current question is the caption; everything said is in the transcript panel.
+  const transcript = page.getByRole("complementary", { name: "Transcript" });
+  const call = page.getByRole("region", { name: "Interview call" });
+  await expect(transcript.getByText("Question 1: tell me about a project where you used this skill?")).toBeVisible({ timeout: 20_000 });
   await expect(page.getByText("Question 1 of 3")).toBeVisible();
+  await expect(call.getByText("Question 1: tell me about a project where you used this skill?")).toBeVisible();
+  // The transcript panel collapses and comes back.
+  await page.getByRole("button", { name: "Collapse transcript" }).click();
+  await expect(transcript).toHaveCount(0);
+  await page.getByRole("button", { name: "Show transcript" }).click();
+  await expect(transcript).toBeVisible();
   // The question is read aloud, and there is no box to type an answer into.
-  await expect.poll(() => spoken).toContain(200);
+  await expect.poll(() => spoken).toContain("1:200");
   await expect(page.getByLabel("Your answer")).toHaveCount(0);
   const deadline = sql(`select deadline_at from interview_sessions where application_id = :'app'`, { app: appId });
 
   // Answer, and reload while question 2 is still streaming.
   await speak(page);
-  await expect(page.getByText("I built a FastAPI service with a Postgres ledger.")).toBeVisible();
-  await expect(page.getByText(/^Question 2:/)).toBeVisible();
-  await expect(page.getByText("Question 2: tell me about a project where you used this skill?")).toHaveCount(0);
+  await expect(transcript.getByText("I built a FastAPI service with a Postgres ledger.")).toBeVisible();
+  await expect(call.getByText(/^Question 2:/)).toBeVisible();
+  await expect(call.getByText("Question 2: tell me about a project where you used this skill?")).toHaveCount(0);
   reloading = true;
   await page.reload();
   reloading = false;
 
   // Restored: the saved answer, the counter and the clock; the interrupted question is asked again, once.
-  await expect(page.getByText("I built a FastAPI service with a Postgres ledger.")).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText("Question 2: tell me about a project where you used this skill?")).toBeVisible({ timeout: 20_000 });
+  await expect(transcript.getByText("I built a FastAPI service with a Postgres ledger.")).toBeVisible({ timeout: 30_000 });
+  await expect(transcript.getByText("Question 2: tell me about a project where you used this skill?")).toBeVisible({ timeout: 20_000 });
   await expect(page.getByText("Question 2 of 3")).toBeVisible();
+  // Each question is read aloud from its own URL, so question 2 is never question 1's cached audio.
+  await expect.poll(() => spoken).toContain("2:200");
   await expect(page.getByRole("button", { name: /Record answer/ })).toBeEnabled();
   expect(sql(`select deadline_at from interview_sessions where application_id = :'app'`, { app: appId })).toBe(deadline);
   expect(transcriptLength()).toBe("3"); // Q1, A1, Q2: the interrupted stream stored nothing twice
@@ -110,8 +123,8 @@ select id from a;`,
 
   // Finish the remaining turns; the last answer ends the interview.
   await speak(page);
-  await expect(page.getByText("Pytest against a real database, plus contract tests.")).toBeVisible();
-  await expect(page.getByText("Question 3: tell me about a project where you used this skill?")).toBeVisible({ timeout: 20_000 });
+  await expect(transcript.getByText("Pytest against a real database, plus contract tests.")).toBeVisible();
+  await expect(transcript.getByText("Question 3: tell me about a project where you used this skill?")).toBeVisible({ timeout: 20_000 });
   await speak(page);
   await expect(page.getByText("Thanks. Your responses are being reviewed.")).toBeVisible({ timeout: 20_000 });
   expect(sql(`select turn_count || ' ' || (finished_at is not null) from interview_sessions where application_id = :'app'`, { app: appId }))
