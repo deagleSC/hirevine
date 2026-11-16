@@ -28,6 +28,7 @@ os.environ.setdefault("APP_ENV", "test")
 os.environ["LANGFUSE_PUBLIC_KEY"] = ""
 os.environ["LANGFUSE_SECRET_KEY"] = ""
 os.environ["SENTRY_DSN"] = ""
+os.environ["INTERVIEW_ANSWER_MODE"] = "text"  # tests opt into voice explicitly; a local .env must not flip it
 # Every test request shares the test client's address, so the per-IP limit would trip across the
 # suite; test_retention.py sets its own low limit with a distinct forwarded IP.
 os.environ.setdefault("APPLICATIONS_PER_IP_PER_DAY", "100000")

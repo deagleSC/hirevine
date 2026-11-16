@@ -32,6 +32,8 @@ class InterviewNextInput(BaseModel):
     question_number: int = Field(ge=1)
     turn_cap: int = Field(ge=3, le=10)
     transcript: list[TurnIn]
+    resume_excerpts: list[Annotated[str, StringConstraints(max_length=2000)]] = Field(
+        default_factory=list, max_length=5)
 
 
 class InterviewQuestion(BaseModel):
@@ -55,6 +57,8 @@ def _next_user(data: InterviewNextInput) -> str:
         f"Description:\n{data.description}",
         f"Themes to cover, spread across the interview:\n{themes}",
         "<hiring_team_notes>\n" + (data.prompt_additions.strip() or "(none)") + "\n</hiring_team_notes>",
+        "Relevant excerpts from the candidate's resume (personal details removed):\n"
+        + ("\n\n".join(untrusted(x) for x in data.resume_excerpts) if data.resume_excerpts else "(none)"),
         "Transcript so far:\n" + (_render_transcript(data.transcript) or "(the interview is starting)"),
         f"Write question {data.question_number} of {data.turn_cap}."
         + (" This is the last question." if data.question_number == data.turn_cap else ""),
@@ -65,11 +69,14 @@ def _next_user(data: InterviewNextInput) -> str:
 INTERVIEW_NEXT = register(
     Prompt(
         id="interview_next",
-        version=1,
+        version=2,
         system=(
             "You are an AI interviewer screening candidates for a hiring team, and the candidate has been told "
             "you are an AI. Ask exactly one clear, open question per turn about the candidate's job-relevant "
             "experience and skills, following the listed themes and building on earlier answers where useful. "
+            "When resume excerpts are given, ground questions in the specific projects, tools and outcomes they "
+            "mention (for example, ask how they built or decided something there) instead of asking generically, "
+            "and prefer parts of the resume not yet discussed. Never claim the resume says something it does not. "
             "Keep each question under 60 words. Do not give feedback, scores, hints or the answer, do not "
             "summarise the candidate's reply, and do not greet or sign off beyond a brief first-turn hello. "
             f"Never ask about or comment on {PROTECTED}; if the candidate raises such a topic, do not pursue "
