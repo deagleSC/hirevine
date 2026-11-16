@@ -368,52 +368,44 @@ function CallControl({
   disabled,
   tone = "default",
   pressed,
-  large,
   children,
 }: {
   label: string;
   onClick?: () => void;
   disabled?: boolean;
-  tone?: "default" | "primary" | "danger" | "recording";
+  tone?: "default" | "danger";
   pressed?: boolean;
-  large?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center gap-1.5">
-      <button
-        type="button"
-        onClick={onClick}
-        disabled={disabled}
-        aria-label={label}
-        aria-pressed={pressed}
-        className={cn(
-          "flex items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 disabled:cursor-not-allowed disabled:opacity-40 [&_svg]:size-5",
-          large ? "size-16 [&_svg]:size-6" : "size-12",
-          tone === "default" && "bg-white/10 text-white hover:bg-white/20",
-          tone === "primary" && "bg-primary text-primary-foreground hover:bg-primary/90",
-          tone === "danger" && "bg-red-600 text-white hover:bg-red-500",
-          tone === "recording" && "bg-red-600 text-white ring-4 ring-red-600/30 hover:bg-red-500",
-        )}
-      >
-        {children}
-      </button>
-      <span aria-hidden className="max-w-24 text-center text-[11px] leading-tight text-neutral-400">
-        {label}
-      </span>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      aria-pressed={pressed}
+      title={label}
+      className={cn(
+        "flex size-11 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 disabled:cursor-not-allowed disabled:opacity-40 [&_svg]:size-[18px]",
+        tone === "default" && "bg-white/[0.08] text-neutral-200 hover:bg-white/15",
+        tone === "default" && pressed && "bg-white/15 text-white",
+        tone === "danger" && "bg-red-500/15 text-red-400 hover:bg-red-500 hover:text-white",
+      )}
+    >
+      {children}
+    </button>
   );
 }
 
-/** The microphone's loudness as five bars. */
+/** The microphone's loudness as a row of bars. */
 function LevelBars({ level, active }: { level: number; active: boolean }) {
   return (
-    <span className="flex h-4 items-end gap-0.5" aria-hidden>
-      {[0.2, 0.45, 0.7, 0.45, 0.2].map((w, i) => (
+    <span className="flex h-3.5 items-center gap-[3px]" aria-hidden>
+      {[0.25, 0.5, 0.8, 0.5, 0.25].map((w, i) => (
         <span
           key={i}
-          className={cn("w-1 rounded-full transition-[height] duration-100", active ? "bg-emerald-400" : "bg-neutral-600")}
-          style={{ height: `${Math.max(18, Math.min(100, (active ? level / w : 0) * 100))}%` }}
+          className={cn("w-[3px] rounded-full transition-[height] duration-100", active ? "bg-emerald-400" : "bg-white/20")}
+          style={{ height: `${Math.max(25, Math.min(100, (active ? level / w : 0) * 100))}%` }}
         />
       ))}
     </span>
@@ -423,7 +415,7 @@ function LevelBars({ level, active }: { level: number; active: boolean }) {
 /**
  * The voice interview as a call with the AI interviewer: a stage with the interviewer (rings while
  * it speaks), the current question as a caption, the candidate's own tile with a microphone meter,
- * and call controls. The transcript sits in a collapsible panel on the right (below on small screens).
+ * and a call control bar. The transcript sits in a collapsible panel on the right (below on small screens).
  */
 export function InterviewCall({
   transcript,
@@ -481,76 +473,94 @@ export function InterviewCall({
             : canAnswer
               ? "Press Record when you are ready. You get one take per question."
               : "Waiting for the next question…";
+  const lowTime = !paused && remaining < 60_000;
 
   return (
-    <div className={cn("grid gap-4", showTranscript && "lg:grid-cols-[minmax(0,1fr)_20rem]")}>
+    <div className={cn("grid gap-4 lg:h-[min(46rem,calc(100dvh-11rem))]", showTranscript && "lg:grid-cols-[minmax(0,1fr)_22rem]")}>
       <section
         aria-label="Interview call"
-        className="flex min-h-[32rem] flex-col overflow-hidden rounded-2xl bg-neutral-950 text-neutral-50 shadow-sm"
+        className="relative flex min-h-[34rem] flex-col overflow-hidden rounded-2xl border border-white/10 bg-neutral-950 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.14),transparent_60%)] text-neutral-50 shadow-xl lg:min-h-0"
       >
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
-          <div className="flex items-center gap-3 text-sm">
-            <span className="flex items-center gap-1.5 rounded-full bg-red-600/90 px-2 py-0.5 text-xs font-medium">
-              <span className="size-1.5 rounded-full bg-white" aria-hidden />
+        <header className="flex items-center justify-between gap-3 px-4 pt-4">
+          <div className="flex items-center gap-2 rounded-full bg-black/40 py-1 pl-1 pr-3 text-xs ring-1 ring-white/10 backdrop-blur">
+            <span className="flex items-center gap-1.5 rounded-full bg-red-500/15 px-2 py-0.5 font-semibold uppercase tracking-wide text-red-400">
+              <span className="relative flex size-1.5" aria-hidden>
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-red-400 opacity-75" />
+                <span className="relative inline-flex size-1.5 rounded-full bg-red-500" />
+              </span>
               Live
             </span>
-            <span className="font-medium">
+            <span className="font-medium text-neutral-200">
               Question {current} of {turnCap}
             </span>
           </div>
-          <Clockface paused={paused} remaining={remaining} className={cn("text-base", paused ? "text-neutral-300" : "text-neutral-100", !paused && remaining < 60_000 && "text-red-400")} />
+          <div className={cn("rounded-full bg-black/40 px-3 py-1 ring-1 ring-white/10 backdrop-blur", lowTime && "ring-red-500/40")}>
+            <Clockface paused={paused} remaining={remaining} className={cn("text-sm", paused ? "text-neutral-300" : "text-neutral-100", lowTime && "text-red-400")} />
+          </div>
         </header>
 
-        <div className="relative flex flex-1 flex-col items-center justify-center gap-6 px-6 pb-8 pt-24 sm:py-10">
-          <div className="relative flex size-36 items-center justify-center">
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-5 px-6 py-6">
+          <div className="relative flex size-32 items-center justify-center">
             {speaking ? (
               <>
-                <span className="absolute inset-0 animate-ping rounded-full bg-primary/25 [animation-duration:1.6s]" aria-hidden />
-                <span className="absolute -inset-3 animate-pulse rounded-full border-2 border-primary/40" aria-hidden />
+                <span className="absolute inset-2 animate-ping rounded-full bg-primary/20 [animation-duration:1.8s]" aria-hidden />
+                <span className="absolute inset-0 animate-pulse rounded-full ring-2 ring-primary/40" aria-hidden />
               </>
             ) : null}
             <span
               className={cn(
-                "relative flex size-28 items-center justify-center rounded-full bg-gradient-to-br from-primary/80 to-primary/40 ring-4 transition-all",
-                speaking ? "ring-primary/60" : "ring-white/10",
+                "relative flex size-24 items-center justify-center rounded-full bg-gradient-to-b from-primary to-primary/60 shadow-lg shadow-primary/20 ring-1 transition-all",
+                speaking ? "ring-primary/70" : "ring-white/15",
               )}
             >
-              <Bot className="size-12 text-white" aria-hidden />
+              <Bot className="size-10 text-white" aria-hidden />
             </span>
           </div>
-          <div className="text-center">
-            <p className="text-sm font-medium">AI interviewer</p>
-            <p className="text-xs text-neutral-400" aria-live="polite">
+          <div className="flex flex-col items-center gap-1.5">
+            <p className="text-sm font-semibold">AI interviewer</p>
+            <p
+              className={cn(
+                "flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium",
+                speaking || streaming !== null ? "bg-primary/15 text-primary" : "bg-white/[0.06] text-neutral-400",
+              )}
+              aria-live="polite"
+            >
+              <span className={cn("size-1.5 rounded-full", speaking || streaming !== null ? "bg-primary" : awaiting === "answer" && !busy ? "bg-emerald-400" : "bg-neutral-500")} aria-hidden />
               {aiState}
             </p>
           </div>
 
-          <div className="min-h-20 w-full max-w-2xl text-center" aria-live="polite" aria-busy={streaming !== null}>
+          <div className="flex min-h-24 w-full max-w-2xl items-start justify-center overflow-y-auto text-center" aria-live="polite" aria-busy={streaming !== null}>
             {caption ? (
-              <p className="text-balance text-lg leading-relaxed text-neutral-100 sm:text-xl">{caption}</p>
+              <p className="text-balance text-base leading-relaxed text-neutral-100 sm:text-lg">{caption}</p>
             ) : transcribing || busy ? (
-              <Loader2 className="mx-auto size-5 animate-spin text-neutral-400" aria-label="Preparing the next question" />
+              <Loader2 className="mt-4 size-5 animate-spin text-neutral-500" aria-label="Preparing the next question" />
             ) : null}
-          </div>
-
-          <div className="absolute right-3 top-3 flex w-32 flex-col gap-2 rounded-xl border border-white/10 bg-neutral-900/90 p-2.5 shadow-lg sm:w-40 sm:p-3">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-xs font-medium">
-                <span className="flex size-6 items-center justify-center rounded-full bg-white/10">
-                  <User className="size-3.5" aria-hidden />
-                </span>
-                You
-              </span>
-              {mic.recording ? <MicIcon className="size-3.5 text-emerald-400" aria-hidden /> : <MicOff className="size-3.5 text-neutral-500" aria-hidden />}
-            </div>
-            <LevelBars level={mic.level} active={mic.recording} />
           </div>
         </div>
 
-        <div className="grid gap-3 border-t border-white/10 px-4 pb-4 pt-3">
-          <p className={cn("flex min-h-5 items-center justify-center gap-2 text-center text-sm", mic.recording ? "font-medium text-white" : "text-neutral-400")} aria-live="polite">
-            {mic.recording ? <span className="size-2.5 animate-pulse rounded-full bg-red-500" aria-hidden /> : null}
-            {transcribing || mic.starting ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+        <div
+          className={cn(
+            "absolute right-4 top-16 hidden w-40 flex-col gap-3 rounded-xl bg-neutral-900/90 p-3 ring-1 backdrop-blur transition-shadow sm:flex",
+            mic.recording ? "ring-emerald-400/60 shadow-[0_0_0_4px_rgba(52,211,153,0.12)]" : "ring-white/10",
+          )}
+        >
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-2 text-xs font-medium">
+              <span className="flex size-7 items-center justify-center rounded-full bg-white/10">
+                <User className="size-3.5" aria-hidden />
+              </span>
+              You
+            </span>
+            {mic.recording ? <MicIcon className="size-3.5 text-emerald-400" aria-hidden /> : <MicOff className="size-3.5 text-neutral-500" aria-hidden />}
+          </div>
+          <LevelBars level={mic.level} active={mic.recording} />
+        </div>
+
+        <div className="grid gap-3 px-4 pb-4">
+          <p className={cn("flex min-h-5 items-center justify-center gap-2 text-center text-xs", mic.recording ? "font-medium text-white" : "text-neutral-400")} aria-live="polite">
+            {mic.recording ? <span className="size-2 animate-pulse rounded-full bg-red-500" aria-hidden /> : null}
+            {transcribing || mic.starting ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : null}
             {status}
           </p>
           {mic.recording && left <= 15 ? <p className="text-center text-xs text-red-400">{left}s left for this answer</p> : null}
@@ -560,7 +570,7 @@ export function InterviewCall({
             </Alert>
           ) : null}
           <ErrorBanner error={error} busy={busy} onRetry={onRetry} />
-          <div className="flex flex-wrap items-start justify-center gap-5">
+          <div className="mx-auto flex items-center gap-2 rounded-full bg-black/50 p-1.5 ring-1 ring-white/10 backdrop-blur">
             {onReplay ? (
               <CallControl
                 label={speaking ? "Stop audio" : "Replay question"}
@@ -571,13 +581,24 @@ export function InterviewCall({
               </CallControl>
             ) : null}
             {mic.recording ? (
-              <CallControl label="Stop and send" onClick={mic.stop} tone="recording" large>
-                <Square />
-              </CallControl>
+              <button
+                type="button"
+                onClick={mic.stop}
+                className="flex h-11 items-center gap-2 rounded-full bg-red-500 px-5 text-sm font-medium text-white transition-colors hover:bg-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+              >
+                <Square className="size-3.5 fill-current" aria-hidden />
+                Stop and send
+              </button>
             ) : (
-              <CallControl label="Record answer" onClick={() => void mic.start()} disabled={!canAnswer || mic.starting} tone="primary" large>
-                {mic.starting || busy ? <Loader2 className="animate-spin" /> : <MicIcon />}
-              </CallControl>
+              <button
+                type="button"
+                onClick={() => void mic.start()}
+                disabled={!canAnswer || mic.starting}
+                className="flex h-11 items-center gap-2 rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {mic.starting || busy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <MicIcon className="size-4" aria-hidden />}
+                Record answer
+              </button>
             )}
             <CallControl
               label={showTranscript ? "Hide transcript" : "Show transcript"}
@@ -586,6 +607,7 @@ export function InterviewCall({
             >
               <MessageSquareText />
             </CallControl>
+            <span className="mx-1 h-6 w-px bg-white/10" aria-hidden />
             <CallControl label="Finish interview" onClick={onFinish} disabled={busy || mic.recording} tone="danger">
               <PhoneOff />
             </CallControl>
@@ -594,25 +616,47 @@ export function InterviewCall({
       </section>
 
       {showTranscript ? (
-        <aside aria-label="Transcript" className="flex max-h-[40rem] min-h-0 flex-col rounded-2xl border bg-card lg:max-h-none">
+        <aside aria-label="Transcript" className="flex max-h-[32rem] min-h-0 flex-col overflow-hidden rounded-2xl border bg-card shadow-sm lg:max-h-none">
           <div className="flex items-center justify-between border-b px-4 py-3">
-            <h2 className="text-sm font-medium">Transcript</h2>
-            <Button size="icon" variant="ghost" className="size-7" onClick={() => setShowTranscript(false)} aria-label="Collapse transcript">
+            <div className="flex items-baseline gap-2">
+              <h2 className="text-sm font-semibold">Transcript</h2>
+              <span className="text-xs text-muted-foreground">Live</span>
+            </div>
+            <Button size="icon" variant="ghost" className="size-7 text-muted-foreground" onClick={() => setShowTranscript(false)} aria-label="Collapse transcript">
               <PanelRightClose />
             </Button>
           </div>
-          <ol className="flex flex-1 flex-col gap-3 overflow-y-auto p-4 text-sm" aria-label="Interview transcript">
+          <ol className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 text-sm" aria-label="Interview transcript">
             {transcript.length === 0 ? <li className="text-muted-foreground">The transcript appears here as you talk.</li> : null}
-            {transcript.map((e, i) => (
-              <li key={i} className="grid gap-0.5">
-                <span className="text-xs font-medium text-muted-foreground">{e.role === "interviewer" ? "AI interviewer" : "You"}</span>
-                <span className={cn("whitespace-pre-wrap", e.role === "candidate" && "text-foreground", e.role === "interviewer" && "text-foreground/85")}>
-                  {e.content}
-                </span>
-              </li>
-            ))}
+            {transcript.map((e, i) => {
+              const ai = e.role === "interviewer";
+              return (
+                <li key={i} className="flex gap-2.5">
+                  <span
+                    className={cn(
+                      "mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full",
+                      ai ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
+                    )}
+                    aria-hidden
+                  >
+                    {ai ? <Bot className="size-3.5" /> : <User className="size-3.5" />}
+                  </span>
+                  <div className="grid min-w-0 gap-1">
+                    <span className="text-xs font-medium text-muted-foreground">{ai ? "AI interviewer" : "You"}</span>
+                    <span
+                      className={cn(
+                        "whitespace-pre-wrap leading-relaxed",
+                        ai ? "text-foreground/90" : "rounded-lg rounded-tl-sm bg-muted/60 px-3 py-2 text-foreground",
+                      )}
+                    >
+                      {e.content}
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
             {transcribing ? (
-              <li className="flex items-center gap-2 text-muted-foreground">
+              <li className="flex items-center gap-2 pl-8 text-xs text-muted-foreground">
                 <Loader2 className="size-3.5 animate-spin" aria-hidden /> Transcribing…
               </li>
             ) : null}
