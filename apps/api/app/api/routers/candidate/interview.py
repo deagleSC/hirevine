@@ -102,11 +102,14 @@ async def turn_voice(application_id: UUID, request: Request, principal: Principa
 
 @router.get("/speech", response_class=Response,
             responses={200: {"content": {"audio/mpeg": {"schema": {"type": "string", "format": "binary"}}}}})
-async def question_speech(application_id: UUID, principal: PrincipalDep) -> Response:
-    """The open question read aloud (MP3)."""
+async def question_speech(
+    application_id: UUID, principal: PrincipalDep,
+    question: int = Query(ge=1, description="The open question's number (InterviewState.questions_asked)"),
+) -> Response:
+    """The open question read aloud. Each question has its own URL, so the audio can be cached."""
     async with user_tx(principal) as (tx, user):
         require_role(user, "candidate")
-        text = await svc.current_question(tx, user, application_id)
+        text = await svc.current_question(tx, user, application_id, question)
     audio, media_type = await speech.synthesize(text)
     return Response(audio, media_type=media_type, headers={"Cache-Control": "private, max-age=3600"})
 

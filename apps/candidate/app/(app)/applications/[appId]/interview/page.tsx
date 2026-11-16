@@ -21,12 +21,13 @@ export default function InterviewPage({ params }: { params: Promise<{ appId: str
   const turn = useInterviewTurn(appId);
   const voice = useQuestionAudio(appId);
   const asked = useRef(false);
-  const spoken = useRef<string | null>(null);
+  const spoken = useRef<number | null>(null);
 
   const s = interview.data;
   const voiceMode = s?.answer_mode === "voice";
+  // The open question's number (1-based), once it has fully arrived.
   const openQuestion =
-    s?.status === "in_progress" && s.awaiting === "answer" && !turn.busy ? s.transcript?.at(-1)?.content ?? null : null;
+    s?.status === "in_progress" && s.awaiting === "answer" && !turn.busy ? s.questions_asked ?? null : null;
   // Read each new question aloud once; the candidate can replay it.
   useEffect(() => {
     if (voiceMode && openQuestion && spoken.current !== openQuestion) {
@@ -143,7 +144,7 @@ export default function InterviewPage({ params }: { params: Promise<{ appId: str
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl">
+    <div className={voiceMode ? "mx-auto w-full max-w-6xl" : "mx-auto w-full max-w-3xl"}>
       <PageHeader
         title="AI interview"
         description={

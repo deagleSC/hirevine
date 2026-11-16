@@ -346,9 +346,12 @@ async def test_voice_answers_are_transcribed_saved_and_typed_answers_refused(
     assert events[-1]["state"]["answer_mode"] == "voice"
 
     # The open question is read aloud.
-    r = await client.get(f"{base(app_id)}/speech", headers=h)
+    r = await client.get(f"{base(app_id)}/speech?question=1", headers=h)
     assert r.status_code == 200 and r.headers["content-type"] == "audio/mpeg"
     assert r.content == b"ID3Tell me about an API you designed."
+    # The URL names the question, so a cached response can never be an earlier question's audio.
+    r = await client.get(f"{base(app_id)}/speech?question=2", headers=h)
+    assert r.status_code == 409 and r.json()["error"]["code"] == "stale_turn"
 
     # Typed answers are refused in voice mode, as are unsupported formats and silence.
     _, [err] = await turn(client, app_id, h, 0, "Pasted answer")
@@ -368,11 +371,13 @@ async def test_voice_answers_are_transcribed_saved_and_typed_answers_refused(
     assert "".join(e["text"] for e in events if e["type"] == "token") == "How did you test it?"
     state = events[-1]["state"]
     assert state["answers_given"] == 1 and state["transcript"][1]["content"] == "I built a ledger API."
+    r = await client.get(f"{base(app_id)}/speech?question=2", headers=h)
+    assert r.status_code == 200 and r.content == b"ID3How did you test it?"
     assert heard[-1] == (5000, "audio/webm;codecs=opus")
 
     # No open question while the next one is still due: nothing to read.
     with admin(migrated_db) as conn:
         conn.execute("update interview_sessions set transcript = transcript - (-1) where application_id = %s",
                      (app_id,))
-    r = await client.get(f"{base(app_id)}/speech", headers=h)
+    r = await client.get(f"{base(app_id)}/speech?question=2", headers=h)
     assert r.status_code == 409 and r.json()["error"]["code"] == "no_open_question"
