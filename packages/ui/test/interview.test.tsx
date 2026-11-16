@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { InterviewChat, InterviewScores, TranscriptView, type InterviewChatProps } from "../src/blocks/interview";
@@ -118,6 +118,26 @@ describe("InterviewChat voice answers", () => {
     const blob = onSendAudio.mock.calls[0]![0] as Blob;
     expect(blob.type).toBe("audio/webm");
     expect(trackStop).toHaveBeenCalled();
+  });
+
+  it("is a call: the question is the caption, the transcript panel collapses, and the AI's state shows", async () => {
+    const { props, rerender } = chat({ answerMode: "voice", onSendAudio: vi.fn(), speaking: true, onReplay: vi.fn() });
+    const call = screen.getByRole("region", { name: "Interview call" });
+    expect(within(call).getByText("How did you test it?")).toBeInTheDocument();
+    expect(within(call).getByText("Speaking…")).toBeInTheDocument();
+    const panel = screen.getByRole("complementary", { name: "Transcript" });
+    expect(within(panel).getByText("A FastAPI ledger.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Collapse transcript" }));
+    expect(screen.queryByRole("complementary", { name: "Transcript" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show transcript" }));
+    expect(screen.getByRole("complementary", { name: "Transcript" })).toBeInTheDocument();
+
+    // While the next question streams, it is the caption and is not yet in the transcript.
+    rerender(<InterviewChat {...props} answerMode="voice" speaking={false} busy awaiting="question" streaming="What would you" />);
+    expect(within(call).getByText("What would you")).toBeInTheDocument();
+    expect(within(screen.getByRole("complementary", { name: "Transcript" })).queryByText("What would you")).not.toBeInTheDocument();
+    expect(within(call).getByText("Asking…")).toBeInTheDocument();
   });
 
   it("explains a blocked microphone and shows transcription progress", async () => {
