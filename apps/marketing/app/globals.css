@@ -1,0 +1,8 @@
+@import "@hirevine/ui/globals.css";
+@source "../app";
+@source "../components";
+@source "../lib";
+
+html {
+  scroll-behavior: smooth;
+}

@@ -64,6 +64,7 @@ apps/candidate┘   (FastAPI, the only    ├─ Supabase Edge Function `embed` 
 | --- | --- |
 | `apps/manager` | Next.js app for hiring managers (port 3000) |
 | `apps/candidate` | Next.js app for candidates (port 3001) |
+| `apps/marketing` | Marketing site at hirevine.vercel.app: landing page, candidates, responsible AI, about, legal (port 3002) |
 | `apps/api` | FastAPI service: the only gateway to the database and the only caller of models (port 8000) |
 | `packages/ui` | Design tokens, layout primitives and shared components (chat, quiz runner, interview call, evidence, charts) |
 | `packages/api-client` | Typed client generated from the API's OpenAPI document |
@@ -186,7 +187,9 @@ After changing API routes, regenerate the typed client: `pnpm gen:api`.
 
 ## Deployment
 
-Three Vercel projects (`hirevine-api`, `hirevine-manager`, `hirevine-candidate`) deploy from `main`.
+Vercel projects `hirevine-api`, `hirevine-manager` and `hirevine-candidate` deploy from `main`; the
+marketing site is the `hirevine` project (root directory `apps/marketing`, served at
+hirevine.vercel.app; set `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_MANAGER_URL`, `NEXT_PUBLIC_CANDIDATE_URL`).
 After each production API deploy, the `inngest-sync` workflow re-registers the background functions
 with Inngest. Database changes are SQL migrations applied with `npx supabase db push --linked`.
 
