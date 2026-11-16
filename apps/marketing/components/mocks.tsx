@@ -186,3 +186,31 @@ export function PipelineMock() {
     </ol>
   );
 }
+
+/** A quiz question generated for the role, with the timer. */
+export function QuizMock() {
+  const options = ["useMemo", "useEffect", "useRef", "useState"];
+  return (
+    <div aria-hidden className="grid gap-3 text-xs">
+      <div className="flex items-center justify-between text-muted-foreground">
+        <span>Question 2 of 8</span>
+        <span className="font-mono tabular-nums text-foreground">07:42</span>
+      </div>
+      <p className="text-sm font-medium">Which hook memoises an expensive calculation between renders?</p>
+      <div className="grid grid-cols-2 gap-2">
+        {options.map((o, i) => (
+          <span
+            key={o}
+            className={cn(
+              "flex items-center gap-2 rounded-lg border bg-background px-3 py-2 font-mono",
+              i === 0 && "border-primary bg-primary/5",
+            )}
+          >
+            <span className={cn("size-3 rounded-full border", i === 0 && "border-4 border-primary")} />
+            {o}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}

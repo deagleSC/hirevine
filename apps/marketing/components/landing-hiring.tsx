@@ -5,7 +5,7 @@ import Link from "next/link";
 
 import { Faq, faqSchema, type FaqItem } from "@/components/faq";
 import { HowItWorks, type Step } from "@/components/how-it-works";
-import { AnalyticsMock, EvidenceMock, InjectionMock, InterviewMock, PipelineMock, RedactionMock, ReleaseMock } from "@/components/mocks";
+import { EvidenceMock, InjectionMock, InterviewMock, PipelineMock, QuizMock, RedactionMock, ReleaseMock } from "@/components/mocks";
 import { CountUp, Reveal } from "@/components/reveal";
 import { Screenshot } from "@/components/section";
 import { StructuredData } from "@/components/structured-data";
@@ -227,9 +227,9 @@ export function HiringLanding({ toggle }: { toggle: React.ReactNode }) {
               <InjectionMock />
             </Reveal>
             <Reveal delay={160} className={`${BENTO_CARD} md:col-span-2`}>
-              <h3 className="mb-2 text-xl font-semibold tracking-tight">Know where the cutoff bites</h3>
-              <p className="mb-6 text-sm text-muted-foreground">Score spread, funnel drop-off and what a new cutoff would change.</p>
-              <AnalyticsMock />
+              <h3 className="mb-2 text-xl font-semibold tracking-tight">A quiz written for the role</h3>
+              <p className="mb-6 text-sm text-muted-foreground">Timed multiple choice, generated from your criteria and graded against the key.</p>
+              <QuizMock />
             </Reveal>
             <Reveal className={`${BENTO_CARD} md:col-span-3`}>
               <h3 className="mb-2 text-xl font-semibold tracking-tight">A pipeline per role</h3>
@@ -272,37 +272,27 @@ export function HiringLanding({ toggle }: { toggle: React.ReactNode }) {
         </div>
       </section>
 
-      {/* Candidates */}
+      {/* Analytics */}
       <section className="py-20 sm:py-28">
-        <div className={`${CONTAINER} grid items-center gap-12 lg:grid-cols-2 lg:gap-20`}>
+        <div className={`${CONTAINER} grid items-center gap-12 lg:grid-cols-[1.25fr_1fr] lg:gap-20`}>
           <Reveal>
-            <Screenshot src="/screens/journey-feedback.png" alt="A candidate's released feedback" />
+            <Screenshot src="/screens/analytics-campaign.png" alt="Campaign analytics: funnel, cutoff impact, score distribution and time per stage" />
           </Reveal>
           <Reveal delay={100} className="grid gap-5">
-            <p className="text-sm font-semibold text-primary">For candidates</p>
-            <h2 className="text-4xl font-bold tracking-tight text-balance">No more applying into silence.</h2>
+            <p className="text-sm font-semibold text-primary">Analytics</p>
+            <h2 className="text-4xl font-bold tracking-tight text-balance">See the whole funnel before you change it.</h2>
             <p className="text-lg text-muted-foreground">
-              Candidates follow every step in one place, take the quiz and interview when it suits them, and get feedback that
-              points to what made the difference.
+              Per-campaign funnels, score distributions against the pass mark, time per stage, and what a different cutoff would
+              do. Across every job: volume, time to shortlist, and how often your team agrees with the AI.
             </p>
             <ul className="grid gap-2.5">
-              {["Told up front when the interviewer is an AI", "Feedback written for them, with reasons", "Download or delete their data any time"].map((t) => (
+              {["Cutoff impact before you move it", "Drop-off at every stage", "AI agreement and unedited-draft rates", "A table view behind every chart"].map((t) => (
                 <li key={t} className="flex items-center gap-3">
                   <Check className="size-5 shrink-0 rounded-full bg-primary/10 p-1 text-primary" aria-hidden />
                   {t}
                 </li>
               ))}
             </ul>
-            <div className="flex flex-wrap gap-3 pt-2">
-              <Button asChild variant="outline">
-                <Link href="/?for=jobseekers">The jobseeker experience</Link>
-              </Button>
-              <Button asChild variant="ghost">
-                <a href={LINKS.browseJobs}>
-                  Browse open roles <ArrowRight />
-                </a>
-              </Button>
-            </div>
           </Reveal>
         </div>
       </section>
@@ -387,7 +377,7 @@ export function HiringLanding({ toggle }: { toggle: React.ReactNode }) {
               </a>
             </Button>
             <Button asChild size="lg" variant="ghost" className="h-12 px-6 text-base text-neutral-100 hover:bg-white/10 hover:text-white">
-              <a href={LINKS.browseJobs}>Browse open roles</a>
+              <Link href="/responsible-ai">How we keep it fair</Link>
             </Button>
           </div>
         </Reveal>
