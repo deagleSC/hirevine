@@ -381,3 +381,52 @@ async def test_voice_answers_are_transcribed_saved_and_typed_answers_refused(
                      (app_id,))
     r = await client.get(f"{base(app_id)}/speech?question=2", headers=h)
     assert r.status_code == 409 and r.json()["error"]["code"] == "no_open_question"
+
+
+async def test_questions_are_grounded_in_retrieved_resume_excerpts(
+        client, migrated_db, storage, inngest, llm, stream):  # noqa: F811
+    """RAG: screening stored resume-chunk vectors; each question prompt gets the closest redacted excerpts."""
+    from app.services import retrieval
+
+    job, cand, app_id = await at_interview(client, migrated_db, storage, llm)
+    h = auth(cand)
+    await client.post(f"{base(app_id)}/start", headers=h)
+    stream.on("Tell me about an API you designed.", "How did you test it?")
+    await turn(client, app_id, h, 0)
+    first = stream.calls[0].resume_excerpts
+    assert first and all(x.strip() for x in first)
+    # Excerpts are redacted resume text, never the candidate's email.
+    assert not any("@" in x for x in first)
+
+    with admin(migrated_db) as conn:
+        lines = conn.execute("select redacted_lines from resume_texts where application_id = %s",
+                             (app_id,)).fetchone()["redacted_lines"]
+    assert all(x in "\n".join(lines) for x in first)
+    excerpts = await retrieval.resume_excerpts(
+        app_id, "Built a FastAPI payments API. Designed PostgreSQL schemas and tuned slow queries.")
+    assert excerpts and excerpts == sorted(excerpts, key=lambda e: -e.similarity)
+
+    # No vectors (e.g. the embed step never ran): the interview carries on without excerpts.
+    with admin(migrated_db) as conn:
+        conn.execute("delete from embeddings where parent_id = %s", (app_id,))
+    await turn(client, app_id, h, 0, "I designed a REST API in FastAPI.")
+    assert stream.calls[-1].resume_excerpts == []
+
+
+async def test_retrieval_failure_does_not_break_the_interview(
+        client, migrated_db, storage, inngest, llm, stream, monkeypatch):  # noqa: F811
+    from app.services import retrieval
+
+    class Broken:
+        model = "hash-384"
+
+        async def embed(self, texts):
+            raise RuntimeError("embed down")
+
+    job, cand, app_id = await at_interview(client, migrated_db, storage, llm)
+    monkeypatch.setattr(retrieval, "get_embedder", lambda: Broken())
+    h = auth(cand)
+    await client.post(f"{base(app_id)}/start", headers=h)
+    stream.on("Tell me about an API you designed.")
+    text, _ = await turn(client, app_id, h, 0)
+    assert text == "Tell me about an API you designed." and stream.calls[0].resume_excerpts == []

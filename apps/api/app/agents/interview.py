@@ -25,12 +25,14 @@ def _turns(transcript: list[interview.Entry]) -> list[TurnIn]:
 
 
 def next_question(*, title: str, seniority: str | None, description: str, config: InterviewConfig,
-                  transcript: list[interview.Entry], deadline: float) -> AsyncIterator[str]:
+                  transcript: list[interview.Entry], deadline: float,
+                  resume_excerpts: list[str] | None = None) -> AsyncIterator[str]:
     """Stream the next question's text. The caller stores `interview.clean_question(full text)`."""
     inp = InterviewNextInput(
         title=title, seniority=seniority, description=description[:4000], themes=config.themes[:10],
         prompt_additions=config.prompt_additions, question_number=interview.questions_asked(transcript) + 1,
         turn_cap=config.turn_cap, transcript=_turns(transcript)[-20:],
+        resume_excerpts=(resume_excerpts or [])[:5],
     )
     stream: AsyncIterator[str] = common.stream_text("structured", "interview_next", inp, deadline=deadline)
     return stream

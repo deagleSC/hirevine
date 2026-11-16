@@ -37,6 +37,7 @@ from app.jobs.runs import JobRefs
 from app.llm import tracing
 from app.llm.errors import BudgetExhausted, LLMNotConfigured, NeedsReview, RateLimited, TimeBudgetExceeded
 from app.llm.wrapper import deadline_in
+from app.services import retrieval
 
 log = logging.getLogger("hirevine.interview")
 
@@ -321,9 +322,14 @@ async def stream_turn(plan: TurnPlan) -> AsyncIterator[dict[str, Any]]:
                               tags=["interview"], metadata={"application_id": plan.application_id})
         span = trace.__enter__()
         try:
+            excerpts = await retrieval.resume_excerpts(plan.application_id, retrieval.build_query(
+                title=plan.title, themes=plan.node.config.themes, last_answer=last))
+            span.update(metadata={"application_id": plan.application_id, "retrieval": [
+                {"chunk": e.chunk_index, "similarity": e.similarity} for e in excerpts]})
             async for chunk in agent.next_question(
                 title=plan.title, seniority=plan.seniority, description=plan.description,
                 config=plan.node.config, transcript=list(plan.transcript), deadline=deadline_in(QUESTION_SECONDS),
+                resume_excerpts=[e.text for e in excerpts],
             ):
                 parts.append(chunk)
                 yield {"type": "token", "text": chunk}
