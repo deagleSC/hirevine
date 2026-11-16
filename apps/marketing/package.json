@@ -1,0 +1,30 @@
+{
+  "name": "@hirevine/marketing",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3002",
+    "build": "next build",
+    "start": "next start -p 3002",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@hirevine/ui": "workspace:^",
+    "next": "15",
+    "react": "19",
+    "react-dom": "19",
+    "lucide-react": "^0.545.0",
+    "next-themes": "^0.4.6",
+    "sonner": "^2.0.7"
+  },
+  "devDependencies": {
+    "@hirevine/config": "workspace:^",
+    "@types/node": "22",
+    "@types/react": "19",
+    "@types/react-dom": "19",
+    "eslint": "9",
+    "typescript": "5",
+    "@tailwindcss/postcss": "^4",
+    "tailwindcss": "^4"
+  }
+}
