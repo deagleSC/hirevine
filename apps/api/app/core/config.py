@@ -48,7 +48,7 @@ class Settings(BaseSettings):
 
     # Consent (§18): the version of the consent text the candidate app shows. Applications must
     # quote this exact version; bump it whenever the text or the provider list changes.
-    consent_text_version: str = "2026-11-10"
+    consent_text_version: str = "2026-11-16"
     consent_providers: list[str] = Field(
         default_factory=lambda: ["Supabase", "OpenRouter", "Inngest", "Langfuse", "Vercel"]
     )
@@ -82,6 +82,15 @@ class Settings(BaseSettings):
     llm_sync_rpm_cap: int = 10
     llm_request_timeout_s: float = 60.0
 
+    # Voice interview (backend plan §15), through OpenRouter's audio endpoints with the same key:
+    # answers are transcribed (audio is never stored) and each question is read aloud. Voice in
+    # production; dev/test default to typed answers so they run end to end without a key.
+    interview_answer_mode: Literal["voice", "text"] | None = None
+    stt_model: str = "openai/whisper-large-v3-turbo"
+    tts_model: str = "elevenlabs/eleven-flash-v2.5"  # returns mp3 (Gemini TTS is pcm only)
+    tts_voice: str = "sarah"
+    max_answer_audio_bytes: int = 10 * 1024 * 1024
+
     # Tracing. Off unless both keys are set.
     langfuse_public_key: str = ""
     langfuse_secret_key: str = ""
@@ -106,6 +115,11 @@ class Settings(BaseSettings):
     @property
     def is_dev(self) -> bool:
         return self.app_env in ("dev", "test")
+
+    @property
+    def answer_mode(self) -> Literal["voice", "text"]:
+        """Voice everywhere real; typed answers in dev/test unless INTERVIEW_ANSWER_MODE=voice."""
+        return self.interview_answer_mode or ("text" if self.is_dev else "voice")
 
     @property
     def jwks_url(self) -> str:

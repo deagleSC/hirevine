@@ -7,11 +7,11 @@ import { ErrorState, PageSkeleton } from "@hirevine/ui/blocks/states";
 import { Alert, AlertDescription, AlertTitle } from "@hirevine/ui/components/alert";
 import { Button } from "@hirevine/ui/components/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@hirevine/ui/components/card";
-import { Bot, CheckCircle2, Clock, ListChecks, Loader2, MessagesSquare } from "lucide-react";
+import { Bot, CheckCircle2, Clock, ListChecks, Loader2, MessagesSquare, Mic } from "lucide-react";
 import Link from "next/link";
 import { use, useEffect, useRef } from "react";
 
-import { useInterview, useInterviewActions, useInterviewTurn } from "@/lib/interview";
+import { useInterview, useInterviewActions, useInterviewTurn, useQuestionAudio } from "@/lib/interview";
 
 /** The AI interview (frontend plan §8.5, Phase 7). Reloading restores the transcript and the clock. */
 export default function InterviewPage({ params }: { params: Promise<{ appId: string }> }) {
@@ -19,9 +19,24 @@ export default function InterviewPage({ params }: { params: Promise<{ appId: str
   const interview = useInterview(appId);
   const { start, finish } = useInterviewActions(appId);
   const turn = useInterviewTurn(appId);
+  const voice = useQuestionAudio(appId);
   const asked = useRef(false);
+  const spoken = useRef<string | null>(null);
 
   const s = interview.data;
+  const voiceMode = s?.answer_mode === "voice";
+  const openQuestion =
+    s?.status === "in_progress" && s.awaiting === "answer" && !turn.busy ? s.transcript?.at(-1)?.content ?? null : null;
+  // Read each new question aloud once; the candidate can replay it.
+  useEffect(() => {
+    if (voiceMode && openQuestion && spoken.current !== openQuestion) {
+      spoken.current = openQuestion;
+      void voice.play(openQuestion);
+    }
+  }, [voiceMode, openQuestion, voice]);
+  useEffect(() => {
+    if (s?.status === "finished") voice.stop();
+  }, [s?.status, voice]);
   // A fresh or resumed session with no open question asks for one, once per visit.
   useEffect(() => {
     if (s?.status === "in_progress" && s.awaiting === "question" && !s.paused && !asked.current && !turn.busy) {
@@ -89,6 +104,15 @@ export default function InterviewPage({ params }: { params: Promise<{ appId: str
               <Clock className="size-4 text-muted-foreground" aria-hidden />
               {s.time_limit_min} minutes, starting when you press Start
             </p>
+            {s.answer_mode === "voice" ? (
+              <p className="flex items-start gap-2">
+                <Mic className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
+                <span>
+                  Questions are read aloud and you answer by speaking, one take per question. Your answers are transcribed
+                  and the recordings are not kept. Use a quiet room and allow microphone access when asked.
+                </span>
+              </p>
+            ) : null}
             {s.evaluates.length ? (
               <p className="flex items-start gap-2">
                 <ListChecks className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
@@ -120,7 +144,14 @@ export default function InterviewPage({ params }: { params: Promise<{ appId: str
 
   return (
     <div className="mx-auto w-full max-w-3xl">
-      <PageHeader title="AI interview" description="Answer in your own words. You can take your time within the limit." />
+      <PageHeader
+        title="AI interview"
+        description={
+          voiceMode
+            ? "Listen to each question, then record your answer. You can take your time within the limit."
+            : "Answer in your own words. You can take your time within the limit."
+        }
+      />
       {finish.isError ? (
         <Alert variant="destructive" className="mb-4">
           <AlertTitle>Could not finish</AlertTitle>
@@ -139,6 +170,12 @@ export default function InterviewPage({ params }: { params: Promise<{ appId: str
         busy={turn.busy || finish.isPending}
         error={turn.error}
         onSend={(m) => void turn.send(s.answers_given ?? 0, m)}
+        answerMode={s.answer_mode ?? "text"}
+        onSendAudio={(a) => void turn.sendAudio(s.answers_given ?? 0, a)}
+        transcribing={turn.transcribing}
+        speaking={voice.speaking}
+        onReplay={openQuestion ? () => void voice.play(openQuestion) : undefined}
+        onStopSpeaking={voice.stop}
         onRetry={() => void turn.send(s.answers_given ?? 0)}
         onFinish={() => finish.mutate()}
         onExpire={() => finish.mutate()}

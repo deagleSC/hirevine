@@ -1,7 +1,7 @@
 "use client";
 
-import { Bot, Clock, Loader2, PauseCircle, Quote, Send, User } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Bot, Clock, Loader2, Mic, PauseCircle, Quote, Send, Square, User, Volume2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Alert, AlertDescription } from "@hirevine/ui/components/alert";
 import { Button } from "@hirevine/ui/components/button";
@@ -10,6 +10,8 @@ import { formatRemaining } from "@hirevine/ui/blocks/quiz-runner";
 import { cn } from "@hirevine/ui/lib/utils";
 
 export const MAX_ANSWER_CHARS = 2000;
+/** A spoken answer stops (and is sent) after this long. */
+export const MAX_ANSWER_SECONDS = 180;
 
 export interface ChatEntry {
   role: "interviewer" | "candidate";
@@ -31,6 +33,15 @@ export interface InterviewChatProps {
   /** The last turn's problem, shown above the answer box, with a retry when the answer is saved. */
   error?: { message: string; canRetry: boolean } | null;
   onSend: (message: string) => void;
+  /** "voice": answers are recorded and sent with onSendAudio, and cannot be edited. */
+  answerMode?: "voice" | "text";
+  onSendAudio?: (audio: Blob) => void;
+  /** The recorded answer is being transcribed (before the next question streams). */
+  transcribing?: boolean;
+  /** The question is being read aloud. */
+  speaking?: boolean;
+  onReplay?: () => void;
+  onStopSpeaking?: () => void;
   onRetry: () => void;
   onFinish: () => void;
   /** Called once when the countdown reaches zero (the server closes the interview). */
@@ -53,6 +64,12 @@ export function InterviewChat({
   busy,
   error,
   onSend,
+  answerMode = "text",
+  onSendAudio,
+  transcribing = false,
+  speaking = false,
+  onReplay,
+  onStopSpeaking,
   onRetry,
   onFinish,
   onExpire,
@@ -87,6 +104,7 @@ export function InterviewChat({
     setDraft("");
   };
   const current = Math.min(Math.max(questionsAsked, 1), turnCap);
+  const canAnswer = awaiting === "answer" && !busy && (paused || remaining > 0);
 
   return (
     <div className="flex flex-col gap-4">
@@ -136,39 +154,211 @@ export function InterviewChat({
         </Alert>
       ) : null}
 
-      <div className="grid gap-2">
-        <label htmlFor="interview-answer" className="text-sm font-medium">
-          Your answer
-        </label>
-        <Textarea
-          id="interview-answer"
-          value={draft}
-          maxLength={MAX_ANSWER_CHARS}
-          rows={5}
-          disabled={awaiting !== "answer" || busy}
-          placeholder={awaiting === "answer" ? "Type your answer…" : "Waiting for the next question…"}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-              e.preventDefault();
-              send();
-            }
-          }}
+      {answerMode === "voice" ? (
+        <VoiceAnswer
+          canAnswer={canAnswer}
+          busy={busy}
+          transcribing={transcribing}
+          speaking={speaking}
+          onReplay={onReplay}
+          onStopSpeaking={onStopSpeaking}
+          onSendAudio={(a) => onSendAudio?.(a)}
+          onFinish={onFinish}
         />
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-xs text-muted-foreground tabular-nums">
-            {draft.length} / {MAX_ANSWER_CHARS}
-          </span>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onFinish} disabled={busy}>
-              Finish interview
-            </Button>
-            <Button onClick={send} disabled={!canSend}>
-              {busy ? <Loader2 className="animate-spin" /> : <Send />}
-              Send answer
-            </Button>
+      ) : (
+        <div className="grid gap-2">
+          <label htmlFor="interview-answer" className="text-sm font-medium">
+            Your answer
+          </label>
+          <Textarea
+            id="interview-answer"
+            value={draft}
+            maxLength={MAX_ANSWER_CHARS}
+            rows={5}
+            disabled={awaiting !== "answer" || busy}
+            placeholder={awaiting === "answer" ? "Type your answer…" : "Waiting for the next question…"}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                send();
+              }
+            }}
+          />
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {draft.length} / {MAX_ANSWER_CHARS}
+            </span>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={onFinish} disabled={busy}>
+                Finish interview
+              </Button>
+              <Button onClick={send} disabled={!canSend}>
+                {busy ? <Loader2 className="animate-spin" /> : <Send />}
+                Send answer
+              </Button>
+            </div>
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+function pickMimeType(): string | undefined {
+  if (typeof MediaRecorder === "undefined") return undefined;
+  return ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"].find((t) =>
+    MediaRecorder.isTypeSupported?.(t),
+  );
+}
+
+/**
+ * Record a spoken answer and send it as is: one take per question, no editing. Recording stops and
+ * sends at MAX_ANSWER_SECONDS. Starting to record stops the question being read aloud.
+ */
+function VoiceAnswer({
+  canAnswer,
+  busy,
+  transcribing,
+  speaking,
+  onReplay,
+  onStopSpeaking,
+  onSendAudio,
+  onFinish,
+}: {
+  canAnswer: boolean;
+  busy: boolean;
+  transcribing: boolean;
+  speaking: boolean;
+  onReplay?: () => void;
+  onStopSpeaking?: () => void;
+  onSendAudio: (audio: Blob) => void;
+  onFinish: () => void;
+}) {
+  const [recording, setRecording] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [micError, setMicError] = useState<string | null>(null);
+  const rec = useRef<MediaRecorder | null>(null);
+  const sendRef = useRef(onSendAudio);
+  sendRef.current = onSendAudio;
+
+  const stop = useCallback(() => {
+    if (rec.current?.state === "recording") rec.current.stop();
+  }, []);
+
+  useEffect(() => {
+    if (!recording) return;
+    const t0 = Date.now();
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - t0) / 1000)), 250);
+    return () => clearInterval(id);
+  }, [recording]);
+
+  useEffect(() => {
+    if (recording && elapsed >= MAX_ANSWER_SECONDS) stop();
+  }, [recording, elapsed, stop]);
+
+  // Unmount mid-answer: release the microphone without sending.
+  useEffect(
+    () => () => {
+      const r = rec.current;
+      if (r) {
+        r.ondataavailable = null;
+        r.onstop = null;
+        if (r.state === "recording") r.stop();
+        r.stream.getTracks().forEach((t) => t.stop());
+      }
+    },
+    [],
+  );
+
+  const start = async () => {
+    setMicError(null);
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      setMicError("This browser cannot record audio. Use a recent Chrome, Edge, Firefox or Safari.");
+      return;
+    }
+    setStarting(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      onStopSpeaking?.();
+      const mimeType = pickMimeType();
+      const r = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      const chunks: Blob[] = [];
+      r.ondataavailable = (e) => {
+        if (e.data.size) chunks.push(e.data);
+      };
+      r.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        rec.current = null;
+        setRecording(false);
+        sendRef.current(new Blob(chunks, { type: (r.mimeType || mimeType || "audio/webm").split(";")[0] }));
+      };
+      rec.current = r;
+      r.start(1000);
+      setElapsed(0);
+      setRecording(true);
+    } catch (e) {
+      const denied = e instanceof DOMException && (e.name === "NotAllowedError" || e.name === "SecurityError");
+      setMicError(
+        denied
+          ? "Microphone access is blocked. Allow it in your browser's site settings, then try again."
+          : "No microphone was found. Connect one and try again.",
+      );
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  const left = MAX_ANSWER_SECONDS - elapsed;
+  const status = recording
+    ? `Recording… ${formatRemaining(elapsed * 1000)} (stops at ${formatRemaining(MAX_ANSWER_SECONDS * 1000)})`
+    : transcribing
+      ? "Transcribing your answer…"
+      : busy
+        ? "Waiting for the next question…"
+        : speaking
+          ? "The interviewer is speaking…"
+          : canAnswer
+            ? "Press Record when you are ready. You get one take per question."
+            : "Waiting for the next question…";
+
+  return (
+    <div className="grid gap-3 rounded-xl border p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className={cn("flex items-center gap-2 text-sm", recording ? "font-medium" : "text-muted-foreground")} aria-live="polite">
+          {recording ? <span className="size-2.5 animate-pulse rounded-full bg-destructive" aria-hidden /> : null}
+          {transcribing ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+          {status}
+        </p>
+        {onReplay && !recording ? (
+          <Button size="sm" variant="ghost" onClick={speaking ? onStopSpeaking : onReplay} disabled={!canAnswer}>
+            <Volume2 />
+            {speaking ? "Stop audio" : "Replay question"}
+          </Button>
+        ) : null}
+      </div>
+      {recording && left <= 15 ? <p className="text-xs text-destructive">{left}s left for this answer</p> : null}
+      {micError ? (
+        <Alert variant="destructive">
+          <AlertDescription>{micError}</AlertDescription>
+        </Alert>
+      ) : null}
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <Button variant="outline" onClick={onFinish} disabled={busy || recording}>
+          Finish interview
+        </Button>
+        {recording ? (
+          <Button onClick={stop} variant="destructive">
+            <Square />
+            Stop and send
+          </Button>
+        ) : (
+          <Button onClick={() => void start()} disabled={!canAnswer || starting}>
+            {starting || busy ? <Loader2 className="animate-spin" /> : <Mic />}
+            Record answer
+          </Button>
+        )}
       </div>
     </div>
   );

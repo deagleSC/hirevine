@@ -29,7 +29,9 @@ export default function PrivacyPage() {
         <li>Inngest: runs background steps such as screening. It receives record IDs only, never your resume or answers.</li>
         <li>
           OpenRouter and the model providers it routes to (currently Google Gemma and NVIDIA Nemotron models): read redacted
-          resume text, quiz and interview answers to produce scores and feedback drafts.
+          resume text, quiz and interview answers to produce scores and feedback drafts. OpenRouter also transcribes your
+          spoken interview answers (the recording is used for transcription only and is not stored by Hirevine; only the
+          transcript is kept) and reads the interviewer&apos;s questions aloud.
         </li>
         <li>Langfuse, if enabled: records model calls for quality checks, with redacted text only.</li>
       </ul>
