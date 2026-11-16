@@ -10,6 +10,8 @@ import { formatRemaining } from "@hirevine/ui/blocks/quiz-runner";
 import { cn } from "@hirevine/ui/lib/utils";
 
 export const MAX_ANSWER_CHARS = 2000;
+/** Longest wait for the microphone's first audio before recording is shown as started anyway. */
+const WARMUP_LIMIT_MS = 3000;
 /** A spoken answer stops (and is sent) after this long. */
 export const MAX_ANSWER_SECONDS = 180;
 
@@ -285,8 +287,13 @@ function VoiceAnswer({
       const mimeType = pickMimeType();
       const r = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
       const chunks: Blob[] = [];
+      // Some engines (WebKit) drop the first second or so of audio while the microphone warms up, so
+      // the candidate is only told to speak once audio is actually arriving.
+      let ready: () => void = () => undefined;
+      const flowing = new Promise<void>((res) => (ready = res));
       r.ondataavailable = (e) => {
         if (e.data.size) chunks.push(e.data);
+        ready();
       };
       r.onstop = () => {
         stream.getTracks().forEach((t) => t.stop());
@@ -295,7 +302,9 @@ function VoiceAnswer({
         sendRef.current(new Blob(chunks, { type: (r.mimeType || mimeType || "audio/webm").split(";")[0] }));
       };
       rec.current = r;
-      r.start(1000);
+      r.start(250);
+      await Promise.race([flowing, new Promise((res) => setTimeout(res, WARMUP_LIMIT_MS))]);
+      if (rec.current !== r) return; // unmounted while warming up
       setElapsed(0);
       setRecording(true);
     } catch (e) {
@@ -311,7 +320,9 @@ function VoiceAnswer({
   };
 
   const left = MAX_ANSWER_SECONDS - elapsed;
-  const status = recording
+  const status = starting
+    ? "Getting the microphone ready…"
+    : recording
     ? `Recording… ${formatRemaining(elapsed * 1000)} (stops at ${formatRemaining(MAX_ANSWER_SECONDS * 1000)})`
     : transcribing
       ? "Transcribing your answer…"

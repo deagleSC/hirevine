@@ -333,8 +333,8 @@ async def test_voice_answers_are_transcribed_saved_and_typed_answers_refused(
         heard.append((len(audio), content_type))
         return "  I built a ledger API.  " if len(audio) > 2000 else ""
 
-    async def fake_synthesize(text: str) -> bytes:
-        return b"ID3" + text.encode()
+    async def fake_synthesize(text: str) -> tuple[bytes, str]:
+        return b"ID3" + text.encode(), "audio/mpeg"
 
     monkeypatch.setattr(speech, "transcribe", fake_transcribe)
     monkeypatch.setattr(speech, "synthesize", fake_synthesize)

@@ -9,20 +9,47 @@
   interview, so the end-to-end chain is short), the rubric, screening (every criterion 4/4, quoting a
   real resume line so the quote check passes), the report draft (citing every ref it was given) and
   interview scoring (every rubric item 3/4, citing answer 1).
+- Audio (the voice interview): `/audio/transcriptions` returns the next of FAKE_TRANSCRIPTS in order,
+  whatever the recording; `/audio/speech` returns a short WAV tone.
 Anything else gets a 500, so an unexpected model call fails the test loudly.
 """
 
 from __future__ import annotations
 
+import io
+import itertools
 import json
+import math
 import os
 import re
+import struct
 import sys
+import threading
 import time
+import wave
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 DELAY = float(os.environ.get("FAKE_LLM_CHUNK_DELAY", "0.25"))
 MODEL = "fake/e2e-model"
+TRANSCRIPTS = os.environ.get("FAKE_TRANSCRIPTS", "I built a FastAPI service with a Postgres ledger.|"
+                             "Pytest against a real database, plus contract tests.|"
+                             "I would add rate limiting and better tracing.").split("|")
+_next_transcript = itertools.cycle(TRANSCRIPTS)
+_transcript_lock = threading.Lock()
+
+
+def _tone_wav(seconds: float = 0.4, hz: int = 440, rate: int = 16000) -> bytes:
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        w.writeframes(b"".join(struct.pack("<h", int(8000 * math.sin(2 * math.pi * hz * i / rate)))
+                               for i in range(int(seconds * rate))))
+    return buf.getvalue()
+
+
+TONE = _tone_wav()
 
 
 def _text(messages: list[dict[str, str]]) -> str:
@@ -75,6 +102,24 @@ class Handler(BaseHTTPRequestHandler):
         self._json(200, {"ok": True})
 
     def do_POST(self) -> None:
+        if self.path.endswith("/audio/transcriptions"):
+            size = int(self.headers.get("content-length", 0))
+            raw = self.rfile.read(size)
+            if b'name="file"' not in raw or b'name="model"' not in raw:
+                self._json(400, {"error": {"message": "fake_openrouter: expected a multipart upload"}})
+                return
+            with _transcript_lock:
+                text = next(_next_transcript)
+            self._json(200, {"text": text, "usage": {"seconds": 3}})
+            return
+        if self.path.endswith("/audio/speech"):
+            self.rfile.read(int(self.headers.get("content-length", 0)))
+            self.send_response(200)
+            self.send_header("content-type", "audio/wav")
+            self.send_header("content-length", str(len(TONE)))
+            self.end_headers()
+            self.wfile.write(TONE)
+            return
         body = json.loads(self.rfile.read(int(self.headers.get("content-length", 0))) or b"{}")
         messages = body.get("messages", [])
         text = _text(messages)

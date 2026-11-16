@@ -107,8 +107,8 @@ async def question_speech(application_id: UUID, principal: PrincipalDep) -> Resp
     async with user_tx(principal) as (tx, user):
         require_role(user, "candidate")
         text = await svc.current_question(tx, user, application_id)
-    audio = await speech.synthesize(text)
-    return Response(audio, media_type="audio/mpeg", headers={"Cache-Control": "private, max-age=3600"})
+    audio, media_type = await speech.synthesize(text)
+    return Response(audio, media_type=media_type, headers={"Cache-Control": "private, max-age=3600"})
 
 
 @router.post("/finish", response_model=svc.InterviewState)

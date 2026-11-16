@@ -67,7 +67,8 @@ async def transcribe(audio: bytes, content_type: str | None) -> str:
     return str(r.json().get("text") or "").strip()
 
 
-async def synthesize(text: str) -> bytes:
+async def synthesize(text: str) -> tuple[bytes, str]:
+    """The spoken question and its media type (MP3 from real providers)."""
     s = get_settings()
     if not s.openrouter_api_key:
         raise _unavailable()
@@ -85,4 +86,4 @@ async def synthesize(text: str) -> bytes:
     if r.status_code >= 400:
         log.warning("speech synthesis failed: %s %s", r.status_code, r.text[:300])
         raise _unavailable()
-    return r.content
+    return r.content, r.headers.get("content-type", "audio/mpeg").split(";")[0]

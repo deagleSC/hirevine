@@ -83,6 +83,8 @@ describe("InterviewChat voice answers", () => {
     }
     start() {
       this.state = "recording";
+      // Audio starts arriving shortly after start, as in a real browser.
+      setTimeout(() => this.ondataavailable?.({ data: new Blob(["head"], { type: "audio/webm" }) }), 0);
     }
     stop() {
       this.state = "inactive";
@@ -107,6 +109,8 @@ describe("InterviewChat voice answers", () => {
     chat({ answerMode: "voice", onSendAudio, onStopSpeaking, onReplay: vi.fn() });
     expect(screen.queryByLabelText("Your answer")).not.toBeInTheDocument();
     await act(async () => fireEvent.click(screen.getByRole("button", { name: /Record answer/ })));
+    // "Recording" is only shown once the microphone delivers audio.
+    expect(await screen.findByText(/^Recording…/)).toBeInTheDocument();
     expect(onStopSpeaking).toHaveBeenCalled();
     expect(screen.getByRole("button", { name: /Finish interview/ })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: /Stop and send/ }));

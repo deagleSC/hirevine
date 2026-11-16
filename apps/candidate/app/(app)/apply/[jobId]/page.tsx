@@ -161,6 +161,10 @@ export default function ApplyPage({ params }: { params: Promise<{ jobId: string 
             <ul className="grid list-disc gap-1.5 pl-5 text-muted-foreground">
               <li>Your resume is scored against the role&apos;s published criteria. An AI assists and must quote the resume line behind each score.</li>
               <li>Your name, contact details, address, date of birth and similar personal details are removed before any AI model sees the text.</li>
+              <li>
+                If the role has an AI interview, it is spoken: questions are read aloud and you answer using your microphone. Your
+                answers are transcribed and the recordings are not kept.
+              </li>
               <li>A person on the hiring team makes every decision. You will not see scores or rankings until results are released.</li>
               <li>
                 Your data is handled by these processors: {consent.data.providers.join(", ")}.{" "}
