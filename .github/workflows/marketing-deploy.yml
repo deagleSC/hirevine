@@ -1,0 +1,64 @@
+# Deploys the marketing site (apps/marketing) to the Vercel project "hirevine" (hirevine.vercel.app).
+# The project isn't connected to Vercel's Git integration, so CI builds with the Vercel CLI and
+# uploads the prebuilt output: production on pushes to main, a preview (linked in a PR comment)
+# on pull requests. Needs one repository secret: VERCEL_TOKEN (vercel.com/account/tokens).
+name: marketing-deploy
+
+on:
+  push:
+    branches: [main]
+    paths: ["apps/marketing/**", "packages/ui/**", "packages/config/**", "pnpm-lock.yaml", ".github/workflows/marketing-deploy.yml"]
+  pull_request:
+    paths: ["apps/marketing/**", "packages/ui/**", "packages/config/**", "pnpm-lock.yaml", ".github/workflows/marketing-deploy.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: marketing-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  VERCEL_ORG_ID: team_POS8E6TthpQoIWBN4USXpkGw
+  VERCEL_PROJECT_ID: prj_xWUPDH8ACv5a9xXwFziQhYtiuD9h
+
+jobs:
+  deploy:
+    # Forks don't get the token; skip instead of failing.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm add -g vercel@latest
+
+      - name: Pull project settings
+        run: |
+          target=${{ github.event_name == 'pull_request' && 'preview' || 'production' }}
+          vercel pull --yes --environment=$target --token=${{ secrets.VERCEL_TOKEN }}
+          # The project has no root directory set server-side; build the monorepo app locally.
+          node -e "const f='.vercel/project.json',d=require('./'+f);d.settings={...d.settings,rootDirectory:'apps/marketing',framework:'nextjs'};require('fs').writeFileSync(f,JSON.stringify(d))"
+
+      - name: Build
+        run: vercel build ${{ github.event_name == 'pull_request' && '' || '--prod' }} --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy
+        id: deploy
+        run: |
+          url=$(vercel deploy --prebuilt ${{ github.event_name == 'pull_request' && '' || '--prod' }} --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Deployed: $url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment preview URL
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr comment ${{ github.event.pull_request.number }} --edit-last --create-if-none --body "Marketing site preview: ${{ steps.deploy.outputs.url }}"

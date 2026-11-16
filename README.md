@@ -189,7 +189,9 @@ After changing API routes, regenerate the typed client: `pnpm gen:api`.
 
 Vercel projects `hirevine-api`, `hirevine-manager` and `hirevine-candidate` deploy from `main`; the
 marketing site is the `hirevine` project (root directory `apps/marketing`, served at
-hirevine.vercel.app; set `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_MANAGER_URL`, `NEXT_PUBLIC_CANDIDATE_URL`).
+hirevine.vercel.app; set `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_MANAGER_URL`, `NEXT_PUBLIC_CANDIDATE_URL`). It is
+deployed by `.github/workflows/marketing-deploy.yml` (production on pushes to `main`, a preview per pull
+request) and needs a `VERCEL_TOKEN` repository secret.
 After each production API deploy, the `inngest-sync` workflow re-registers the background functions
 with Inngest. Database changes are SQL migrations applied with `npx supabase db push --linked`.
 
