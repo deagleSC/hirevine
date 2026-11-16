@@ -4,8 +4,6 @@ import { messageFor } from "@hirevine/api-client";
 import { BarList, ChartCard, ColumnChart, DataTable, StatTile } from "@hirevine/ui/blocks/charts";
 import { PageHeader } from "@hirevine/ui/blocks/dashboard-layout";
 import { ErrorState, PageSkeleton } from "@hirevine/ui/blocks/states";
-import { Button } from "@hirevine/ui/components/button";
-import Link from "next/link";
 import { use } from "react";
 
 import { DemoBanner } from "@/components/demo-banner";
@@ -25,14 +23,10 @@ export default function CampaignAnalyticsPage({ params }: { params: Promise<{ ca
       <PageHeader
         title={`${a.job_title} — analytics`}
         description={`${a.applications} application${a.applications === 1 ? "" : "s"} · ${a.status}`}
-        actions={
-          <Button asChild variant="outline">
-            <Link href={`/campaigns/${campaignId}`}>Back to campaign</Link>
-          </Button>
-        }
+        back={{ href: `/campaigns/${campaignId}`, label: "Campaign" }}
       />
       <DemoBanner campaignId={campaignId} />
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-testid="kpis">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" data-testid="kpis">
         <StatTile label="Applications" value={a.applications} />
         <StatTile label="Passed screening" value={screening ? `${screening.passed} of ${screening.reached}` : "—"} />
         <StatTile label="AI drafts sent unedited" value={pct(a.feedback_acceptance.share)} hint={`of ${a.feedback_acceptance.n} released drafts`} />

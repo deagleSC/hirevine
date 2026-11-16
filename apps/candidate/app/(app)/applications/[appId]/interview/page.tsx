@@ -3,7 +3,7 @@
 import { ApiError, messageFor } from "@hirevine/api-client";
 import { PageHeader } from "@hirevine/ui/blocks/dashboard-layout";
 import { InterviewChat } from "@hirevine/ui/blocks/interview";
-import { ErrorState, PageSkeleton } from "@hirevine/ui/blocks/states";
+import { ErrorState, PageSkeleton, StatusCard } from "@hirevine/ui/blocks/states";
 import { Alert, AlertDescription, AlertTitle } from "@hirevine/ui/components/alert";
 import { Button } from "@hirevine/ui/components/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@hirevine/ui/components/card";
@@ -48,24 +48,24 @@ export default function InterviewPage({ params }: { params: Promise<{ appId: str
 
   if (interview.isError) return <ErrorState message={messageFor(interview.error)} />;
   if (interview.isPending || !s) return <PageSkeleton />;
+  const backTo = { href: `/applications/${appId}`, label: "Application" };
   const back = (
     <Button asChild variant="outline">
-      <Link href={`/applications/${appId}`}>Back to application</Link>
+      <Link href={backTo.href}>Back to application</Link>
     </Button>
   );
 
   if (s.status === "finished") {
     return (
       <>
-        <PageHeader title="AI interview" />
-        <Card className="max-w-xl">
-          <CardHeader>
-            <CheckCircle2 className="mb-2 size-6 text-emerald-600 dark:text-emerald-400" />
-            <CardTitle>Thanks. Your responses are being reviewed.</CardTitle>
-            <CardDescription>The hiring team will share outcomes when they release them.</CardDescription>
-          </CardHeader>
-          <CardFooter>{back}</CardFooter>
-        </Card>
+        <PageHeader title="AI interview" back={backTo} />
+        <StatusCard
+          icon={<CheckCircle2 />}
+          tone="success"
+          title="Thanks. Your responses are being reviewed."
+          description="The hiring team will share outcomes when they release them."
+          actions={back}
+        />
       </>
     );
   }
@@ -73,14 +73,13 @@ export default function InterviewPage({ params }: { params: Promise<{ appId: str
   if (s.status === "closed") {
     return (
       <>
-        <PageHeader title="AI interview" />
-        <Card className="max-w-xl">
-          <CardHeader>
-            <CardTitle>This interview is not open</CardTitle>
-            <CardDescription>Your application is not at the interview step right now.</CardDescription>
-          </CardHeader>
-          <CardFooter>{back}</CardFooter>
-        </Card>
+        <PageHeader title="AI interview" back={backTo} />
+        <StatusCard
+          icon={<Bot />}
+          title="This interview is not open"
+          description="Your application is not at the interview step right now."
+          actions={back}
+        />
       </>
     );
   }
@@ -89,8 +88,8 @@ export default function InterviewPage({ params }: { params: Promise<{ appId: str
     const notReady = start.error instanceof ApiError && start.error.code === "interview_not_ready";
     return (
       <>
-        <PageHeader title="AI interview" />
-        <Card className="max-w-xl">
+        <PageHeader title="AI interview" back={backTo} />
+        <Card>
           <CardHeader>
             <Bot className="mb-2 size-6 text-primary" aria-hidden />
             <CardTitle>This interview is conducted by an AI</CardTitle>
@@ -136,7 +135,6 @@ export default function InterviewPage({ params }: { params: Promise<{ appId: str
               {start.isPending ? <Loader2 className="animate-spin" /> : null}
               Start interview
             </Button>
-            {back}
           </CardFooter>
         </Card>
       </>
@@ -144,7 +142,7 @@ export default function InterviewPage({ params }: { params: Promise<{ appId: str
   }
 
   return (
-    <div className={voiceMode ? "mx-auto w-full max-w-6xl" : "mx-auto w-full max-w-3xl"}>
+    <>
       <PageHeader
         title="AI interview"
         description={
@@ -154,7 +152,7 @@ export default function InterviewPage({ params }: { params: Promise<{ appId: str
         }
       />
       {finish.isError ? (
-        <Alert variant="destructive" className="mb-4">
+        <Alert variant="destructive">
           <AlertTitle>Could not finish</AlertTitle>
           <AlertDescription>{messageFor(finish.error)}</AlertDescription>
         </Alert>
@@ -181,6 +179,6 @@ export default function InterviewPage({ params }: { params: Promise<{ appId: str
         onFinish={() => finish.mutate()}
         onExpire={() => finish.mutate()}
       />
-    </div>
+    </>
   );
 }

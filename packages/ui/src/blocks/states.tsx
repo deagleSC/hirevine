@@ -50,3 +50,44 @@ export function PageSkeleton() {
     </div>
   );
 }
+
+/**
+ * A full-width status message for a page whose main task is done or unavailable: icon, title, short
+ * description and actions. Actions sit to the right on wider screens and below on phones.
+ */
+export function StatusCard({
+  icon,
+  tone = "default",
+  title,
+  description,
+  actions,
+}: {
+  icon?: ReactNode;
+  tone?: "default" | "success";
+  title: string;
+  description?: ReactNode;
+  actions?: ReactNode;
+}) {
+  return (
+    <section className="flex flex-col gap-4 rounded-xl border bg-card p-5 text-card-foreground shadow-sm sm:flex-row sm:items-center sm:p-6">
+      {icon ? (
+        <span
+          className={
+            "flex size-10 shrink-0 items-center justify-center rounded-full [&_svg]:size-5 " +
+            (tone === "success"
+              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+              : "bg-primary/10 text-primary")
+          }
+          aria-hidden
+        >
+          {icon}
+        </span>
+      ) : null}
+      <div className="grid min-w-0 flex-1 gap-1">
+        <h2 className="font-semibold leading-snug">{title}</h2>
+        {description ? <div className="text-sm text-muted-foreground">{description}</div> : null}
+      </div>
+      {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
+    </section>
+  );
+}

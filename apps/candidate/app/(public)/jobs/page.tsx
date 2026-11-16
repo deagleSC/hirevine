@@ -6,7 +6,7 @@ import { EmptyState, ErrorState, PageSkeleton } from "@hirevine/ui/blocks/states
 import { Badge } from "@hirevine/ui/components/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@hirevine/ui/components/card";
 import { Input } from "@hirevine/ui/components/input";
-import { Briefcase, MapPin, Search } from "lucide-react";
+import { ArrowRight, Briefcase, MapPin, Search } from "lucide-react";
 import Link from "next/link";
 import { useDeferredValue, useState } from "react";
 
@@ -45,13 +45,16 @@ export default function JobsPage() {
           description={filtering ? "Try fewer words or a different location." : "New roles appear here as soon as they are published."}
         />
       ) : (
-        <ul className="grid gap-3">
+        <ul className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
           {jobs.data.items.map((job) => (
             <li key={job.id}>
-              <Link href={`/jobs/${job.id}`} className="block rounded-xl focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">
-                <Card className="transition-colors hover:bg-accent/50">
+              <Link href={`/jobs/${job.id}`} className="group block h-full rounded-xl focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">
+                <Card className="h-full transition-colors group-hover:border-primary/40 group-hover:bg-accent/40">
                   <CardHeader>
-                    <CardTitle className="text-base">{job.title}</CardTitle>
+                    <CardTitle className="flex items-center justify-between gap-2 text-base">
+                      {job.title}
+                      <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" aria-hidden />
+                    </CardTitle>
                     <CardDescription className="flex flex-wrap items-center gap-2">
                       {job.seniority ? <Badge variant="secondary" className="capitalize">{job.seniority}</Badge> : null}
                       {job.location ? <span>{job.location}</span> : null}

@@ -132,7 +132,7 @@ export function QuizRunner({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="sticky top-0 z-10 -mx-4 flex flex-wrap items-center justify-between gap-3 border-b bg-background/95 px-4 py-3 backdrop-blur">
+      <div className="sticky top-0 z-10 -mx-4 flex flex-wrap items-center justify-between gap-3 border-b bg-background/95 px-4 py-3 backdrop-blur md:-mx-6 md:px-6">
         <div
           role="timer"
           aria-live="off"
@@ -152,7 +152,7 @@ export function QuizRunner({
 
       <ol className="flex flex-col gap-6">
         {questions.map((q, i) => (
-          <li key={q.id} className="rounded-xl border p-4 sm:p-5">
+          <li key={q.id} className="rounded-xl border bg-card p-4 shadow-xs sm:p-5">
             <fieldset disabled={submitting}>
               <legend id={`q-${q.id}`} className="mb-3 font-medium">
                 <span className="mr-2 text-muted-foreground">{i + 1}.</span>
@@ -162,7 +162,7 @@ export function QuizRunner({
                 aria-labelledby={`q-${q.id}`}
                 value={answers[q.id] === undefined ? "" : String(answers[q.id])}
                 onValueChange={(v) => choose(q.id, Number(v))}
-                className="gap-2"
+                className="gap-2 md:grid-cols-2"
               >
                 {q.options.map((opt, j) => {
                   const id = `q-${q.id}-${j}`;

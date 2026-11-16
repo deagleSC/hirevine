@@ -51,7 +51,7 @@ export default function CampaignPage({ params }: { params: Promise<{ campaignId:
           </span>
         }
         actions={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button asChild variant="outline">
               <Link href={`/jobs/${c.job_id}/workflow`}>Pipeline</Link>
             </Button>
@@ -66,7 +66,7 @@ export default function CampaignPage({ params }: { params: Promise<{ campaignId:
       />
       <DemoBanner campaignId={campaignId} />
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {c.nodes.filter((n) => n.enabled).map((n) => {
           const counts = c.counts.filter((x) => x.node_id === n.id);
           return (
@@ -94,7 +94,7 @@ export default function CampaignPage({ params }: { params: Promise<{ campaignId:
       </div>
 
       {/* A filter for the table below, not tabs with panels: toggle buttons (aria-pressed). */}
-      <div role="group" aria-label="Show applications" className="inline-flex w-fit flex-wrap gap-1 rounded-lg bg-muted p-[3px]">
+      <div role="group" aria-label="Show applications" className="-mx-4 flex max-w-[100vw] gap-1 overflow-x-auto px-4 sm:mx-0 sm:w-fit sm:px-0">
         {Object.entries(TABS).map(([key, t]) => (
           <button
             key={key}
@@ -102,8 +102,10 @@ export default function CampaignPage({ params }: { params: Promise<{ campaignId:
             aria-pressed={tab === key}
             onClick={() => setTab(key)}
             className={
-              "inline-flex h-8 items-center gap-1 rounded-md px-3 text-sm text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring " +
-              (tab === key ? "bg-background font-medium shadow-sm" : "font-normal hover:bg-background/60")
+              "inline-flex h-8 shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring " +
+              (tab === key
+                ? "border-primary bg-primary text-primary-foreground font-medium"
+                : "bg-background font-normal text-foreground hover:bg-muted")
             }
           >
             {t.label}
@@ -120,12 +122,12 @@ export default function CampaignPage({ params }: { params: Promise<{ campaignId:
         <EmptyState icon={<Inbox />} title={tab === "all" ? "No applications yet" : "Nothing here"}
           description={tab === "all" ? "Share the job link; applications appear here as they arrive." : undefined} />
       ) : (
-        <div className="rounded-lg border">
+        <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Candidate</TableHead>
-                <TableHead>Stage</TableHead>
+                <TableHead className="hidden sm:table-cell">Stage</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Match</TableHead>
                 <TableHead className="hidden md:table-cell">Flags</TableHead>
@@ -135,13 +137,13 @@ export default function CampaignPage({ params }: { params: Promise<{ campaignId:
             <TableBody>
               {rows.data.items.map((r) => (
                 <TableRow key={r.id}>
-                  <TableCell>
+                  <TableCell className="whitespace-normal">
                     <Link href={`/campaigns/${campaignId}/candidates/${r.id}`} className="font-medium hover:underline">
                       {candidateLabel(r.id, r.candidate_name)}
                     </Link>
                     <div className="text-xs text-muted-foreground">Applied {new Date(r.created_at).toLocaleDateString()}</div>
                   </TableCell>
-                  <TableCell>{r.current_node ? names[r.current_node] : "—"}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{r.current_node ? names[r.current_node] : "—"}</TableCell>
                   <TableCell>
                     {r.job_status && ["queued", "running", "deferred_budget"].includes(r.job_status) ? (
                       <StatusBadge status={r.job_status} />
