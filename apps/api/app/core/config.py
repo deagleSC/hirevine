@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     cors_origins: list[str] = Field(
         default_factory=lambda: ["http://localhost:3000", "http://localhost:3001"]
     )
+    # Extra allowed origins as a regex, e.g. Vercel preview deployments of the two frontends:
+    # ^https://hirevine-(candidate|manager)-[a-z0-9-]+\.vercel\.app$
+    cors_origin_regex: str | None = None
     cron_secret: str = ""
 
     # Supabase Storage (backend plan §20.2). The service key is used ONLY by SupabaseStorage for
