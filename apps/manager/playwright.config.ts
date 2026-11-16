@@ -42,7 +42,39 @@ export default defineConfig({
   workers: 1,
   reporter: [["list"]],
   globalSetup: "./e2e/global-setup.ts",
-  use: { baseURL: APP, trace: "retain-on-failure" },
+  use: {
+    baseURL: APP,
+    trace: "retain-on-failure",
+  },
+  // The voice interview runs in all three engines, each with a fake microphone (no permission
+  // prompt) and audio allowed to autoplay; everything else runs in Chromium.
+  projects: [
+    {
+      name: "chromium",
+      use: {
+        browserName: "chromium",
+        permissions: ["microphone"],
+        launchOptions: {
+          args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream", "--autoplay-policy=no-user-gesture-required"],
+        },
+      },
+    },
+    {
+      name: "firefox",
+      testMatch: /candidate-interview\.spec\.ts/,
+      use: {
+        browserName: "firefox",
+        launchOptions: {
+          firefoxUserPrefs: {
+            "media.navigator.streams.fake": true,
+            "media.navigator.permission.disabled": true,
+            "media.autoplay.default": 0,
+          },
+        },
+      },
+    },
+    { name: "webkit", testMatch: /candidate-interview\.spec\.ts/, use: { browserName: "webkit", permissions: ["microphone"] } },
+  ],
   webServer: [
     {
       command: "uv run python scripts/fake_openrouter.py 8199",
@@ -64,6 +96,8 @@ export default defineConfig({
         CORS_ORIGINS: JSON.stringify([APP, CANDIDATE_APP]),
         OPENROUTER_BASE_URL: FAKE_LLM,
         OPENROUTER_API_KEY: "e2e-fake",
+        // Spoken answers, recorded from Chromium's fake microphone and "transcribed" by the fake.
+        INTERVIEW_ANSWER_MODE: "voice",
         LLM_SYNC_RPM_CAP: "100",
         LLM_DAILY_CAP: "1000",
         // Jobs run in-process right after commit (no Inngest in e2e); uploads go to the API's dev store.

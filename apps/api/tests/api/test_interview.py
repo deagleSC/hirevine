@@ -319,3 +319,60 @@ async def test_interview_is_only_for_the_owner_at_that_stage(
     job2, cand2, app2 = await at_interview(client, migrated_db, storage, llm, workflow(rubric=[]))
     r = await client.post(f"{base(app2)}/start", headers=auth(cand2))
     assert r.json()["error"]["code"] == "interview_not_ready"
+
+
+async def test_voice_answers_are_transcribed_saved_and_typed_answers_refused(
+        client, migrated_db, storage, inngest, llm, stream, monkeypatch):  # noqa: F811
+    from app.core.config import get_settings
+    from app.services import speech
+
+    monkeypatch.setattr(get_settings(), "interview_answer_mode", "voice")
+    heard: list[tuple[int, str | None]] = []
+
+    async def fake_transcribe(audio: bytes, content_type: str | None) -> str:
+        heard.append((len(audio), content_type))
+        return "  I built a ledger API.  " if len(audio) > 2000 else ""
+
+    async def fake_synthesize(text: str) -> tuple[bytes, str]:
+        return b"ID3" + text.encode(), "audio/mpeg"
+
+    monkeypatch.setattr(speech, "transcribe", fake_transcribe)
+    monkeypatch.setattr(speech, "synthesize", fake_synthesize)
+    _, cand, app_id = await at_interview(client, migrated_db, storage, llm)
+    h = auth(cand)
+    await client.post(f"{base(app_id)}/start", headers=h)
+    stream.on("Tell me about an API you designed.", "How did you test it?")
+    _, events = await turn(client, app_id, h, 0)
+    assert events[-1]["state"]["answer_mode"] == "voice"
+
+    # The open question is read aloud.
+    r = await client.get(f"{base(app_id)}/speech", headers=h)
+    assert r.status_code == 200 and r.headers["content-type"] == "audio/mpeg"
+    assert r.content == b"ID3Tell me about an API you designed."
+
+    # Typed answers are refused in voice mode, as are unsupported formats and silence.
+    _, [err] = await turn(client, app_id, h, 0, "Pasted answer")
+    assert err["status"] == 422 and err["error"]["code"] == "voice_required"
+    audio_h = {**h, "Content-Type": "audio/webm;codecs=opus"}
+    r = await client.post(f"{base(app_id)}/turn-voice?turn=0", headers={**h, "Content-Type": "text/plain"}, content=b"x")
+    assert r.status_code == 415
+    r = await client.post(f"{base(app_id)}/turn-voice?turn=0", headers=audio_h, content=b"x" * 10)
+    assert r.status_code == 422 and r.json()["error"]["code"] == "empty_answer"
+    r = await client.post(f"{base(app_id)}/turn-voice?turn=1", headers=audio_h, content=b"x" * 5000)
+    assert r.status_code == 409 and r.json()["error"]["code"] == "stale_turn"
+
+    r = await client.post(f"{base(app_id)}/turn-voice?turn=0", headers=audio_h, content=b"x" * 5000)
+    assert r.status_code == 200
+    events = [json.loads(line[6:]) for line in r.text.splitlines() if line.startswith("data: ")]
+    assert events[0] == {"type": "answer", "text": "I built a ledger API."}
+    assert "".join(e["text"] for e in events if e["type"] == "token") == "How did you test it?"
+    state = events[-1]["state"]
+    assert state["answers_given"] == 1 and state["transcript"][1]["content"] == "I built a ledger API."
+    assert heard[-1] == (5000, "audio/webm;codecs=opus")
+
+    # No open question while the next one is still due: nothing to read.
+    with admin(migrated_db) as conn:
+        conn.execute("update interview_sessions set transcript = transcript - (-1) where application_id = %s",
+                     (app_id,))
+    r = await client.get(f"{base(app_id)}/speech", headers=h)
+    assert r.status_code == 409 and r.json()["error"]["code"] == "no_open_question"

@@ -26,6 +26,7 @@ from pydantic import BaseModel, Field
 
 from app.agents import interview as agent
 from app.core.auth import CurrentUser
+from app.core.config import get_settings
 from app.core.db import Tx, system_claims, transaction
 from app.core.errors import AppError
 from app.domain import interview
@@ -60,6 +61,8 @@ class InterviewState(BaseModel):
     answers_given: int = 0
     awaiting: Literal["question", "answer"] | None = None
     paused: bool = False
+    answer_mode: Literal["voice", "text"] = Field(
+        default="voice", description="voice: answers are recorded and sent to `turn-voice`; text: typed to `turn`")
     transcript: list[interview.Entry] = Field(default_factory=list)
     started_at: datetime | None = None
     deadline_at: datetime | None = None
@@ -128,6 +131,7 @@ def _state(ctx: dict[str, Any]) -> InterviewState:
     base: dict[str, Any] = {
         "disclosure": interview.DISCLOSURE, "time_limit_min": interview.time_limit_min(cfg),
         "evaluates": [r.name for r in cfg.rubric], "server_now": ctx["server_now"],
+        "answer_mode": get_settings().answer_mode,
     }
     if ctx["started_at"] is not None:
         t: list[interview.Entry] = ctx["entries"]
@@ -228,8 +232,10 @@ class TurnPlan:
     transcript: tuple[interview.Entry, ...] = ()
 
 
-async def begin_turn(tx: Tx, user: CurrentUser, application_id: UUID, body: TurnIn) -> TurnPlan:
-    """Validate and save the candidate's answer (if any), and decide whether a question is due."""
+async def begin_turn(tx: Tx, user: CurrentUser, application_id: UUID, body: TurnIn, *,
+                     spoken: bool = False) -> TurnPlan:
+    """Validate and save the candidate's answer (if any), and decide whether a question is due.
+    `spoken`: the answer is a transcript from `turn-voice`; typed answers are refused in voice mode."""
     ctx = await _candidate_ctx(tx, user, application_id, lock=True)
     if ctx["started_at"] is None:
         raise AppError(409, "interview_not_started", "Start the interview first.")
@@ -243,9 +249,12 @@ async def begin_turn(tx: Tx, user: CurrentUser, application_id: UUID, body: Turn
                        {"answers_given": interview.answers_given(t)})
     node: InterviewNode = ctx["node"]
     if body.message is not None:
-        answer = body.message.strip()
+        if not spoken and get_settings().answer_mode == "voice":
+            raise AppError(422, "voice_required", "This interview is answered by voice. Record your answer.")
+        answer = body.message.strip()[:interview.MAX_ANSWER_CHARS]
         if not answer:
-            raise AppError(422, "empty_answer", "Write an answer before sending.")
+            raise AppError(422, "empty_answer", "We could not hear an answer. Check your microphone and record again."
+                           if spoken else "Write an answer before sending.")
         if interview.awaiting(t) != "answer":
             raise AppError(409, "no_open_question", "There is no question to answer yet.")
         t = [*t, interview.Entry(role="candidate", content=answer, at=ctx["server_now"])]
@@ -261,6 +270,15 @@ async def begin_turn(tx: Tx, user: CurrentUser, application_id: UUID, body: Turn
     return TurnPlan(application_id=str(ctx["id"]), action="question", expected_len=len(t), title=ctx["title"],
                     seniority=ctx["seniority"], description=ctx["description"] or "", node=node,
                     transcript=tuple(t))
+
+
+async def current_question(tx: Tx, user: CurrentUser, application_id: UUID) -> str:
+    """The open question's text, for reading aloud. Only the candidate's own, unanswered question."""
+    ctx = await _candidate_ctx(tx, user, application_id)
+    t: list[interview.Entry] = ctx["entries"]
+    if ctx["started_at"] is None or ctx["finished_at"] is not None or interview.awaiting(t) != "answer":
+        raise AppError(409, "no_open_question", "There is no question to read right now.")
+    return t[-1].content
 
 
 async def _append_question(plan: TurnPlan, text: str) -> bool:

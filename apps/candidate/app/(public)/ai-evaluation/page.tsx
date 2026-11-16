@@ -19,8 +19,10 @@ export default function AiEvaluationPage() {
       <h2>AI interview</h2>
       <p>
         If the job has one, you are told before you start that the interviewer is an AI. It asks one question at a time about the
-        role, and never asks about age, family, religion, health, nationality or other personal matters. Your answers are scored
-        against the team&apos;s rubric, and each score must point to the answers it is based on.
+        role, and never asks about age, family, religion, health, nationality or other personal matters. The interview is
+        spoken: each question is read aloud, and you answer by recording yourself, one take per question. Your recording is
+        transcribed and then discarded; only the text transcript is kept, and that is what is scored and what the hiring team
+        reads. Your answers are scored against the team&apos;s rubric, and each score must point to the answers it is based on.
       </p>
       <h2>Feedback and decisions</h2>
       <p>

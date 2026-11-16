@@ -68,6 +68,69 @@ describe("InterviewChat", () => {
   });
 });
 
+describe("InterviewChat voice answers", () => {
+  class FakeRecorder {
+    static isTypeSupported = (t: string) => t === "audio/webm;codecs=opus";
+    state = "inactive";
+    mimeType: string;
+    ondataavailable: ((e: { data: Blob }) => void) | null = null;
+    onstop: (() => void) | null = null;
+    constructor(
+      public stream: { getTracks: () => { stop: () => void }[] },
+      opts?: { mimeType?: string },
+    ) {
+      this.mimeType = opts?.mimeType ?? "";
+    }
+    start() {
+      this.state = "recording";
+      // Audio starts arriving shortly after start, as in a real browser.
+      setTimeout(() => this.ondataavailable?.({ data: new Blob(["head"], { type: "audio/webm" }) }), 0);
+    }
+    stop() {
+      this.state = "inactive";
+      this.ondataavailable?.({ data: new Blob(["voice"], { type: "audio/webm" }) });
+      this.onstop?.();
+    }
+  }
+  const trackStop = vi.fn();
+
+  beforeEach(() => {
+    vi.stubGlobal("MediaRecorder", FakeRecorder);
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: { getUserMedia: vi.fn().mockResolvedValue({ getTracks: () => [{ stop: trackStop }] }) },
+    });
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("records one take, sends it as webm, releases the mic and stops the question audio", async () => {
+    const onSendAudio = vi.fn();
+    const onStopSpeaking = vi.fn();
+    chat({ answerMode: "voice", onSendAudio, onStopSpeaking, onReplay: vi.fn() });
+    expect(screen.queryByLabelText("Your answer")).not.toBeInTheDocument();
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: /Record answer/ })));
+    // "Recording" is only shown once the microphone delivers audio.
+    expect(await screen.findByText(/^Recording…/)).toBeInTheDocument();
+    expect(onStopSpeaking).toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: /Finish interview/ })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /Stop and send/ }));
+    expect(onSendAudio).toHaveBeenCalledTimes(1);
+    const blob = onSendAudio.mock.calls[0]![0] as Blob;
+    expect(blob.type).toBe("audio/webm");
+    expect(trackStop).toHaveBeenCalled();
+  });
+
+  it("explains a blocked microphone and shows transcription progress", async () => {
+    (navigator.mediaDevices.getUserMedia as ReturnType<typeof vi.fn>).mockRejectedValue(new DOMException("no", "NotAllowedError"));
+    const { props, rerender } = chat({ answerMode: "voice", onSendAudio: vi.fn() });
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: /Record answer/ })));
+    expect(screen.getByText(/Microphone access is blocked/)).toBeInTheDocument();
+    rerender(<InterviewChat {...props} answerMode="voice" busy transcribing awaiting="question" />);
+    expect(screen.getByText("Transcribing your answer…")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Record answer/ })).toBeDisabled();
+  });
+});
+
 describe("manager views", () => {
   it("numbers turns, marks cited ones, and selects a turn from a score's citation", () => {
     const onSelectTurn = vi.fn();

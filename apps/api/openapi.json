@@ -2288,6 +2288,16 @@
       "InterviewState": {
         "description": "What the candidate sees: the disclosure, the transcript and the clock. Never a score.",
         "properties": {
+          "answer_mode": {
+            "default": "voice",
+            "description": "voice: answers are recorded and sent to `turn-voice`; text: typed to `turn`",
+            "enum": [
+              "voice",
+              "text"
+            ],
+            "title": "Answer Mode",
+            "type": "string"
+          },
           "answers_given": {
             "default": 0,
             "title": "Answers Given",
@@ -5984,6 +5994,96 @@
         ]
       }
     },
+    "/v1/candidate/applications/{application_id}/interview/speech": {
+      "get": {
+        "description": "The open question read aloud (MP3).",
+        "operationId": "question_speech_v1_candidate_applications__application_id__interview_speech_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "audio/mpeg": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Question Speech",
+        "tags": [
+          "candidate"
+        ]
+      }
+    },
     "/v1/candidate/applications/{application_id}/interview/start": {
       "post": {
         "description": "Start the clock. Calling it again returns the same session. Then request the first question\nwith `POST \u2026/turn` and no message.",
@@ -6167,6 +6267,160 @@
           }
         ],
         "summary": "Turn",
+        "tags": [
+          "candidate"
+        ]
+      }
+    },
+    "/v1/candidate/applications/{application_id}/interview/turn-voice": {
+      "post": {
+        "description": "Send a spoken answer as the raw request body (an audio recording) and stream the next question.\nThe recording is transcribed and discarded; only the transcript is saved, and it cannot be edited.",
+        "operationId": "turn_voice_v1_candidate_applications__application_id__interview_turn_voice_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "InterviewState.answers_given",
+            "in": "query",
+            "name": "turn",
+            "required": true,
+            "schema": {
+              "description": "InterviewState.answers_given",
+              "minimum": 0,
+              "title": "Turn",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "audio/aac": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            },
+            "audio/mp4": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            },
+            "audio/mpeg": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            },
+            "audio/ogg": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            },
+            "audio/wav": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            },
+            "audio/webm": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            },
+            "audio/x-m4a": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            },
+            "audio/x-wav": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "As `turn`, with a first `{type: 'answer', text}` event: the saved transcript."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Turn Voice",
         "tags": [
           "candidate"
         ]
