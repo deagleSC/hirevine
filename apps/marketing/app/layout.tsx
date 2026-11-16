@@ -3,7 +3,7 @@ import "./globals.css";
 import { UiProvider } from "@hirevine/ui/blocks/theme-provider";
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -40,7 +40,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2">
             Skip to content
           </a>
-          <SiteHeader />
+          <Suspense fallback={<div className="h-16" />}>
+            <SiteHeader />
+          </Suspense>
           <main id="main">{children}</main>
           <SiteFooter />
         </UiProvider>
