@@ -34,11 +34,16 @@ export const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim() || nu
 
 export const LINKS = {
   managerSignUp: `${MANAGER_URL}/sign-up`,
+  /** Primary call to action while the product is in preview. */
+  tryPreview: `${MANAGER_URL}/sign-up`,
   managerSignIn: `${MANAGER_URL}/sign-in`,
   browseJobs: `${CANDIDATE_URL}/jobs`,
   candidateSignUp: `${CANDIDATE_URL}/sign-up`,
   github: "https://github.com/deagleSC/hirevine",
 };
+
+/** Shared page container: wide content with modest gutters. */
+export const CONTAINER = "mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8";
 
 export const NAV = [
   { label: "How it works", href: "/#how-it-works" },
